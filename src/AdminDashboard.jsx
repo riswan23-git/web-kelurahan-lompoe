@@ -72,14 +72,14 @@ function AdminDashboard() {
 
   const fetchKontakRt = () => {
     axios.get(`${API_BASE_URL}/api/kontak-rt`)
-      .then(res => setKontakRtList(res.data || []))
-      .catch(() => {});
+      .then(res => setKontakRtList(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setKontakRtList([]));
   };
 
   const fetchNomorDarurat = () => {
     axios.get(`${API_BASE_URL}/api/nomor-darurat`)
-      .then(res => setNomorDaruratList(res.data || []))
-      .catch(() => {});
+      .then(res => setNomorDaruratList(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setNomorDaruratList([]));
   };
 
   const handleSaveDarurat = async (e) => {
@@ -110,29 +110,29 @@ function AdminDashboard() {
   const fetchPengajuan = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
-      setPengajuanList(res.data);
-    } catch (err) { console.error(err); }
+      setPengajuanList(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setPengajuanList([]); }
   };
 
   const fetchAparatur = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/aparatur`);
-      setAparaturList(res.data);
-    } catch (err) { console.error(err); }
+      setAparaturList(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setAparaturList([]); }
   };
 
   const fetchPkk = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah`);
-      setPkkList(res.data);
-    } catch (err) { console.error(err); }
+      setPkkList(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setPkkList([]); }
   };
 
   const fetchBerita = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/berita`);
-      setBeritaList(res.data);
-    } catch (err) { console.error(err); }
+      setBeritaList(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setBeritaList([]); }
   };
 
   const fetchStatsAndInfo = async () => {
@@ -141,30 +141,30 @@ function AdminDashboard() {
         axios.get(`${API_BASE_URL}/api/statistik`),
         axios.get(`${API_BASE_URL}/api/info-kelurahan`)
       ]);
-      setStats(resStats.data);
-      setInfo(resInfo.data);
+      setStats(resStats.data || {});
+      setInfo(resInfo.data || {});
     } catch (err) { console.error(err); }
   };
 
   const fetchSarana = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/sarana`);
-      setSaranaList(res.data);
-    } catch (err) { console.error(err); }
+      setSaranaList(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setSaranaList([]); }
   };
 
   const fetchChatRooms = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/chat-rooms`);
-      setChatRooms(res.data);
-    } catch (err) { console.error(err); }
+      setChatRooms(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setChatRooms([]); }
   };
 
   const fetchChatMessages = async (room) => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/chat/${room}`);
-      setChatMessages(res.data);
-    } catch (err) { console.error(err); }
+      setChatMessages(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setChatMessages([]); }
   };
 
   const handleLogout = () => {
