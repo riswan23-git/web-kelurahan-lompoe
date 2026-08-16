@@ -11,8 +11,23 @@ import AdminDashboard from './AdminDashboard';
 import AdminLogin from './AdminLogin';
 
 function ProtectedRoute({ children }) {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('admin_user');
-  if (!isLoggedIn) {
+  let isValid = false;
+  try {
+    const flag = localStorage.getItem('isLoggedIn');
+    const userStr = localStorage.getItem('admin_user');
+    if (flag === 'true' && userStr && userStr !== 'undefined') {
+      const parsed = JSON.parse(userStr);
+      if (parsed && typeof parsed === 'object') {
+        isValid = true;
+      }
+    }
+  } catch (e) {
+    isValid = false;
+  }
+
+  if (!isValid) {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('admin_user');
     return <Navigate to="/login" replace />;
   }
   return children;

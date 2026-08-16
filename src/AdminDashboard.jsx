@@ -174,10 +174,24 @@ function AdminDashboard() {
     navigate('/login', { replace: true });
   };
 
-  const isAuthValid = localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('admin_user');
+  let isAuthValid = false;
+  try {
+    const flag = localStorage.getItem('isLoggedIn');
+    const userStr = localStorage.getItem('admin_user');
+    if (flag === 'true' && userStr && userStr !== 'undefined') {
+      const parsed = JSON.parse(userStr);
+      if (parsed && typeof parsed === 'object') {
+        isAuthValid = true;
+      }
+    }
+  } catch (e) {
+    isAuthValid = false;
+  }
 
   useEffect(() => {
     if (!isAuthValid) {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('admin_user');
       navigate('/login', { replace: true });
       return;
     }
