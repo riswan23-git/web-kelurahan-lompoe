@@ -1402,7 +1402,11 @@ app.delete('/api/admin/nomor-darurat/:id', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server Backend Kelurahan Lompoe berjalan di port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Server Backend Kelurahan Lompoe berjalan di port ${PORT}`);
+    });
+}
+
+module.exports = app;
