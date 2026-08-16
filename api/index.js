@@ -6,9 +6,6 @@ app.use(cors());
 app.use(express.json());
 
 const DATA = {
-    admin: [
-        { id: 1, username: 'admin', password: 'admin123', nama_lengkap: 'Administrator Kelurahan', jabatan: 'Staf IT & Admin', pin_recovery: '123456' }
-    ],
     aparatur: [
         { id: 1, nama: 'Hj. Andi Hasnani, S.Sos', nip: '19700101 199003 2 001', jabatan: 'Lurah Lompoe', foto: null, is_lurah: 1, sambutan: 'Selamat Datang di Website Resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare. Website ini hadir sebagai wujud transparansi publik dan kemudahan pelayanan administrasi bagi seluruh warga.', urutan: 1 },
         { id: 2, nama: 'Muhammad Amir, S.STP', nip: '19850512 200801 1 002', jabatan: 'Sekretaris Kelurahan', foto: null, is_lurah: 0, sambutan: '', urutan: 2 },
@@ -53,12 +50,9 @@ const DATA = {
     sarana: [
         { id: 1, nama_sarana: 'Kantor Kelurahan Lompoe', kategori: 'Pemerintahan', lokasi: 'Jl. Poros Lompoe', deskripsi: 'Pusat pelayanan administrasi publik dan pelayanan masyarakat.', foto: null },
         { id: 2, nama_sarana: 'Puskesmas Pembantu Bacukiki', kategori: 'Kesehatan', lokasi: 'Lompoe', deskripsi: 'Fasilitas pelayanan kesehatan dasar bagi warga.', foto: null }
-    ],
-    pengajuan: [],
-    chat_messages: []
+    ]
 };
 
-// Endpoints
 app.get('/api/aparatur', (req, res) => res.json(DATA.aparatur));
 app.get('/api/statistik', (req, res) => res.json(DATA.statistik));
 app.get('/api/info-kelurahan', (req, res) => res.json(DATA.info_kelurahan));
@@ -66,18 +60,19 @@ app.get('/api/nomor-darurat', (req, res) => res.json(DATA.nomor_darurat));
 app.get('/api/pkk-wilayah', (req, res) => res.json(DATA.pkk_wilayah));
 app.get('/api/berita', (req, res) => res.json(DATA.berita));
 app.get('/api/sarana', (req, res) => res.json(DATA.sarana));
-app.get('/api/pengajuan', (req, res) => res.json(DATA.pengajuan));
-app.get('/api/chat/messages', (req, res) => res.json(DATA.chat_messages));
+app.get('/api/pengajuan', (req, res) => res.json([]));
+app.get('/api/chat/messages', (req, res) => res.json([]));
 
 app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
     if (username === 'admin' && (password === 'admin123' || password === 'admin')) {
         return res.json({ success: true, message: 'Login Berhasil!', admin: { username: 'admin', nama_lengkap: 'Administrator Kelurahan', jabatan: 'Staf IT & Admin' } });
     }
     return res.status(401).json({ success: false, message: 'Gagal login. Periksa username dan password Anda.' });
 });
 
-// Fallback for any other /api routes
-app.all('/api/*', (req, res) => res.json({ success: true, data: [] }));
+app.all('*', (req, res) => res.json({ success: true }));
 
-module.exports = app;
+module.exports = (req, res) => {
+  return app(req, res);
+};
