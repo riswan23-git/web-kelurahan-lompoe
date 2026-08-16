@@ -110,34 +110,69 @@ const FALLBACK_DATA = {
     ],
     sarana: [
         { id: 1, nama_sarana: 'Kantor Kelurahan Lompoe', kategori: 'Pemerintahan', lokasi: 'Jl. Poros Lompoe', deskripsi: 'Pusat pelayanan administrasi publik dan pelayanan masyarakat.', foto: null },
-        { id: 2, nama_sarana: 'Puskesmas Pembantu Bacukiki', kategori: 'Kesehatan', lokasi: 'Lompoe', deskripsi: 'Fasilitas pelayanan kesehatan dasar bagi warga.', foto: null }
+        { id: 2, nama_sarana: 'Puskesmas Pembantu Bacukiki', kategori: 'Kesehatan', lokasi: 'Lompoe', deskripsi: 'Fasilitas pelayanan kesehatan dasar bagi warga' }
     ]
 };
 
-// Utility DB Query Promise Helper with Fallback
-const dbQuery = (sql, params = []) => {
-    return new Promise((resolve, reject) => {
-        pool.query(sql, params, (err, results) => {
-            if (err) {
-                const lower = sql.toLowerCase();
-                if (lower.includes('from aparatur')) return resolve(FALLBACK_DATA.aparatur);
-                if (lower.includes('from statistik')) return resolve([FALLBACK_DATA.statistik]);
-                if (lower.includes('from info_kelurahan')) return resolve([FALLBACK_DATA.info_kelurahan]);
-                if (lower.includes('from nomor_darurat')) return resolve(FALLBACK_DATA.nomor_darurat);
-                if (lower.includes('from pkk_wilayah')) return resolve(FALLBACK_DATA.pkk_wilayah);
-                if (lower.includes('from berita')) return resolve(FALLBACK_DATA.berita);
-                if (lower.includes('from sarana')) return resolve(FALLBACK_DATA.sarana);
-                if (lower.includes('from admin')) {
-                    if (lower.includes('where username')) {
-                        const uname = params[0];
-                        if (uname === 'admin') return resolve(FALLBACK_DATA.admin);
-                    }
-                    return resolve(FALLBACK_DATA.admin);
-                }
-                return resolve([]);
-            }
-            resolve(results);
+// Lazy Connection Pool (hanya dibuat saat query berjalan)
+let pool = null;
+function getPool() {
+    if (!pool) {
+        pool = mysql.createPool({
+            host: process.env.DB_HOST || '127.0.0.1',
+            port: parseInt(process.env.DB_PORT) || 3306,
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'db_lompoe',
+            waitForConnections: true,
+            connectionLimit: 5,
+            queueLimit: 0,
+            connectTimeout: 2000,
+            multipleStatements: true,
+            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
         });
+    }
+    return pool;
+}
+
+// Utility DB Query Promise Helper dengan Safe Fallback
+const dbQuery = (sql, params = []) => {
+    return new Promise((resolve) => {
+        try {
+            const p = getPool();
+            p.query(sql, params, (err, results) => {
+                if (err) {
+                    const lower = sql.toLowerCase();
+                    if (lower.includes('from aparatur')) return resolve(FALLBACK_DATA.aparatur);
+                    if (lower.includes('from statistik')) return resolve([FALLBACK_DATA.statistik]);
+                    if (lower.includes('from info_kelurahan')) return resolve([FALLBACK_DATA.info_kelurahan]);
+                    if (lower.includes('from nomor_darurat')) return resolve(FALLBACK_DATA.nomor_darurat);
+                    if (lower.includes('from pkk_wilayah')) return resolve(FALLBACK_DATA.pkk_wilayah);
+                    if (lower.includes('from berita')) return resolve(FALLBACK_DATA.berita);
+                    if (lower.includes('from sarana')) return resolve(FALLBACK_DATA.sarana);
+                    if (lower.includes('from admin')) {
+                        if (lower.includes('where username')) {
+                            const uname = params[0];
+                            if (uname === 'admin') return resolve(FALLBACK_DATA.admin);
+                        }
+                        return resolve(FALLBACK_DATA.admin);
+                    }
+                    return resolve([]);
+                }
+                resolve(results);
+            });
+        } catch (e) {
+            const lower = sql.toLowerCase();
+            if (lower.includes('from aparatur')) return resolve(FALLBACK_DATA.aparatur);
+            if (lower.includes('from statistik')) return resolve([FALLBACK_DATA.statistik]);
+            if (lower.includes('from info_kelurahan')) return resolve([FALLBACK_DATA.info_kelurahan]);
+            if (lower.includes('from nomor_darurat')) return resolve(FALLBACK_DATA.nomor_darurat);
+            if (lower.includes('from pkk_wilayah')) return resolve(FALLBACK_DATA.pkk_wilayah);
+            if (lower.includes('from berita')) return resolve(FALLBACK_DATA.berita);
+            if (lower.includes('from sarana')) return resolve(FALLBACK_DATA.sarana);
+            if (lower.includes('from admin')) return resolve(FALLBACK_DATA.admin);
+            return resolve([]);
+        }
     });
 };
 
