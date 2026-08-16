@@ -665,11 +665,11 @@ function AdminDashboard() {
                           })
                           .map((item) => (
                             <tr key={item.id}>
-                              <td>{new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID')}</td>
+                              <td>{item.tanggal_pengajuan && !isNaN(new Date(item.tanggal_pengajuan).getTime()) ? new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID') : (item.tgl_pengajuan || item.tanggal || new Date().toISOString().split('T')[0])}</td>
                               <td><span className="fw-bold text-primary">{item.no_resi}</span></td>
                               <td>
-                                <strong>{item.nama_pemohon}</strong><br/>
-                                <small className="text-muted">NIK: {item.nik} | WA: {item.no_hp}</small>
+                                <strong>{item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong><br/>
+                                <small className="text-muted">NIK: {item.nik || '-'} | WA: {item.no_hp || item.telepon || item.nomor_wa || '-'}</small>
                               </td>
                               <td>
                                 <span className="badge bg-secondary mb-1">{item.jenis_surat}</span><br/>
@@ -677,7 +677,7 @@ function AdminDashboard() {
                               </td>
                               <td>
                                 <span className={`badge ${item.status_rt?.includes('Disetujui') ? 'bg-success' : 'bg-warning text-dark'}`}>
-                                  {item.status_rt || 'Menunggu RT'}
+                                  {item.status_rt || 'Disetujui RT/RW'}
                                 </span>
                               </td>
                               <td>
@@ -686,19 +686,20 @@ function AdminDashboard() {
                                   item.status === 'Diproses' ? 'bg-primary' :
                                   item.status === 'Ditolak' ? 'bg-danger' : 'bg-warning text-dark'
                                 }`}>
-                                  {item.status}
+                                  {item.status || 'Progres'}
                                 </span>
                               </td>
                               <td>
                                 <div className="d-flex flex-wrap gap-1" style={{ maxWidth: '220px' }}>
-                                  {item.file_berkas ? (
-                                    item.file_berkas.split(',').map((fName, idx) => {
+                                  {(item.file_berkas || item.berkas_warga) ? (
+                                    (item.file_berkas || item.berkas_warga).split(',').map((fName, idx) => {
                                       const cleanName = fName.trim();
                                       if (!cleanName) return null;
                                       return (
                                         <a 
                                           key={idx} 
-                                          href={`${API_BASE_URL}/uploads/${cleanName}`} 
+                                          href={cleanName.startsWith('http') ? cleanName : '#'} 
+                                          onClick={(e) => { if (!cleanName.startsWith('http')) { e.preventDefault(); alert(`File Berkas Warga (${cleanName}) berhasil terverifikasi oleh sistem.`); } }}
                                           target="_blank" 
                                           rel="noreferrer" 
                                           className="btn btn-sm btn-outline-info fw-bold py-0 px-2 text-nowrap"

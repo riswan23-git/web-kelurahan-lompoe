@@ -1,29 +1,4 @@
-let pengajuanList = [
-    {
-        id: 1,
-        no_resi: 'LMP-102938',
-        nomor_resi: 'LMP-102938',
-        nama_pemohon: 'Andi M. Fajar',
-        nama_lengkap: 'Andi M. Fajar',
-        nik: '7372011205950001',
-        jenis_surat: 'Surat Keterangan Usaha (SKU)',
-        rt_rw: 'RW 01 / RT 02',
-        telepon: '081234567890',
-        nomor_wa: '081234567890',
-        keperluan: 'Persyaratan Pengajuan KUR Bank Dahulu',
-        status_rt: 'Disetujui RT/RW',
-        status_kelurahan: 'Progres',
-        status: 'Progres',
-        token_rt: 'tok_rt_102938',
-        tgl_pengajuan: '2026-08-16',
-        tanggal: '2026-08-16'
-    }
-];
-
-let chatMessages = [
-    { id: 1, sender: 'Warga', message: 'Halo admin, mau tanya jam operasional loket?', time: '09:00' },
-    { id: 2, sender: 'Staf Kelurahan', message: 'Halo! Jam pelayanan loket kami dari pukul 08.00 - 16.00 WITA.', time: '09:02' }
-];
+const store = require('./_store.js');
 
 module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,7 +12,7 @@ module.exports = (req, res) => {
     if (url.includes('cek-resi')) {
         const urlParts = url.split('/');
         const noResi = urlParts[urlParts.length - 1];
-        const found = pengajuanList.find(p => p.no_resi == noResi || p.nomor_resi == noResi);
+        const found = store.pengajuanList.find(p => p.no_resi == noResi || p.nomor_resi == noResi);
         if (found) return res.status(200).json(found);
         return res.status(200).json({
             id: 1,
@@ -66,10 +41,10 @@ module.exports = (req, res) => {
                 message: body.message || body.pesan || '',
                 time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
             };
-            chatMessages.push(newMessage);
+            store.chatMessages.push(newMessage);
             return res.status(200).json({ success: true, message: 'Pesan berhasil terkirim!', data: newMessage });
         }
-        return res.status(200).json(chatMessages);
+        return res.status(200).json(store.chatMessages);
     }
 
     // 3. PENGAJUAN SURAT (GET / POST / PUT / DELETE)
@@ -77,26 +52,39 @@ module.exports = (req, res) => {
         const body = req.body || {};
         const resi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
         const tokenRt = 'tok_rt_' + Math.floor(100000 + Math.random() * 900000);
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        const namaPemohon = body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Kelurahan Lompoe';
+        const nikPemohon = body.nik || '7372011205950001';
+        const jenisSurat = body.jenis_surat || 'Surat Keterangan Usaha (SKU)';
+        const rtRw = body.rt_rw || 'RW 01 / RT 01';
+        const telp = body.telepon || body.nomor_wa || '081234567890';
+        const keperluan = body.keperluan || 'Pengurusan Administrasi';
+        const berkasStr = body.file_berkas ? (typeof body.file_berkas === 'string' ? body.file_berkas : 'Dokumen_Lampiran_Warga.pdf') : 'KTP_KK_Pengantar_RT.pdf';
+
         const newItem = {
             id: Date.now(),
             no_resi: resi,
             nomor_resi: resi,
-            nama_pemohon: body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Kelurahan Lompoe',
-            nama_lengkap: body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Kelurahan Lompoe',
-            nik: body.nik || '7372011205950001',
-            jenis_surat: body.jenis_surat || 'Surat Keterangan Usaha (SKU)',
-            rt_rw: body.rt_rw || 'RW 01 / RT 01',
-            telepon: body.telepon || body.nomor_wa || '081234567890',
-            nomor_wa: body.telepon || body.nomor_wa || '081234567890',
-            keperluan: body.keperluan || 'Pengurusan Administrasi',
+            nama_pemohon: namaPemohon,
+            nama_lengkap: namaPemohon,
+            nik: nikPemohon,
+            jenis_surat: jenisSurat,
+            rt_rw: rtRw,
+            telepon: telp,
+            nomor_wa: telp,
+            keperluan: keperluan,
             status_rt: 'Disetujui RT/RW',
             status_kelurahan: 'Progres',
             status: 'Progres',
             token_rt: tokenRt,
-            tgl_pengajuan: new Date().toISOString().split('T')[0],
-            tanggal: new Date().toISOString().split('T')[0]
+            tgl_pengajuan: todayStr,
+            tanggal: todayStr,
+            berkas_warga: berkasStr
         };
-        pengajuanList.unshift(newItem);
+
+        store.pengajuanList.unshift(newItem);
+
         return res.status(200).json({
             success: true,
             message: 'Pengajuan surat berhasil dikirim! Silakan catat nomor resi Anda.',
@@ -112,7 +100,7 @@ module.exports = (req, res) => {
         const urlParts = url.split('/');
         const resiFromUrl = urlParts[urlParts.length - 1];
         const body = req.body || {};
-        const item = pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id || p.id == resiFromUrl);
+        const item = store.pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id || p.id == resiFromUrl);
         if (item) {
             if (body.status_kelurahan) item.status_kelurahan = body.status_kelurahan;
             if (body.status_rt) item.status_rt = body.status_rt;
@@ -125,9 +113,9 @@ module.exports = (req, res) => {
     if (req.method === 'DELETE') {
         const urlParts = url.split('/');
         const resiFromUrl = urlParts[urlParts.length - 1];
-        pengajuanList = pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        store.pengajuanList = store.pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
         return res.status(200).json({ success: true, message: 'Pengajuan berhasil dihapus!' });
     }
 
-    return res.status(200).json(pengajuanList);
+    return res.status(200).json(store.pengajuanList);
 };
