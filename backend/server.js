@@ -12,17 +12,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Pastikan folder uploads ada
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+// Pastikan folder uploads ada (Support Vercel Read-Only Filesystem)
+const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
+} catch (e) {
+    console.warn('Upload dir notice:', e.message);
 }
 app.use('/uploads', express.static(uploadDir));
 
-// Konfigurasi Multer dengan Filter Keamanan Strict (Anti-Malware & File Extension Check)
+// Konfigurasi Multer dengan Filter Keamanan Strict
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         const cleanExt = path.extname(file.originalname).toLowerCase();
@@ -114,23 +118,50 @@ const FALLBACK_DATA = {
     ]
 };
 
-// Lazy Connection Pool (hanya dibuat saat query berjalan)
+// Helper Fallback Matcher
+function getFallbackResult(sql, params) {
+    const lower = sql.toLowerCase();
+    if (lower.includes('from aparatur')) return FALLBACK_DATA.aparatur;
+    if (lower.includes('from statistik')) return [FALLBACK_DATA.statistik];
+    if (lower.includes('from info_kelurahan')) return [FALLBACK_DATA.info_kelurahan];
+    if (lower.includes('from nomor_darurat')) return FALLBACK_DATA.nomor_darurat;
+    if (lower.includes('from pkk_wilayah')) return FALLBACK_DATA.pkk_wilayah;
+    if (lower.includes('from berita')) return FALLBACK_DATA.berita;
+    if (lower.includes('from sarana')) return FALLBACK_DATA.sarana;
+    if (lower.includes('from admin')) {
+        if (lower.includes('where username')) {
+            const uname = params[0];
+            if (uname === 'admin') return FALLBACK_DATA.admin;
+        }
+        return FALLBACK_DATA.admin;
+    }
+    return [];
+}
+
+// Lazy Connection Pool
 let pool = null;
 function getPool() {
+    if (process.env.VERCEL && !process.env.DB_HOST) {
+        return null; // Skip DB connection on Vercel if DB_HOST not provided
+    }
     if (!pool) {
-        pool = mysql.createPool({
-            host: process.env.DB_HOST || '127.0.0.1',
-            port: parseInt(process.env.DB_PORT) || 3306,
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'db_lompoe',
-            waitForConnections: true,
-            connectionLimit: 5,
-            queueLimit: 0,
-            connectTimeout: 2000,
-            multipleStatements: true,
-            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
-        });
+        try {
+            pool = mysql.createPool({
+                host: process.env.DB_HOST || '127.0.0.1',
+                port: parseInt(process.env.DB_PORT) || 3306,
+                user: process.env.DB_USER || 'root',
+                password: process.env.DB_PASSWORD || '',
+                database: process.env.DB_NAME || 'db_lompoe',
+                waitForConnections: true,
+                connectionLimit: 5,
+                queueLimit: 0,
+                connectTimeout: 2000,
+                multipleStatements: true,
+                ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+            });
+        } catch (e) {
+            pool = null;
+        }
     }
     return pool;
 }
@@ -140,38 +171,17 @@ const dbQuery = (sql, params = []) => {
     return new Promise((resolve) => {
         try {
             const p = getPool();
+            if (!p) {
+                return resolve(getFallbackResult(sql, params));
+            }
             p.query(sql, params, (err, results) => {
                 if (err) {
-                    const lower = sql.toLowerCase();
-                    if (lower.includes('from aparatur')) return resolve(FALLBACK_DATA.aparatur);
-                    if (lower.includes('from statistik')) return resolve([FALLBACK_DATA.statistik]);
-                    if (lower.includes('from info_kelurahan')) return resolve([FALLBACK_DATA.info_kelurahan]);
-                    if (lower.includes('from nomor_darurat')) return resolve(FALLBACK_DATA.nomor_darurat);
-                    if (lower.includes('from pkk_wilayah')) return resolve(FALLBACK_DATA.pkk_wilayah);
-                    if (lower.includes('from berita')) return resolve(FALLBACK_DATA.berita);
-                    if (lower.includes('from sarana')) return resolve(FALLBACK_DATA.sarana);
-                    if (lower.includes('from admin')) {
-                        if (lower.includes('where username')) {
-                            const uname = params[0];
-                            if (uname === 'admin') return resolve(FALLBACK_DATA.admin);
-                        }
-                        return resolve(FALLBACK_DATA.admin);
-                    }
-                    return resolve([]);
+                    return resolve(getFallbackResult(sql, params));
                 }
                 resolve(results);
             });
         } catch (e) {
-            const lower = sql.toLowerCase();
-            if (lower.includes('from aparatur')) return resolve(FALLBACK_DATA.aparatur);
-            if (lower.includes('from statistik')) return resolve([FALLBACK_DATA.statistik]);
-            if (lower.includes('from info_kelurahan')) return resolve([FALLBACK_DATA.info_kelurahan]);
-            if (lower.includes('from nomor_darurat')) return resolve(FALLBACK_DATA.nomor_darurat);
-            if (lower.includes('from pkk_wilayah')) return resolve(FALLBACK_DATA.pkk_wilayah);
-            if (lower.includes('from berita')) return resolve(FALLBACK_DATA.berita);
-            if (lower.includes('from sarana')) return resolve(FALLBACK_DATA.sarana);
-            if (lower.includes('from admin')) return resolve(FALLBACK_DATA.admin);
-            return resolve([]);
+            return resolve(getFallbackResult(sql, params));
         }
     });
 };
