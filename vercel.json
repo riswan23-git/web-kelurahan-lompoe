@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/admin/generate-docx/:path*",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/api/admin/generate-docx",
+      "destination": "/api/layanan"
+    },
+    {
       "source": "/api/admin/pengajuan/:path*",
       "destination": "/api/layanan"
     },

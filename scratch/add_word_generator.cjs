@@ -1,4 +1,37 @@
-const store = require('./_store.js');
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const apiDir = path.join(rootDir, 'api');
+
+// 1. Update vercel.json rewrites so /api/admin/generate-docx maps to /api/layanan
+const vercelJsonPath = path.join(rootDir, 'vercel.json');
+const vercelConfig = {
+  "rewrites": [
+    { "source": "/api/admin/generate-docx/:path*", "destination": "/api/layanan" },
+    { "source": "/api/admin/generate-docx", "destination": "/api/layanan" },
+    { "source": "/api/admin/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/admin/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin-api" },
+    { "source": "/api/admin", "destination": "/api/admin-api" },
+    { "source": "/api/login", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt/:path*", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt", "destination": "/api/auth" },
+    { "source": "/api/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi/:path*", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi", "destination": "/api/layanan" },
+    { "source": "/api/chat/:path*", "destination": "/api/layanan" },
+    { "source": "/api/chat", "destination": "/api/layanan" },
+    { "source": "/api/:path*", "destination": "/api/public" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+};
+
+fs.writeFileSync(vercelJsonPath, JSON.stringify(vercelConfig, null, 2), 'utf8');
+
+// 2. Update api/layanan.js to include word document generator
+const layananCode = `const store = require('./_store.js');
 
 module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +56,7 @@ module.exports = (req, res) => {
 
         const todayFormatted = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        const docHtml = `<!DOCTYPE html>
+        const docHtml = \`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -50,31 +83,31 @@ body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-he
   <p>Alamat: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulawesi Selatan</p>
 </div>
 <div class="title">
-  <h4>${(item.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
-  <p>Nomor Resi / Agenda: ${item.no_resi || 'LMP-102938'}</p>
+  <h4>\${(item.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
+  <p>Nomor Resi / Agenda: \${item.no_resi || 'LMP-102938'}</p>
 </div>
 <div class="content">
   <p>Yang bertanda tangan di bawah ini Lurah Lompoe, Kecamatan Bacukiki, Kota Parepare, dengan ini menerangkan bahwa:</p>
   <table class="table-data">
-    <tr><td>Nama Lengkap</td><td>: <strong>${item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong></td></tr>
-    <tr><td>NIK</td><td>: ${item.nik || '7372011205950001'}</td></tr>
-    <tr><td>Wilayah Domisili</td><td>: ${item.rt_rw || 'RW 01 / RT 01'}</td></tr>
-    <tr><td>Jenis Layanan</td><td>: ${item.jenis_surat || 'Surat Keterangan'}</td></tr>
-    <tr><td>Keperluan</td><td>: ${item.keperluan || 'Pengurusan Administrasi'}</td></tr>
-    <tr><td>Status RT/RW</td><td>: ${item.status_rt || 'Disetujui RT/RW'}</td></tr>
+    <tr><td>Nama Lengkap</td><td>: <strong>\${item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong></td></tr>
+    <tr><td>NIK</td><td>: \${item.nik || '7372011205950001'}</td></tr>
+    <tr><td>Wilayah Domisili</td><td>: \${item.rt_rw || 'RW 01 / RT 01'}</td></tr>
+    <tr><td>Jenis Layanan</td><td>: \${item.jenis_surat || 'Surat Keterangan'}</td></tr>
+    <tr><td>Keperluan</td><td>: \${item.keperluan || 'Pengurusan Administrasi'}</td></tr>
+    <tr><td>Status RT/RW</td><td>: \${item.status_rt || 'Disetujui RT/RW'}</td></tr>
   </table>
   <p>Demikian Surat Keterangan ini dibuat dan diberikan kepada yang bersangkutan untuk dipergunakan sebagaimana mestinya.</p>
 </div>
 <div class="footer">
-  <p>Parepare, ${todayFormatted}<br><strong>Lurah Lompoe</strong></p>
+  <p>Parepare, \${todayFormatted}<br><strong>Lurah Lompoe</strong></p>
   <br><br><br>
   <p><strong><u>HJ. ANDI HASNANI, S.Sos</u></strong><br>NIP. 19700101 199003 2 001</p>
 </div>
 </body>
-</html>`;
+</html>\`;
 
         res.setHeader('Content-Type', 'application/msword');
-        res.setHeader('Content-Disposition', `attachment; filename="Surat_Kelurahan_Lompoe_${noResi}.doc"`);
+        res.setHeader('Content-Disposition', \`attachment; filename="Surat_Kelurahan_Lompoe_\${noResi}.doc"\`);
         return res.status(200).send(docHtml);
     }
 
@@ -188,4 +221,7 @@ body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-he
     }
 
     return res.status(200).json(store.pengajuanList);
-};
+};`;
+
+fs.writeFileSync(path.join(apiDir, 'layanan.js'), layananCode, 'utf8');
+console.log('Successfully updated Word Generator in api/layanan.js and vercel.json!');
