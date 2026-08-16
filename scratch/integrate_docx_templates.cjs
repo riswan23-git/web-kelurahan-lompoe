@@ -1,4 +1,10 @@
-const store = require('./_store.js');
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const apiDir = path.join(rootDir, 'api');
+
+const layananCode = `const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
 const PizZip = require('pizzip');
@@ -32,20 +38,20 @@ function getKonsumenPenggunaRuns(selectedType) {
     const finalIkan = isIkan;
     const finalUmum = isUmum;
 
-    const runFonts = `<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>`;
-    const runFontsStrike = `<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:strike w:val="1"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>`;
+    const runFonts = \`<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>\`;
+    const runFontsStrike = \`<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:strike w:val="1"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>\`;
 
-    const rHeader = `<w:r>${runFonts}<w:t xml:space="preserve">Konsumen Pengguna</w:t><w:tab/><w:t xml:space="preserve">:</w:t><w:tab/></w:r>`;
-    const rMikro = `<w:r>${finalMikro ? runFonts : runFontsStrike}<w:t xml:space="preserve">Usaha Mikro</w:t></w:r>`;
-    const rSep1 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rTani = `<w:r>${finalTani ? runFonts : runFontsStrike}<w:t xml:space="preserve">pertanian</w:t></w:r>`;
-    const rSep2 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rIkan = `<w:r>${finalIkan ? runFonts : runFontsStrike}<w:t xml:space="preserve">perikanan</w:t></w:r>`;
-    const rSep3 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rUmum = `<w:r>${finalUmum ? runFonts : runFontsStrike}<w:t xml:space="preserve">pelayanan umum</w:t></w:r>`;
+    const rHeader = \`<w:r>\${runFonts}<w:t xml:space="preserve">Konsumen Pengguna</w:t><w:tab/><w:t xml:space="preserve">:</w:t><w:tab/></w:r>\`;
+    const rMikro = \`<w:r>\${finalMikro ? runFonts : runFontsStrike}<w:t xml:space="preserve">Usaha Mikro</w:t></w:r>\`;
+    const rSep1 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rTani = \`<w:r>\${finalTani ? runFonts : runFontsStrike}<w:t xml:space="preserve">pertanian</w:t></w:r>\`;
+    const rSep2 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rIkan = \`<w:r>\${finalIkan ? runFonts : runFontsStrike}<w:t xml:space="preserve">perikanan</w:t></w:r>\`;
+    const rSep3 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rUmum = \`<w:r>\${finalUmum ? runFonts : runFontsStrike}<w:t xml:space="preserve">pelayanan umum</w:t></w:r>\`;
 
-    const pPr = `<w:pPr><w:tabs><w:tab w:val="left" w:pos="2977"/><w:tab w:val="left" w:pos="3261"/></w:tabs><w:spacing w:line="240" w:lineRule="auto"/><w:ind w:left="720" w:firstLine="0"/><w:rPr><w:sz w:val="24"/><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>`;
-    return `<w:p w:rsidR="00000000" w:rsidDel="00000000" w:rsidP="00000000" w:rsidRDefault="00000000" w:rsidRPr="00000000">${pPr}${rHeader}${rMikro}${rSep1}${rTani}${rSep2}${rIkan}${rSep3}${rUmum}</w:p>`;
+    const pPr = \`<w:pPr><w:tabs><w:tab w:val="left" w:pos="2977"/><w:tab w:val="left" w:pos="3261"/></w:tabs><w:spacing w:line="240" w:lineRule="auto"/><w:ind w:left="720" w:firstLine="0"/><w:rPr><w:sz w:val="24"/><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>\`;
+    return \`<w:p w:rsidR="00000000" w:rsidDel="00000000" w:rsidP="00000000" w:rsidRDefault="00000000" w:rsidRPr="00000000">\${pPr}\${rHeader}\${rMikro}\${rSep1}\${rTani}\${rSep2}\${rIkan}\${rSep3}\${rUmum}</w:p>\`;
 }
 
 module.exports = (req, res) => {
@@ -74,9 +80,9 @@ module.exports = (req, res) => {
         const templatePath = path.join(process.cwd(), 'templates', templateFile);
 
         if (!fs.existsSync(templatePath)) {
-            console.error(`Template not found at ${templatePath}`);
+            console.error(\`Template not found at \${templatePath}\`);
             res.setHeader('Content-Type', 'text/plain');
-            return res.status(404).send(`File template ${templateFile} tidak ditemukan!`);
+            return res.status(404).send(\`File template \${templateFile} tidak ditemukan!\`);
         }
 
         try {
@@ -91,7 +97,7 @@ module.exports = (req, res) => {
             const [rtVal, rwVal] = (item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
             const payload = {
-                'nomor_naskah': `470 / ${item.id || 1} / KL-LMP / VIII / 2026`,
+                'nomor_naskah': \`470 / \${item.id || 1} / KL-LMP / VIII / 2026\`,
                 'kp_raw': getKonsumenPenggunaRuns(item.keperluan),
                 'KELURAHAN': 'LOMPOE',
                 'KECAMATAN': 'BACUKIKI',
@@ -131,9 +137,9 @@ module.exports = (req, res) => {
             doc.render(payload);
             const buf = doc.getZip().generate({ type: 'nodebuffer' });
 
-            const safeFilename = encodeURIComponent(`${item.jenis_surat || 'Surat'}_${noResi}.docx`);
+            const safeFilename = encodeURIComponent(\`\${item.jenis_surat || 'Surat'}_\${noResi}.docx\`);
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+            res.setHeader('Content-Disposition', \`attachment; filename="\${safeFilename}"\`);
             return res.status(200).send(buf);
 
         } catch (err) {
@@ -256,4 +262,7 @@ module.exports = (req, res) => {
     }
 
     return res.status(200).json(store.pengajuanList);
-};
+};`;
+
+fs.writeFileSync(path.join(apiDir, 'layanan.js'), layananCode, 'utf8');
+console.log('Successfully integrated SRIKANDI .docx templates in api/layanan.js!');
