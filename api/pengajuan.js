@@ -1,4 +1,24 @@
-let pengajuanList = [];
+let pengajuanList = [
+    {
+        id: 1,
+        no_resi: 'LMP-102938',
+        nomor_resi: 'LMP-102938',
+        nama_pemohon: 'Andi M. Fajar',
+        nama_lengkap: 'Andi M. Fajar',
+        nik: '7372011205950001',
+        jenis_surat: 'Surat Keterangan Usaha (SKU)',
+        rt_rw: 'RW 01 / RT 02',
+        telepon: '081234567890',
+        nomor_wa: '081234567890',
+        keperluan: 'Persyaratan Pengajuan KUR Bank Dahulu',
+        status_rt: 'Disetujui RT/RW',
+        status_kelurahan: 'Progres',
+        status: 'Progres',
+        token_rt: 'tok_rt_102938',
+        tgl_pengajuan: '2026-08-16',
+        tanggal: '2026-08-16'
+    }
+];
 
 module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,31 +28,57 @@ module.exports = (req, res) => {
 
     if (req.method === 'POST') {
         const body = req.body || {};
-        const resi = 'LMP-' + Date.now().toString().slice(-6);
+        const resi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
+        const tokenRt = 'tok_rt_' + Math.floor(100000 + Math.random() * 900000);
         const newItem = {
             id: Date.now(),
+            no_resi: resi,
             nomor_resi: resi,
-            nama_lengkap: body.nama_lengkap || body.nama || 'Warga Lompoe',
+            nama_pemohon: body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Lompoe',
+            nama_lengkap: body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Lompoe',
             nik: body.nik || '-',
             jenis_surat: body.jenis_surat || 'Surat Keterangan',
-            nomor_wa: body.nomor_wa || body.telepon || '-',
+            rt_rw: body.rt_rw || 'RW 01 / RT 01',
+            telepon: body.telepon || body.nomor_wa || '-',
+            nomor_wa: body.telepon || body.nomor_wa || '-',
+            keperluan: body.keperluan || 'Pengurusan Administrasi',
+            status_rt: 'Menunggu RT/RW',
+            status_kelurahan: 'Progres',
             status: 'Progres',
+            token_rt: tokenRt,
+            tgl_pengajuan: new Date().toISOString().split('T')[0],
             tanggal: new Date().toISOString().split('T')[0]
         };
         pengajuanList.unshift(newItem);
         return res.status(200).json({
             success: true,
             message: 'Pengajuan surat berhasil dikirim! Silakan catat nomor resi Anda.',
-            nomor_resi: resi
+            no_resi: resi,
+            nomor_resi: resi,
+            token_rt: tokenRt,
+            status_rt: 'Menunggu RT/RW'
         });
     }
 
     if (req.method === 'PUT') {
+        const urlParts = (req.url || '').split('/');
+        const resiFromUrl = urlParts[urlParts.length - 1];
         const body = req.body || {};
-        const { id, status } = body;
-        const item = pengajuanList.find(p => p.id == id);
-        if (item) item.status = status || item.status;
+        const item = pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id);
+        if (item) {
+            if (body.status_kelurahan) item.status_kelurahan = body.status_kelurahan;
+            if (body.status_rt) item.status_rt = body.status_rt;
+            if (body.status) item.status = body.status;
+            if (body.catatan_admin) item.catatan_admin = body.catatan_admin;
+        }
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!' });
+    }
+
+    if (req.method === 'DELETE') {
+        const urlParts = (req.url || '').split('/');
+        const resiFromUrl = urlParts[urlParts.length - 1];
+        pengajuanList = pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        return res.status(200).json({ success: true, message: 'Pengajuan berhasil dihapus!' });
     }
 
     return res.status(200).json(pengajuanList);

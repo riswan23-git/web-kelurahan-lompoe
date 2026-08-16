@@ -25,7 +25,7 @@ function VerifikasiRT() {
       return;
     }
 
-    axios.get(`http://localhost:5000/api/verifikasi-rt/${token}`)
+    axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}`)
       .then((res) => {
         setData(res.data);
       })
@@ -42,14 +42,14 @@ function VerifikasiRT() {
     setSubmitting(true);
     setErrorMsg('');
     try {
-      const res = await axios.post(`http://localhost:5000/api/verifikasi-rt/${token}/setujui`, {
+      const res = await axios.post(`${API_BASE_URL}/api/verifikasi-rt/${token}/setujui`, {
         keputusan,
         nama_rt_rw: namaRt,
         catatan_rt: catatan
       });
       setSuksesMsg(res.data.message);
       // Reload data
-      const updated = await axios.get(`http://localhost:5000/api/verifikasi-rt/${token}`);
+      const updated = await axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}`);
       setData(updated.data);
     } catch (err) {
       console.error(err);

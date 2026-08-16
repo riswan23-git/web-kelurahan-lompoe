@@ -25,12 +25,12 @@ function ChatWarga() {
 
   const fetchMessages = async (resiCode) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/chat/${resiCode}`);
+      const response = await axios.get(`${API_BASE_URL}/api/chat/${resiCode}`);
       setMessages(response.data);
       
       // Fetch resi status info to check if file_hasil is ready
       try {
-        const resInfo = await axios.get(`http://localhost:5000/api/cek-resi/${resiCode}`);
+        const resInfo = await axios.get(`${API_BASE_URL}/api/cek-resi/${resiCode}`);
         if (resInfo.data && resInfo.data.file_hasil) {
           setFileHasilRoom(resInfo.data.file_hasil);
         }
@@ -157,7 +157,7 @@ function ChatWarga() {
                       <small className="opacity-90">Dokumen resmi bertanda tangan digital Pak Lurah sudah tersedia.</small>
                     </div>
                     <a 
-                      href={`http://localhost:5000/uploads/${fileHasilRoom}`} 
+                      href={`${API_BASE_URL}/uploads/${fileHasilRoom}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="btn btn-light text-success fw-bold px-3 py-1 btn-sm rounded-pill shadow-sm"

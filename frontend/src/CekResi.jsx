@@ -29,7 +29,7 @@ function CekResi() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/cek-resi/${noResi.trim()}`);
+      const response = await axios.get(`${API_BASE_URL}/api/cek-resi/${noResi.trim()}`);
       setHasilResi(response.data);
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Nomor resi tidak ditemukan. Pastikan nomor resi sudah benar.');
@@ -215,7 +215,7 @@ function CekResi() {
                         </strong>
                       </div>
                       <a 
-                        href={`http://localhost:5000/uploads/${hasilResi.file_hasil}`} 
+                        href={`${API_BASE_URL}/uploads/${hasilResi.file_hasil}`} 
                         target="_blank" 
                         rel="noreferrer" 
                         className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"

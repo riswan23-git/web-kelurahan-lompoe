@@ -81,7 +81,7 @@ function Berita() {
                 <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column">
                   {item.gambar ? (
                     <img 
-                      src={`http://localhost:5000/uploads/${item.gambar}`} 
+                      src={`${API_BASE_URL}/uploads/${item.gambar}`} 
                       alt={item.judul}
                       style={{ height: '200px', objectFit: 'cover' }}
                     />
@@ -130,7 +130,7 @@ function Berita() {
                 <h4 className="fw-bold mb-3">{selectedBerita.judul}</h4>
                 {selectedBerita.gambar && (
                   <img 
-                    src={`http://localhost:5000/uploads/${selectedBerita.gambar}`} 
+                    src={`${API_BASE_URL}/uploads/${selectedBerita.gambar}`} 
                     alt={selectedBerita.judul}
                     className="img-fluid rounded-4 mb-4 shadow-sm w-100"
                     style={{ maxHeight: '350px', objectFit: 'cover' }}

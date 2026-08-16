@@ -66,7 +66,7 @@ function Sarana() {
                 <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                   {item.foto ? (
                     <img 
-                      src={`http://localhost:5000/uploads/${item.foto}`} 
+                      src={`${API_BASE_URL}/uploads/${item.foto}`} 
                       alt={item.nama_sarana}
                       style={{ height: '180px', objectFit: 'cover' }}
                     />

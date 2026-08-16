@@ -63,7 +63,7 @@ function Profil() {
                   <div className="col-md-4 text-center">
                     {lurah?.foto ? (
                       <img 
-                        src={`http://localhost:5000/uploads/${lurah.foto}`} 
+                        src={`${API_BASE_URL}/uploads/${lurah.foto}`} 
                         alt={lurah.nama} 
                         className="rounded-circle border border-4 border-primary shadow"
                         style={{ width: '170px', height: '170px', objectFit: 'cover' }}
@@ -190,7 +190,7 @@ function Profil() {
                     <div className="card border-0 shadow-sm rounded-4 h-100 text-center p-4 bg-white card-hover">
                       {staf.foto ? (
                         <img 
-                          src={`http://localhost:5000/uploads/${staf.foto}`} 
+                          src={`${API_BASE_URL}/uploads/${staf.foto}`} 
                           alt={staf.nama}
                           className="rounded-circle border mb-3 mx-auto shadow-sm"
                           style={{ width: '90px', height: '90px', objectFit: 'cover' }}

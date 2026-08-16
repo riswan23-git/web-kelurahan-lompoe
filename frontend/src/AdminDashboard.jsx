@@ -98,7 +98,7 @@ function AdminDashboard() {
   const handleDeleteDarurat = async (id) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus nomor darurat ini?')) return;
     try {
-      const res = await axios.delete(`http://localhost:5000/api/admin/nomor-darurat/${id}`);
+      const res = await axios.delete(`${API_BASE_URL}/api/admin/nomor-darurat/${id}`);
       showNotif(res.data.message);
       fetchNomorDarurat();
     } catch (err) {
@@ -162,7 +162,7 @@ function AdminDashboard() {
 
   const fetchChatMessages = async (room) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/chat/${room}`);
+      const res = await axios.get(`${API_BASE_URL}/api/chat/${room}`);
       setChatMessages(res.data);
     } catch (err) { console.error(err); }
   };
@@ -215,7 +215,7 @@ function AdminDashboard() {
     if (fileHasil) data.append('file_hasil', fileHasil);
 
     try {
-      await axios.put(`http://localhost:5000/api/admin/pengajuan/${modalUpdate.no_resi}`, data, {
+      await axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui!`);
@@ -229,7 +229,7 @@ function AdminDashboard() {
   const handleDeletePengajuan = async (no_resi) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data pengajuan ${no_resi}? Data dan riwayat pesan akan dihapus permanen.`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/pengajuan/${no_resi}`);
+        await axios.delete(`${API_BASE_URL}/api/admin/pengajuan/${no_resi}`);
         showNotif(`Pengajuan ${no_resi} berhasil dihapus!`);
         fetchPengajuan();
       } catch (err) {
@@ -243,7 +243,7 @@ function AdminDashboard() {
     e.preventDefault();
     try {
       if (editPkkMode) {
-        await axios.put(`http://localhost:5000/api/admin/pkk-wilayah/${formPkk.id}`, formPkk);
+        await axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk);
         showNotif('Data wilayah berhasil diupdate!');
       } else {
         await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk);
@@ -265,7 +265,7 @@ function AdminDashboard() {
   const handleDeletePkk = async (id) => {
     if (window.confirm('Yakin ingin menghapus data wilayah ini?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/pkk-wilayah/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/admin/pkk-wilayah/${id}`);
         showNotif('Data wilayah berhasil dihapus!');
         fetchPkk();
       } catch (err) { showNotif('Gagal menghapus data wilayah'); }
@@ -286,7 +286,7 @@ function AdminDashboard() {
 
     try {
       if (editAparaturMode) {
-        await axios.put(`http://localhost:5000/api/admin/aparatur/${formAparatur.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, data);
         showNotif('Data aparatur berhasil diupdate!');
       } else {
         await axios.post(`${API_BASE_URL}/api/admin/aparatur`, data);
@@ -309,7 +309,7 @@ function AdminDashboard() {
   const handleDeleteAparatur = async (id) => {
     if (window.confirm('Yakin ingin menghapus data aparatur ini?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/aparatur/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`);
         showNotif('Aparatur berhasil dihapus!');
         fetchAparatur();
       } catch (err) { showNotif('Gagal menghapus aparatur'); }
@@ -328,7 +328,7 @@ function AdminDashboard() {
 
     try {
       if (editBeritaMode) {
-        await axios.put(`http://localhost:5000/api/admin/berita/${formBerita.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, data);
         showNotif('Berita berhasil diupdate!');
       } else {
         await axios.post(`${API_BASE_URL}/api/admin/berita`, data);
@@ -351,7 +351,7 @@ function AdminDashboard() {
   const handleDeleteBerita = async (id) => {
     if (window.confirm('Yakin ingin menghapus berita ini?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/berita/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`);
         showNotif('Berita berhasil dihapus!');
         fetchBerita();
       } catch (err) { showNotif('Gagal menghapus berita'); }
@@ -387,7 +387,7 @@ function AdminDashboard() {
 
     try {
       if (editSaranaMode) {
-        await axios.put(`http://localhost:5000/api/admin/sarana/${formSarana.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, data);
         showNotif('Sarana & prasarana berhasil diupdate!');
       } else {
         await axios.post(`${API_BASE_URL}/api/admin/sarana`, data);
@@ -403,7 +403,7 @@ function AdminDashboard() {
   const handleDeleteSarana = async (id) => {
     if (window.confirm('Hapus sarana prasarana ini?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/sarana/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/admin/sarana/${id}`);
         showNotif('Sarana prasarana dihapus!');
         fetchSarana();
       } catch (err) { showNotif('Gagal menghapus'); }
@@ -684,7 +684,7 @@ function AdminDashboard() {
                                       return (
                                         <a 
                                           key={idx} 
-                                          href={`http://localhost:5000/uploads/${cleanName}`} 
+                                          href={`${API_BASE_URL}/uploads/${cleanName}`} 
                                           target="_blank" 
                                           rel="noreferrer" 
                                           className="btn btn-sm btn-outline-info fw-bold py-0 px-2 text-nowrap"
@@ -702,7 +702,7 @@ function AdminDashboard() {
                               <td>
                                 <div className="d-flex flex-column gap-1">
                                   <a 
-                                    href={`http://localhost:5000/api/admin/generate-docx/${item.no_resi}`} 
+                                    href={`${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}`} 
                                     target="_blank" 
                                     rel="noreferrer" 
                                     className="btn btn-sm btn-primary fw-bold"
@@ -901,7 +901,7 @@ function AdminDashboard() {
                           <tr key={item.id}>
                             <td>
                               {item.foto ? (
-                                <img src={`http://localhost:5000/uploads/${item.foto}`} alt={item.nama} className="rounded-circle" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                                <img src={`${API_BASE_URL}/uploads/${item.foto}`} alt={item.nama} className="rounded-circle" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
                               ) : '🧑🏻‍💼'}
                             </td>
                             <td>
@@ -1369,7 +1369,7 @@ function AdminDashboard() {
                             onClick={async () => {
                               if (window.confirm(`Apakah Anda yakin ingin menghapus data kontak ${item.rt_rw}?`)) {
                                 try {
-                                  await axios.delete(`http://localhost:5000/api/admin/kontak-rt/${item.id}`);
+                                  await axios.delete(`${API_BASE_URL}/api/admin/kontak-rt/${item.id}`);
                                   showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
                                   fetchKontakRt();
                                 } catch (err) {

@@ -161,7 +161,7 @@ function Home() {
                       <div className="position-relative d-inline-block">
                         {lurah.foto ? (
                           <img
-                            src={`http://localhost:5000/uploads/${lurah.foto}`}
+                            src={`${API_BASE_URL}/uploads/${lurah.foto}`}
                             alt={lurah.nama}
                             className="rounded-circle border border-4 border-primary shadow-sm"
                             style={{ width: '125px', height: '125px', objectFit: 'cover' }}
@@ -285,7 +285,7 @@ function Home() {
                     <div key={item.id} className="d-flex flex-column flex-sm-row gap-3 mb-4 pb-3 border-bottom align-items-start hover-lift p-2 rounded-3">
                       {item.gambar ? (
                         <img
-                          src={`http://localhost:5000/uploads/${item.gambar}`}
+                          src={`${API_BASE_URL}/uploads/${item.gambar}`}
                           alt={item.judul}
                           className="rounded-3 shadow-sm"
                           style={{ width: '130px', height: '90px', objectFit: 'cover' }}
