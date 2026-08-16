@@ -81,20 +81,27 @@ async function safeAddColumn(tableName, columnName, columnDefinition) {
     }
 }
 
-// Pastikan Database db_lompoe Dibuat Sebelum Pool Bekerja
+// Pastikan Database Dibuat Sebelum Pool Bekerja
 function prepareDatabase() {
-    const rootConn = mysql.createConnection({ host: '127.0.0.1', user: 'root', password: '' });
-    rootConn.on('error', (err) => {
-        console.error('⚠️ Network/MySQL Connection Error:', err.message);
-    });
-    rootConn.query('CREATE DATABASE IF NOT EXISTS db_lompoe;', (err) => {
-        if (err) {
-            console.error('❌ Gagal koneksi ke MySQL/XAMPP. Pastikan service MySQL (XAMPP/Lamp) sudah dinyalakan:', err.message);
-        } else {
-            initDB();
-        }
-        try { rootConn.end(); } catch (e) {}
-    });
+    try {
+        const rootConn = mysql.createConnection({ 
+            host: process.env.DB_HOST || '127.0.0.1', 
+            port: parseInt(process.env.DB_PORT) || 3306,
+            user: process.env.DB_USER || 'root', 
+            password: process.env.DB_PASSWORD || '' 
+        });
+        rootConn.on('error', (err) => {
+            console.warn('⚠️ MySQL Notice:', err.message);
+        });
+        rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'db_lompoe'}\`;`, (err) => {
+            if (!err) {
+                initDB().catch(e => console.warn('Init DB Notice:', e.message));
+            }
+            try { rootConn.end(); } catch (e) {}
+        });
+    } catch (err) {
+        console.warn('Prepare DB Notice:', err.message);
+    }
 }
 
 // Auto Initialization Database, Migration, & Tables
