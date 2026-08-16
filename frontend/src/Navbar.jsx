@@ -6,6 +6,7 @@ import axios from 'axios';
 function Navbar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const [info, setInfo] = useState({
     telepon_kantor: '(0421) 12345',
     teks_marquee: '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE • 🕒 JAM PELAYANAN KANTOR LOKET: SENIN - JUMAT 08.00 - 16.00 WITA • 📝 LAYANAN PENGAJUAN SURAT & PERSETUJUAN LURAH BISA DILAKUKAN ONLINE 24 JAM'
@@ -18,6 +19,10 @@ function Navbar() {
       })
       .catch(() => {});
   }, []);
+
+  const handleNavClick = () => {
+    setIsNavCollapsed(true);
+  };
 
   return (
     <>
@@ -41,7 +46,7 @@ function Navbar() {
       {/* Main Glass Navbar */}
       <nav className="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top glass-nav" style={{ backgroundColor: '#0f4c75' }}>
         <div className="container">
-          <Link to="/" className="navbar-brand fw-bold d-flex align-items-center">
+          <Link to="/" onClick={handleNavClick} className="navbar-brand fw-bold d-flex align-items-center">
             <div className="bg-white p-1 rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-2 border-warning shrink-0" style={{ width: '48px', height: '48px', marginRight: '14px' }}>
               <img 
                 src="/assets/logo_kelurahan_lompoe.png" 
@@ -55,44 +60,49 @@ function Navbar() {
             </div>
           </Link>
 
-          <button className="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <button 
+            className="navbar-toggler border-0 shadow-none" 
+            type="button" 
+            onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+            aria-label="Toggle navigation"
+          >
             <span className="navbar-toggler-icon"></span>
           </button>
 
-          <div className="collapse navbar-collapse" id="navbarNav">
+          <div className={`collapse navbar-collapse ${!isNavCollapsed ? 'show bg-dark bg-opacity-95 p-3 rounded-3 mt-2 shadow-lg' : ''}`} id="navbarNav">
             <ul className="navbar-nav ms-auto fw-semibold align-items-lg-center gap-lg-1">
               <li className="nav-item">
-                <Link className={`nav-link px-3 text-white ${currentPath === '/' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/">
+                <Link onClick={handleNavClick} className={`nav-link px-3 text-white ${currentPath === '/' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/">
                   <i className="bi bi-house-door-fill me-1"></i> Beranda
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link px-3 text-white ${currentPath === '/profil' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/profil">
+                <Link onClick={handleNavClick} className={`nav-link px-3 text-white ${currentPath === '/profil' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/profil">
                   <i className="bi bi-diagram-3-fill me-1"></i> Profil & Aparatur
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link px-3 text-white ${currentPath === '/berita' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/berita">
+                <Link onClick={handleNavClick} className={`nav-link px-3 text-white ${currentPath === '/berita' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/berita">
                   <i className="bi bi-newspaper me-1"></i> Kabar Kelurahan
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link px-3 text-white ${currentPath === '/sarana' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/sarana">
+                <Link onClick={handleNavClick} className={`nav-link px-3 text-white ${currentPath === '/sarana' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/sarana">
                   <i className="bi bi-building-fill me-1"></i> Sarana Prasarana
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link px-3 text-white ${currentPath === '/cek-resi' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/cek-resi">
+                <Link onClick={handleNavClick} className={`nav-link px-3 text-white ${currentPath === '/cek-resi' ? 'active fw-extrabold border-bottom border-warning border-3' : ''}`} to="/cek-resi">
                   <i className="bi bi-search me-1 text-warning"></i> Cek Resi Surat
                 </Link>
               </li>
               <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
-                <Link className="btn btn-sm btn-outline-light px-3 py-2 rounded-pill fw-bold text-white shadow-sm" to="/chat">
+                <Link onClick={handleNavClick} className="btn btn-sm btn-outline-light px-3 py-2 rounded-pill fw-bold text-white shadow-sm" to="/chat">
                   <i className="bi bi-chat-dots-fill text-success me-1"></i> Live Chat Staf
                 </Link>
               </li>
               <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
-                <Link className="btn btn-sm btn-warning text-dark px-3 py-2 rounded-pill fw-extrabold shadow" to="/isi-data">
+                <Link onClick={handleNavClick} className="btn btn-sm btn-warning text-dark px-3 py-2 rounded-pill fw-extrabold shadow" to="/isi-data">
                   <i className="bi bi-file-earmark-plus-fill me-1"></i> Layanan Surat
                 </Link>
               </li>
