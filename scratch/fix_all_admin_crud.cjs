@@ -1,4 +1,36 @@
-let pengajuanList = [
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const apiDir = path.join(rootDir, 'api');
+
+// 1. Update vercel.json rewrites so /api/admin/pengajuan maps to /api/layanan
+const vercelJsonPath = path.join(rootDir, 'vercel.json');
+const vercelConfig = {
+  "rewrites": [
+    { "source": "/api/admin/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/admin/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin-api" },
+    { "source": "/api/admin", "destination": "/api/admin-api" },
+    { "source": "/api/login", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt/:path*", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt", "destination": "/api/auth" },
+    { "source": "/api/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi/:path*", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi", "destination": "/api/layanan" },
+    { "source": "/api/chat/:path*", "destination": "/api/layanan" },
+    { "source": "/api/chat", "destination": "/api/layanan" },
+    { "source": "/api/:path*", "destination": "/api/public" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+};
+
+fs.writeFileSync(vercelJsonPath, JSON.stringify(vercelConfig, null, 2), 'utf8');
+console.log('Updated vercel.json rewrites!');
+
+// 2. Make sure api/layanan.js handles GET/POST/PUT/DELETE for pengajuan and returns arrays!
+const layananCode = `let pengajuanList = [
     {
         id: 1,
         no_resi: 'LMP-102938',
@@ -130,4 +162,7 @@ module.exports = (req, res) => {
     }
 
     return res.status(200).json(pengajuanList);
-};
+};`;
+
+fs.writeFileSync(path.join(apiDir, 'layanan.js'), layananCode, 'utf8');
+console.log('Updated api/layanan.js!');
