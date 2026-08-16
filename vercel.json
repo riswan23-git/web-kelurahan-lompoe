@@ -2,15 +2,7 @@
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
-      "source": "/api/admin/:path*",
-      "destination": "/api/admin"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
-    {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|assets/|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]
