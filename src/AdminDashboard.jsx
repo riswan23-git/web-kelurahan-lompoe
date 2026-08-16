@@ -258,14 +258,16 @@ function AdminDashboard() {
     try {
       if (editPkkMode) {
         await axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk);
+        setPkkList(pkkList.map(p => p.id === formPkk.id ? formPkk : p));
         showNotif('Data wilayah berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk);
+        const newItem = res.data?.data || { ...formPkk, id: Date.now() };
+        setPkkList([...pkkList, newItem]);
         showNotif('Wilayah baru berhasil ditambahkan!');
       }
       setFormPkk({ id: null, nama_wilayah: '', pkk_rw: 1, pkk_rt: 1, dasa_wisma: 1, krt: 0, kk: 0, pria: 0, wanita: 0 });
       setEditPkkMode(false);
-      fetchPkk();
     } catch (err) {
       showNotif('Gagal menyimpan data wilayah');
     }
@@ -289,27 +291,20 @@ function AdminDashboard() {
   // Handlers for Aparatur CRUD
   const handleSaveAparatur = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('nama', formAparatur.nama);
-    data.append('nip', formAparatur.nip);
-    data.append('jabatan', formAparatur.jabatan);
-    data.append('is_lurah', formAparatur.is_lurah);
-    data.append('sambutan', formAparatur.sambutan || '');
-    data.append('urutan', formAparatur.urutan || 0);
-    if (fotoAparatur) data.append('foto', fotoAparatur);
-
     try {
       if (editAparaturMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, formAparatur);
+        setAparaturList(aparaturList.map(a => a.id === formAparatur.id ? formAparatur : a));
         showNotif('Data aparatur berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/aparatur`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, formAparatur);
+        const newItem = res.data?.data || { ...formAparatur, id: Date.now() };
+        setAparaturList([...aparaturList, newItem]);
         showNotif('Aparatur baru berhasil ditambahkan!');
       }
       setFormAparatur({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0 });
       setFotoAparatur(null);
       setEditAparaturMode(false);
-      fetchAparatur();
     } catch (err) {
       showNotif('Gagal menyimpan data aparatur');
     }
@@ -324,8 +319,8 @@ function AdminDashboard() {
     if (window.confirm('Yakin ingin menghapus data aparatur ini?')) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`);
+        setAparaturList(aparaturList.filter(a => a.id !== id));
         showNotif('Aparatur berhasil dihapus!');
-        fetchAparatur();
       } catch (err) { showNotif('Gagal menghapus aparatur'); }
     }
   };
@@ -333,25 +328,20 @@ function AdminDashboard() {
   // Handlers for Berita CRUD
   const handleSaveBerita = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('judul', formBerita.judul);
-    data.append('kategori', formBerita.kategori);
-    data.append('isi', formBerita.isi);
-    data.append('penulis', formBerita.penulis);
-    if (gambarBerita) data.append('gambar', gambarBerita);
-
     try {
       if (editBeritaMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, formBerita);
+        setBeritaList(beritaList.map(b => b.id === formBerita.id ? formBerita : b));
         showNotif('Berita berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/berita`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, formBerita);
+        const newItem = res.data?.data || { ...formBerita, id: Date.now(), tanggal: new Date().toISOString().split('T')[0] };
+        setBeritaList([newItem, ...beritaList]);
         showNotif('Berita baru berhasil diterbitkan!');
       }
       setFormBerita({ id: null, judul: '', kategori: 'Pengumuman', isi: '', penulis: 'Admin Kelurahan' });
       setGambarBerita(null);
       setEditBeritaMode(false);
-      fetchBerita();
     } catch (err) {
       showNotif('Gagal menyimpan berita');
     }
@@ -366,8 +356,8 @@ function AdminDashboard() {
     if (window.confirm('Yakin ingin menghapus berita ini?')) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`);
+        setBeritaList(beritaList.filter(b => b.id !== id));
         showNotif('Berita berhasil dihapus!');
-        fetchBerita();
       } catch (err) { showNotif('Gagal menghapus berita'); }
     }
   };
@@ -392,25 +382,20 @@ function AdminDashboard() {
   // Handlers for Sarana CRUD
   const handleSaveSarana = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('nama_sarana', formSarana.nama_sarana);
-    data.append('kategori', formSarana.kategori);
-    data.append('lokasi', formSarana.lokasi);
-    data.append('kondisi', formSarana.kondisi);
-    if (fotoSarana) data.append('foto', fotoSarana);
-
     try {
       if (editSaranaMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, formSarana);
+        setSaranaList(saranaList.map(s => s.id === formSarana.id ? formSarana : s));
         showNotif('Sarana & prasarana berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/sarana`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, formSarana);
+        const newItem = res.data?.data || { ...formSarana, id: Date.now() };
+        setSaranaList([...saranaList, newItem]);
         showNotif('Sarana & prasarana berhasil ditambahkan!');
       }
       setFormSarana({ id: null, nama_sarana: '', kategori: 'Layanan Publik', lokasi: '', kondisi: 'Baik' });
       setFotoSarana(null);
       setEditSaranaMode(false);
-      fetchSarana();
     } catch (err) { showNotif('Gagal menyimpan sarana prasarana'); }
   };
 

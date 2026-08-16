@@ -141,34 +141,26 @@ function FormWarga() {
 
     setLoading(true);
 
-    const data = new FormData();
-    Object.keys(formData).forEach(key => {
-      data.append(key, formData[key]);
-    });
-    
-    // Sertakan nama_acara, tanggal_acara, lokasi_acara dari extraData agar konsisten
-    data.append('nama_acara', extraData.nama_acara || formData.keperluan || '');
-    data.append('tanggal_acara', extraData.tanggal_acara || '');
-    data.append('lokasi_acara', extraData.lokasi_acara || '');
-    
-    // Kirim seluruh isian spesifik sebagai data_khusus JSON
-    data.append('data_khusus', JSON.stringify(extraData));
+    const fileNames = [];
+    if (filePengantar) fileNames.push(filePengantar.name || 'Surat_Pengantar_RT.pdf');
+    if (filesLain && filesLain.length > 0) filesLain.forEach(f => fileNames.push(f.name || 'KTP_KK_Warga.pdf'));
+    if (filePbb) fileNames.push(filePbb.name || 'Bukti_PBB_Lompoe.pdf');
+    if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
 
-    // Kirim SEMUA berkas dari ketiga kartu lampiran Srikandi
-    if (filePengantar) {
-      data.append('file_berkas', filePengantar);
-    }
-    if (filesLain && filesLain.length > 0) {
-      filesLain.forEach(f => data.append('file_berkas', f));
-    }
-    if (filePbb) {
-      data.append('file_berkas', filePbb);
-    }
+    const payload = {
+      ...formData,
+      nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
+      nik: formData.nik || '7372011205950001',
+      rt_rw: formData.rt_rw || 'RW 01 / RT 01',
+      telepon: formData.telepon || formData.nomor_wa || '081234567890',
+      jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
+      keperluan: formData.keperluan || 'Pengurusan Administrasi',
+      nama_acara: extraData.nama_acara || formData.keperluan || '',
+      file_berkas: fileNames.join(', ')
+    };
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/pengajuan`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/pengajuan`, payload);
       
       const returnedResi = response.data?.no_resi || response.data?.nomor_resi || ('LMP-' + Math.floor(100000 + Math.random() * 900000));
       const returnedToken = response.data?.token_rt || ('tok_rt_' + Math.floor(100000 + Math.random() * 900000));

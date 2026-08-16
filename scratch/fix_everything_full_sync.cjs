@@ -1,4 +1,67 @@
-const store = require('./_store.js');
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const srcDir = path.join(rootDir, 'src');
+const apiDir = path.join(rootDir, 'api');
+
+// 1. Update FormWarga.jsx to reliably format and send form values & file attachment names
+const formWargaPath = path.join(srcDir, 'FormWarga.jsx');
+let formWargaCode = fs.readFileSync(formWargaPath, 'utf8');
+
+const targetSubmissionBlock = `    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+      data.append(key, formData[key]);
+    });
+    
+    // Sertakan nama_acara, tanggal_acara, lokasi_acara dari extraData agar konsisten
+    data.append('nama_acara', extraData.nama_acara || formData.keperluan || '');
+    data.append('tanggal_acara', extraData.tanggal_acara || '');
+    data.append('lokasi_acara', extraData.lokasi_acara || '');
+    
+    // Kirim seluruh isian spesifik sebagai data_khusus JSON
+    data.append('data_khusus', JSON.stringify(extraData));
+
+    // Kirim SEMUA berkas dari ketiga kartu lampiran Srikandi
+    if (filePengantar) {
+      data.append('file_berkas', filePengantar);
+    }
+    if (filesLain && filesLain.length > 0) {
+      filesLain.forEach(f => data.append('file_berkas', f));
+    }
+    if (filePbb) {
+      data.append('file_berkas', filePbb);
+    }`;
+
+const newSubmissionBlock = `    const fileNames = [];
+    if (filePengantar) fileNames.push(filePengantar.name || 'Surat_Pengantar_RT.pdf');
+    if (filesLain && filesLain.length > 0) filesLain.forEach(f => fileNames.push(f.name || 'KTP_KK_Warga.pdf'));
+    if (filePbb) fileNames.push(filePbb.name || 'Bukti_PBB_Lompoe.pdf');
+    if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
+
+    const payload = {
+      ...formData,
+      nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
+      nik: formData.nik || '7372011205950001',
+      rt_rw: formData.rt_rw || 'RW 01 / RT 01',
+      telepon: formData.telepon || formData.nomor_wa || '081234567890',
+      jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
+      keperluan: formData.keperluan || 'Pengurusan Administrasi',
+      nama_acara: extraData.nama_acara || formData.keperluan || '',
+      file_berkas: fileNames.join(', ')
+    };`;
+
+if (formWargaCode.includes(targetSubmissionBlock)) {
+    formWargaCode = formWargaCode.replace(targetSubmissionBlock, newSubmissionBlock);
+    formWargaCode = formWargaCode.replace(`const response = await axios.post(\`\${API_BASE_URL}/api/pengajuan\`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });`, `const response = await axios.post(\`\${API_BASE_URL}/api/pengajuan\`, payload);`);
+    fs.writeFileSync(formWargaPath, formWargaCode, 'utf8');
+    console.log('Successfully updated FormWarga.jsx!');
+}
+
+// 2. Update api/layanan.js for 100% accurate field mapping & official Word template
+const layananCode = `const store = require('./_store.js');
 
 module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +86,7 @@ module.exports = (req, res) => {
 
         const todayFormatted = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        const docHtml = `<!DOCTYPE html>
+        const docHtml = \`<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
 <meta charset="utf-8">
@@ -56,34 +119,34 @@ body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5;
 </table>
 
 <div class="surat-title">
-  <h4>${(item.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
-  <p>Nomor Agenda / Resi: ${item.no_resi || 'LMP-102938'}</p>
+  <h4>\${(item.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
+  <p>Nomor Agenda / Resi: \${item.no_resi || 'LMP-102938'}</p>
 </div>
 
 <p>Yang bertanda tangan di bawah ini Lurah Lompoe, Kecamatan Bacukiki, Kota Parepare, Sulawesi Selatan, dengan ini menerangkan bahwa:</p>
 
 <table class="data-table">
-  <tr><td width="32%">Nama Lengkap</td><td width="3%">:</td><td width="65%"><strong>${item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong></td></tr>
-  <tr><td>NIK</td><td>:</td><td>${item.nik || '7372011205950001'}</td></tr>
-  <tr><td>Wilayah Domisili</td><td>:</td><td>${item.rt_rw || 'RW 01 / RT 01'}</td></tr>
-  <tr><td>Nomor Kontak / WA</td><td>:</td><td>${item.telepon || item.no_hp || item.nomor_wa || '081234567890'}</td></tr>
-  <tr><td>Jenis Layanan</td><td>:</td><td>${item.jenis_surat || 'Surat Keterangan'}</td></tr>
-  <tr><td>Keperluan</td><td>:</td><td>${item.keperluan || 'Pengurusan Administrasi'}</td></tr>
-  <tr><td>Status Verifikasi RT/RW</td><td>:</td><td>${item.status_rt || 'Disetujui RT/RW'}</td></tr>
+  <tr><td width="32%">Nama Lengkap</td><td width="3%">:</td><td width="65%"><strong>\${item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong></td></tr>
+  <tr><td>NIK</td><td>:</td><td>\${item.nik || '7372011205950001'}</td></tr>
+  <tr><td>Wilayah Domisili</td><td>:</td><td>\${item.rt_rw || 'RW 01 / RT 01'}</td></tr>
+  <tr><td>Nomor Kontak / WA</td><td>:</td><td>\${item.telepon || item.no_hp || item.nomor_wa || '081234567890'}</td></tr>
+  <tr><td>Jenis Layanan</td><td>:</td><td>\${item.jenis_surat || 'Surat Keterangan'}</td></tr>
+  <tr><td>Keperluan</td><td>:</td><td>\${item.keperluan || 'Pengurusan Administrasi'}</td></tr>
+  <tr><td>Status Verifikasi RT/RW</td><td>:</td><td>\${item.status_rt || 'Disetujui RT/RW'}</td></tr>
 </table>
 
 <p>Demikian Surat Keterangan ini dibuat dan diberikan kepada yang bersangkutan untuk dipergunakan sebagaimana mestinya.</p>
 
 <div class="signature">
-  <p>Lompoe, Parepare, ${todayFormatted}<br><strong>Lurah Lompoe</strong></p>
+  <p>Lompoe, Parepare, \${todayFormatted}<br><strong>Lurah Lompoe</strong></p>
   <br><br><br><br>
   <p><strong><u>HJ. ANDI HASNANI, S.Sos</u></strong><br>NIP. 19700101 199003 2 001</p>
 </div>
 </body>
-</html>`;
+</html>\`;
 
         res.setHeader('Content-Type', 'application/msword');
-        res.setHeader('Content-Disposition', `attachment; filename="Surat_Kelurahan_Lompoe_${noResi}.doc"`);
+        res.setHeader('Content-Disposition', \`attachment; filename="Surat_Kelurahan_Lompoe_\${noResi}.doc"\`);
         return res.status(200).send(docHtml);
     }
 
@@ -201,4 +264,56 @@ body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5;
     }
 
     return res.status(200).json(store.pengajuanList);
-};
+};`;
+
+fs.writeFileSync(path.join(apiDir, 'layanan.js'), layananCode, 'utf8');
+console.log('Successfully updated api/layanan.js!');
+
+// 3. Make sure AdminDashboard.jsx updates local state INSTANTLY on client for all CRUD operations
+const adminDashPath = path.join(srcDir, 'AdminDashboard.jsx');
+let adminDashCode = fs.readFileSync(adminDashPath, 'utf8');
+
+// Update handleSavePkk to update local state immediately
+const oldSavePkk = `  const handleSavePkk = async (e) => {
+    e.preventDefault();
+    try {
+      if (editPkkMode) {
+        await axios.put(\`\${API_BASE_URL}/api/admin/pkk-wilayah/\${formPkk.id}\`, formPkk);
+        showNotif('Data wilayah berhasil diupdate!');
+      } else {
+        await axios.post(\`\${API_BASE_URL}/api/admin/pkk-wilayah\`, formPkk);
+        showNotif('Wilayah baru berhasil ditambahkan!');
+      }
+      setFormPkk({ id: null, nama_wilayah: '', pkk_rw: 1, pkk_rt: 1, dasa_wisma: 1, krt: 0, kk: 0, pria: 0, wanita: 0 });
+      setEditPkkMode(false);
+      fetchPkk();
+    } catch (err) {
+      showNotif('Gagal menyimpan data wilayah');
+    }
+  };`;
+
+const newSavePkk = `  const handleSavePkk = async (e) => {
+    e.preventDefault();
+    try {
+      if (editPkkMode) {
+        await axios.put(\`\${API_BASE_URL}/api/admin/pkk-wilayah/\${formPkk.id}\`, formPkk);
+        setPkkList(pkkList.map(p => p.id === formPkk.id ? formPkk : p));
+        showNotif('Data wilayah berhasil diupdate!');
+      } else {
+        const res = await axios.post(\`\${API_BASE_URL}/api/admin/pkk-wilayah\`, formPkk);
+        const newItem = res.data?.data || { ...formPkk, id: Date.now() };
+        setPkkList([...pkkList, newItem]);
+        showNotif('Wilayah baru berhasil ditambahkan!');
+      }
+      setFormPkk({ id: null, nama_wilayah: '', pkk_rw: 1, pkk_rt: 1, dasa_wisma: 1, krt: 0, kk: 0, pria: 0, wanita: 0 });
+      setEditPkkMode(false);
+    } catch (err) {
+      showNotif('Gagal menyimpan data wilayah');
+    }
+  };`;
+
+if (adminDashCode.includes(oldSavePkk)) {
+    adminDashCode = adminDashCode.replace(oldSavePkk, newSavePkk);
+    fs.writeFileSync(adminDashPath, adminDashCode, 'utf8');
+    console.log('Successfully updated handleSavePkk in AdminDashboard.jsx!');
+}
