@@ -3,7 +3,7 @@ let kontakList = [
     { id: 2, nama_rt_rw: 'Ketua RW 02', nama_pejabat: 'Bpk. Syafruddin', nomor_wa: '081298765432' }
 ];
 
-module.exports = (req, res) => {
+export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
