@@ -52,20 +52,6 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-// Connection Pool ke database db_lompoe (Local & Cloud Supported)
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: parseInt(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'db_lompoe',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    multipleStatements: true,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
-});
-
 // Pre-loaded Seed Data for Serverless Fallback Resilience
 const FALLBACK_DATA = {
     admin: [
