@@ -1,11 +1,17 @@
 {
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/api/admin/:path*", "destination": "/api/admin-api" },
+    { "source": "/api/admin", "destination": "/api/admin-api" },
+    { "source": "/api/login", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt/:path*", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt", "destination": "/api/auth" },
+    { "source": "/api/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi/:path*", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi", "destination": "/api/layanan" },
+    { "source": "/api/chat/:path*", "destination": "/api/layanan" },
+    { "source": "/api/chat", "destination": "/api/layanan" },
+    { "source": "/api/:path*", "destination": "/api/public" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
