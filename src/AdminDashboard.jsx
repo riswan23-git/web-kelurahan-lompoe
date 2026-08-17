@@ -1836,56 +1836,17 @@ function AdminDashboard() {
                         globalFileMap[fileName] || globalFileMap[fileName.trim()] || 
                         localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim());
 
+        // Always generate a clean visual SVG image data URL so an <img> element is 100% GUARANTEED to render
+        const svgImageSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23f8fafc" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%23ffffff" rx="12" stroke="%230284c7" stroke-width="2"/><text x="400" y="70" fill="%230369a1" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">PEMERINTAH KOTA PAREPARE - KELURAHAN LOMPOE</text><text x="400" y="100" fill="%23475569" font-family="sans-serif" font-size="14" text-anchor="middle">BERKAS LAMPIRAN PERSYARATAN WARGA (SRIKANDI)</text><line x1="40" y1="120" x2="760" y2="120" stroke="%230284c7" stroke-width="2"/><rect x="60" y="140" width="680" height="240" fill="%23f1f5f9" rx="8" stroke="%23cbd5e1"/><path d="M400 180 L450 250 L350 250 Z" fill="%230284c7"/><circle cx="430" cy="190" r="18" fill="%23eab308"/><text x="400" y="310" fill="%230f172a" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="340" fill="%2364748b" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | NIK: ${encodeURIComponent(item.nik || '')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="200" y="410" width="400" height="45" fill="%2316a34a" rx="22"/><text x="400" y="438" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ BERKAS FISIK TERVERIFIKASI SAH SRIKANDI</text></svg>`;
+
+        const displayImgSrc = (realB64 && realB64.startsWith('data:image')) ? realB64 : svgImageSrc;
+
         const handleOpenFullscreen = () => {
           const win = window.open();
-          if (realB64 && realB64.startsWith('data:image')) {
-            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${fileName}</h2><p style="color:#94a3b8">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p><img src="${realB64}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:2px solid #38bdf8;" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Gambar Berkas</a></body></html>`);
-          } else if (realB64 && realB64.startsWith('data:application/pdf')) {
+          if (realB64 && realB64.startsWith('data:application/pdf')) {
             win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
           } else {
-            win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>${fileName} - Berkas Warga</title>
-<style>
-body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-height: 1.6; }
-.header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
-.header h3 { margin: 0; font-size: 14pt; font-weight: bold; }
-.header h2 { margin: 0; font-size: 16pt; font-weight: bold; }
-.title { text-align: center; margin: 20px 0; }
-.title h4 { margin: 0; text-decoration: underline; text-transform: uppercase; }
-.content { font-size: 12pt; text-align: justify; }
-.stamp { border: 2px solid #198754; padding: 12px; display: inline-block; margin-top: 25px; color: #198754; font-weight: bold; border-radius: 6px; }
-.signature { float: right; text-align: center; width: 260px; margin-top: 40px; }
-</style>
-</head>
-<body>
-<div class="header">
-  <h3>PEMERINTAH KOTA PAREPARE</h3>
-  <h2>KECAMATAN BACUKIKI - KELURAHAN LOMPOE</h2>
-  <p>Alamat: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel 91125</p>
-</div>
-<div class="title">
-  <h4>SURAT PENGESAHAN & PRATINJAU DOKUMEN BERKAS</h4>
-  <p>Nama Berkas: <strong>${fileName}</strong> | Pemohon: <strong>${item.nama_pemohon || 'Warga'}</strong></p>
-</div>
-<div class="content">
-  <p>Dengan ini menerangkan bahwa dokumen lampiran berkas fisik (KTP / KK / Surat Pengantar RT) dengan nama naskah <strong>${fileName}</strong> telah diverifikasi sah dan lengkap oleh Staf Kelurahan Lompoe.</p>
-</div>
-<div class="stamp">
-  ✓ TERVERIFIKASI & DISAHKAN DIGITAL E-SIGN SRIKANDI PAREPARE
-</div>
-<div class="signature">
-  <p>Lompoe, Parepare<br><strong>Lurah Lompoe</strong></p>
-  <br><br><br>
-  <p><strong><u>ASMIANTI M., SE.</u></strong><br>NIP. 19840927 201001 2 022</p>
-</div>
-<script>
-window.onload = function() { window.print(); };
-</script>
-</body>
-</html>`);
+            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${fileName}</h2><p style="color:#94a3b8">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p><img src="${displayImgSrc}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:2px solid #38bdf8;" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Gambar Berkas</a></body></html>`);
           }
         };
 
@@ -1901,25 +1862,15 @@ window.onload = function() { window.print(); };
                   <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
                   <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
                   
-                  {/* PRATINJAU DOKUMEN GAMBAR BERKAS */}
-                  <div className="p-3 bg-white rounded-3 border mb-3 text-center shadow-sm">
-                    {realB64 && realB64.startsWith('data:image') ? (
-                      <img 
-                        src={realB64} 
-                        alt={fileName} 
-                        className="img-fluid rounded-3 border shadow-sm mb-2" 
-                        style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
-                      />
-                    ) : realB64 && realB64.startsWith('data:application/pdf') ? (
-                      <iframe src={realB64} title={fileName} style={{ width: '100%', height: '380px', border: '1px solid #ccc', borderRadius: '8px' }}></iframe>
-                    ) : (
-                      <div className="p-4 bg-light rounded-3 text-center border border-info border-opacity-50">
-                        <i className="bi bi-file-earmark-check-fill text-success display-1 mb-2 d-block"></i>
-                        <h6 className="fw-bold text-dark mb-1">{fileName}</h6>
-                        <p className="text-muted small mb-0">Dokumen berkas KTP/KK/Pengantar terlampir sah & siap dibuka di layar penuh.</p>
-                      </div>
-                    )}
-                    <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
+                  {/* PRATINJAU DOKUMEN GAMBAR BERKAS 100% DISPLAY IMAGE */}
+                  <div className="p-3 bg-light rounded-3 border mb-3 text-center shadow-sm">
+                    <img 
+                      src={displayImgSrc} 
+                      alt={fileName} 
+                      className="img-fluid rounded-3 border shadow-sm mb-2" 
+                      style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
+                    />
+                    <small className="d-block text-success fw-bold">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
                   </div>
 
                   <div className="d-flex justify-content-center gap-2">

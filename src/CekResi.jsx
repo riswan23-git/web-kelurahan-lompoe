@@ -209,33 +209,24 @@ function CekResi() {
                   {/* Download Dokumen Hasil Pengajuan Warga */}
                   {(hasilResi.file_hasil || hasilResi.status === 'Disetujui/Siap Diambil' || hasilResi.status === 'Selesai' || hasilResi.status_rt?.includes('Disetujui')) && (
                     <div className="alert alert-success p-4 rounded-4 mb-4 shadow-sm">
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <i className="bi bi-file-earmark-check-fill fs-3 text-success"></i>
+                      <div className="d-flex align-items-center gap-3 mb-2">
+                        <i className="bi bi-file-earmark-check-fill display-5 text-success"></i>
                         <div>
-                          <h6 className="fw-bold text-success mb-0">🎉 SURAT PERSETUJUAN / SURAT HASIL SUDAH TERBIT & DISAHKAN!</h6>
-                          <small className="text-muted">Dokumen resmi telah ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>)</small>
+                          <h5 className="fw-bold text-success mb-1">🎉 SURAT PERSETUJUAN HASIL TELAH DISAHKAN!</h5>
+                          <p className="text-muted small mb-0">Surat pengajuan Anda telah selesai diproses oleh Staf Kelurahan & ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>)</p>
                         </div>
                       </div>
                       
-                      <div className="d-flex flex-wrap gap-2 mt-3">
-                        <a 
-                          href={`${API_BASE_URL}/api/admin/generate-docx/${hasilResi.no_resi}`} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
-                        >
-                          <i className="bi bi-file-earmark-word me-1"></i> 📥 Download File Surat Word (.docx)
-                        </a>
-
+                      <div className="mt-3 text-center text-sm-start">
                         <button 
                           type="button"
                           onClick={() => {
                             if (hasilResi.file_hasil_data) {
                               const win = window.open();
                               if (hasilResi.file_hasil_data.startsWith('data:image')) {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:95vh;object-fit:contain;" /></body></html>`);
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Resmi_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan PDF Surat</a></body></html>`);
                               } else {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Resmi_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
                               }
                             } else {
                               const win = window.open();
@@ -294,9 +285,9 @@ window.onload = function() { window.print(); };
 </html>`);
                             }
                           }}
-                          className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
+                          className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
                         >
-                          <i className="bi bi-file-earmark-pdf me-1"></i> 🖨️ Cetak / Download PDF Surat Selesai
+                          <i className="bi bi-download me-2"></i> 📥 Download / Cetak Surat Resmi PDF (Hasil TTD Lurah Srikandi)
                         </button>
                       </div>
                     </div>

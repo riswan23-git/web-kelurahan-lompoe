@@ -156,7 +156,11 @@ function FormWarga() {
       const fName = filePengantar.name || 'Surat_Pengantar_RT.pdf';
       fileNames.push(fName);
       const b64 = await readFileAsBase64(filePengantar);
-      if (b64) fileDataMap[fName] = b64;
+      if (b64) {
+        fileDataMap[fName] = b64;
+        fileDataMap[fName.trim()] = b64;
+        localStorage.setItem('file_b64_' + fName, b64);
+      }
     }
 
     if (filesLain && filesLain.length > 0) {
@@ -164,7 +168,11 @@ function FormWarga() {
         const fName = f.name || 'KTP_KK_Warga.pdf';
         fileNames.push(fName);
         const b64 = await readFileAsBase64(f);
-        if (b64) fileDataMap[fName] = b64;
+        if (b64) {
+          fileDataMap[fName] = b64;
+          fileDataMap[fName.trim()] = b64;
+          localStorage.setItem('file_b64_' + fName, b64);
+        }
       }
     }
 
@@ -172,7 +180,11 @@ function FormWarga() {
       const fName = filePbb.name || 'Bukti_PBB_Lompoe.pdf';
       fileNames.push(fName);
       const b64 = await readFileAsBase64(filePbb);
-      if (b64) fileDataMap[fName] = b64;
+      if (b64) {
+        fileDataMap[fName] = b64;
+        fileDataMap[fName.trim()] = b64;
+        localStorage.setItem('file_b64_' + fName, b64);
+      }
     }
 
     if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
