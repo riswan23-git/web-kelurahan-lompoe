@@ -16,11 +16,11 @@ module.exports = (req, res) => {
             return res.status(200).json({ success: true, message: 'Data aparatur berhasil disimpan!', data: newItem });
         }
         if (req.method === 'PUT') {
-            const urlParts = url.split('/');
-            const id = urlParts[urlParts.length - 1];
-            const item = store.aparatur.find(a => a.id == id || a.id == body.id);
+            const urlParts = url.split('?')[0].split('/');
+            const rawId = urlParts[urlParts.length - 1];
+            const item = store.aparatur.find(a => a.id == rawId || a.id == body.id || (body.is_lurah && a.is_lurah == 1) || (a.is_lurah === 1 && body.jabatan && body.jabatan.toLowerCase().includes('lurah')));
             if (item) Object.assign(item, body);
-            return res.status(200).json({ success: true, message: 'Data aparatur berhasil diperbarui!' });
+            return res.status(200).json({ success: true, message: 'Data aparatur berhasil diperbarui!', data: item });
         }
         if (req.method === 'DELETE') {
             const urlParts = url.split('/');

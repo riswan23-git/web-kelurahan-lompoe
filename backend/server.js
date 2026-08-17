@@ -58,7 +58,7 @@ const FALLBACK_DATA = {
         { id: 1, username: 'admin', password: '$2a$10$wE1fOq4BwW1/gYq8vE5dXe9dZ0Y4k1VzG2X3a4b5c6d7e8f9g0h1i', nama_lengkap: 'Administrator Kelurahan', jabatan: 'Staf IT & Admin', pin_recovery: '123456' }
     ],
     aparatur: [
-        { id: 1, nama: 'Hj. Andi Hasnani, S.Sos', nip: '19700101 199003 2 001', jabatan: 'Lurah Lompoe', foto: null, is_lurah: 1, sambutan: 'Selamat Datang di Website Resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare. Website ini hadir sebagai wujud transparansi publik dan kemudahan pelayanan administrasi bagi seluruh warga.', urutan: 1 },
+        { id: 1, nama: 'Asmianti M., SE.', nip: '19840927 201001 2 022', jabatan: 'Lurah Lompoe', foto: null, is_lurah: 1, sambutan: 'Selamat Datang di Website Resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare. Website ini hadir sebagai wujud transparansi publik dan kemudahan pelayanan administrasi bagi seluruh warga.', urutan: 1 },
         { id: 2, nama: 'Muhammad Amir, S.STP', nip: '19850512 200801 1 002', jabatan: 'Sekretaris Kelurahan', foto: null, is_lurah: 0, sambutan: '', urutan: 2 },
         { id: 3, nama: 'Siti Rahmah, S.E', nip: '19880920 201101 2 003', jabatan: 'Kasi Pelayanan Umum & Kesejahteraan', foto: null, is_lurah: 0, sambutan: '', urutan: 3 },
         { id: 4, nama: 'Ahmad Fauzi, S.Kom', nip: '19920315 201502 1 004', jabatan: 'Staf Administrasi & IT', foto: null, is_lurah: 0, sambutan: '', urutan: 4 }
@@ -249,7 +249,7 @@ async function initDB() {
         if (aparaturList.length === 0) {
             await dbQuery(`
                 INSERT INTO aparatur (nama, nip, jabatan, is_lurah, sambutan, urutan) VALUES 
-                ('H. Andi Ahmad, S.IP.', '19750812 200212 1 003', 'Lurah Lompoe', 1, 'Selamat datang di Website Resmi Kelurahan Lompoe. Portal ini hadir untuk memberikan kemudahan pelayanan administrasi digital dan transparansi informasi bagi seluruh warga Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare.', 1),
+                ('Asmianti M., SE.', '19840927 201001 2 022', 'Lurah Lompoe', 1, 'Selamat datang di Website Resmi Kelurahan Lompoe. Portal ini hadir untuk memberikan kemudahan pelayanan administrasi digital dan transparansi informasi bagi seluruh warga Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare.', 1),
                 ('Bambang Sugianto, S.STP', '19820315 200604 1 002', 'Sekretaris Kelurahan', 0, NULL, 2),
                 ('Hj. Heriana', '-', 'Ketua TP PKK Kelurahan Lompoe', 0, NULL, 3),
                 ('Hasniah', '-', 'Sekretaris TP PKK Kelurahan Lompoe', 0, NULL, 4);
