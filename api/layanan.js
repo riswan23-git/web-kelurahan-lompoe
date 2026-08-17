@@ -279,20 +279,19 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         if (found) return res.status(200).json(found);
 
         return res.status(200).json({
-            id: 1,
+            id: Date.now(),
             no_resi: noResi || 'LMP-102938',
             nomor_resi: noResi || 'LMP-102938',
             nama_pemohon: 'Pemohon Resi Lompoe',
             nik: '7372011205950001',
-            jenis_surat: 'Surat Keterangan Usaha (SKU)',
-            rt_rw: 'RW 01 / RT 02',
+            jenis_surat: 'Surat Pengajuan Warga',
+            rt_rw: 'RW 01 / RT 01',
             telepon: '081234567890',
             no_hp: '081234567890',
-            status_rt: 'Disetujui RT/RW',
-            status_kelurahan: 'Disetujui/Siap Diambil',
-            status: 'Disetujui/Siap Diambil',
-            catatan_admin: 'Surat telah selesai diproses dan siap diunduh.',
-            file_hasil: `Surat_Pengesahan_Lurah_${noResi || 'LMP-102938'}.pdf`,
+            status_rt: 'Menunggu Verifikasi RT/RW',
+            status_kelurahan: 'Pending',
+            status: 'Pending',
+            catatan_admin: 'Pengajuan Anda sedang ditinjau oleh Staf Kelurahan & Ketua RT/RW.',
             tgl_pengajuan: new Date().toISOString().split('T')[0]
         });
     }
@@ -349,9 +348,9 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             nama_acara: body.nama_acara || keperluan,
             tanggal_acara: body.tanggal_acara || 'Senin, 24 Agustus 2026',
             lokasi_acara: body.lokasi_acara || body.alamat || 'Kediaman Pemohon',
-            status_rt: 'Disetujui RT/RW',
-            status_kelurahan: 'Progres',
-            status: 'Progres',
+            status_rt: body.opsi_persetujuan_rt === 'upload' ? 'Disetujui Manual (Surat Pengantar RT)' : 'Menunggu Verifikasi RT/RW',
+            status_kelurahan: 'Pending',
+            status: 'Pending',
             token_rt: tokenRt,
             tgl_pengajuan: todayStr,
             tanggal_pengajuan: todayStr,

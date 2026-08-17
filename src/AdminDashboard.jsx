@@ -1593,7 +1593,24 @@ function AdminDashboard() {
                   </div>
                   <div className="mb-3 p-3 bg-light rounded-3 border border-success border-opacity-50">
                     <label className="form-label fw-bold text-success">📄 Upload File Surat Hasil TTD Lurah dari SRIKANDI (PDF Resmi)</label>
-                    <input type="file" className="form-control" accept="image/*,.pdf,.docx" onChange={(e) => setFileHasil(e.target.files[0])} />
+                    <input 
+                      type="file" 
+                      className="form-control border-success" 
+                      accept="image/*,.pdf,.docx" 
+                      onChange={async (e) => {
+                        const f = e.target.files[0];
+                        setFileHasil(f);
+                        if (f && modalUpdate) {
+                          const b64 = await readFileAsBase64(f);
+                          if (b64) {
+                            localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, b64);
+                            if (modalUpdate.nama_pemohon) {
+                              localStorage.setItem('file_hasil_b64_' + modalUpdate.nama_pemohon.toLowerCase().trim(), b64);
+                            }
+                          }
+                        }
+                      }} 
+                    />
                     <small className="text-muted d-block mt-2">
                       Upload file <b>PDF resmi dari Srikandi</b> yang sudah ditandatangani digital oleh Pak Lurah dan menerbitkan Nomor/Tanggal Naskah. File ini bisa langsung didownload warga secara mandiri dari rumah!
                     </small>
