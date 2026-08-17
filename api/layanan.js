@@ -351,6 +351,29 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'RW tempat acara': rwVal || '01'
             };
 
+            if (zip.files['word/document.xml']) {
+                let xmlContent = zip.files['word/document.xml'].asText();
+                xmlContent = xmlContent.replace(/\{nomor_naskah\s*\}/g, '<<nomor_naskah>>')
+                                       .replace(/\{tanggal_naskah\s*\}/g, '<<tanggal_naskah>>')
+                                       .replace(/\{ttd_pengirim\s*\}/g, '<<ttd_pengirim>>');
+                zip.file('word/document.xml', xmlContent);
+            }
+
+            const doc = new Docxtemplater(zip, {
+                delimiters: { start: '<<', end: '>>' },
+                paragraphLoop: true,
+                linebreaks: true,
+                nullGetter: function(tag) {
+                    const tagKey = tag.name ? tag.name.trim() : '';
+                    if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
+                    if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return todayLongStr;
+                    if (payload && payload[tagKey] !== undefined) return payload[tagKey];
+                    if (payload && payload[tag.name] !== undefined) return payload[tag.name];
+                    const val = item[tagKey] || extraJson[tagKey] || item[tagKey.toLowerCase()] || extraJson[tagKey.toLowerCase()];
+                    return (val !== undefined && val !== null && val !== '') ? val : '-';
+                }
+            });
+
             doc.render(payload);
             const buf = doc.getZip().generate({ type: 'nodebuffer' });
 
