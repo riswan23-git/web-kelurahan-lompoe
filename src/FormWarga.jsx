@@ -17,9 +17,13 @@ function FormWarga() {
   const [listKontakRt, setListKontakRt] = useState([]);
 
   useEffect(() => {
+    const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
+    if (local && local.length > 0) setListKontakRt(local);
     axios.get(`${API_BASE_URL}/api/kontak-rt`)
-      .then(res => setListKontakRt(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setListKontakRt([]));
+      .then(res => {
+        if (Array.isArray(res.data) && res.data.length > 0 && !local) setListKontakRt(res.data);
+      })
+      .catch(() => {});
   }, []);
   const [formData, setFormData] = useState({
     nik: '',

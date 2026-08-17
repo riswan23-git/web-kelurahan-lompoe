@@ -10,10 +10,17 @@ function Sarana() {
   const [kategori, setKategori] = useState('Semua');
 
   useEffect(() => {
+    const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+    if (localSarana) {
+      setSaranaList(localSarana);
+      setLoading(false);
+    }
     const fetchSarana = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/sarana`);
-        setSaranaList(response.data);
+        if (Array.isArray(response.data) && response.data.length > 0 && !localSarana) {
+          setSaranaList(response.data);
+        }
       } catch (err) {
         console.error('Error fetching sarana:', err);
       } finally {

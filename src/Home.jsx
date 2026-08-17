@@ -22,33 +22,46 @@ function Home() {
 
   useEffect(() => {
     // 1. Fetch Aparatur & Lurah
+    const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+    if (localAparatur && localAparatur.length > 0) {
+      setLurah(localAparatur.find(a => a.is_lurah === 1) || localAparatur[0]);
+    }
     axios.get(`${API_BASE_URL}/api/aparatur`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          setLurah(res.data.find(a => a.is_lurah === 1) || res.data[0]);
+          const apiLurah = res.data.find(a => a.is_lurah === 1) || res.data[0];
+          if (!localAparatur) setLurah(apiLurah);
         }
       })
       .catch(err => console.error('Aparatur fetch error:', err));
 
     // 2. Fetch Statistik
+    const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
+    if (localStats) setStats(localStats);
     axios.get(`${API_BASE_URL}/api/statistik`)
-      .then(res => setStats(res.data))
+      .then(res => { if (res.data && Object.keys(res.data).length > 0 && !localStats) setStats(res.data); })
       .catch(err => console.error('Statistik fetch error:', err));
 
     // 3. Fetch Berita
+    const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
+    if (localBerita) setBeritaList(localBerita);
     axios.get(`${API_BASE_URL}/api/berita`)
-      .then(res => setBeritaList(res.data))
+      .then(res => { if (Array.isArray(res.data) && res.data.length > 0 && !localBerita) setBeritaList(res.data); })
       .catch(err => console.error('Berita fetch error:', err));
 
     // 4. Fetch Sarana
+    const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+    if (localSarana) setSaranaList(localSarana);
     axios.get(`${API_BASE_URL}/api/sarana`)
-      .then(res => setSaranaList(res.data))
+      .then(res => { if (Array.isArray(res.data) && res.data.length > 0 && !localSarana) setSaranaList(res.data); })
       .catch(err => console.error('Sarana fetch error:', err));
 
     // 5. Fetch Nomor Darurat
+    const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
+    if (localDarurat) setNomorDaruratList(localDarurat);
     axios.get(`${API_BASE_URL}/api/nomor-darurat`)
       .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data) && res.data.length > 0 && !localDarurat) {
           setNomorDaruratList(res.data);
         }
       })

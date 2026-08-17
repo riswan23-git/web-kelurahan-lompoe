@@ -12,9 +12,11 @@ function Footer() {
   });
 
   useEffect(() => {
+    const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+    if (localInfo) setInfo(localInfo);
     axios.get(`${API_BASE_URL}/api/info-kelurahan`)
       .then(res => {
-        if (res.data) setInfo(res.data);
+        if (res.data && !localInfo) setInfo(res.data);
       })
       .catch(() => {});
   }, []);

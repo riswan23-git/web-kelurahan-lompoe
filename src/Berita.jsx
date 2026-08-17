@@ -12,10 +12,17 @@ function Berita() {
   const [selectedBerita, setSelectedBerita] = useState(null);
 
   useEffect(() => {
+    const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
+    if (localBerita) {
+      setBeritaList(localBerita);
+      setLoading(false);
+    }
     const fetchBerita = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/berita`);
-        setBeritaList(response.data);
+        if (Array.isArray(response.data) && response.data.length > 0 && !localBerita) {
+          setBeritaList(response.data);
+        }
       } catch (err) {
         console.error('Error fetching berita:', err);
       } finally {

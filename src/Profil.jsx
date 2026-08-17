@@ -13,14 +13,23 @@ function Profil() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+        const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+        const localPkk = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+
+        if (localAparatur) setAparaturList(localAparatur);
+        if (localInfo) setInfo(localInfo);
+        if (localPkk) setPkkWilayah(localPkk);
+
         const [resAparatur, resInfo, resPkk] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/aparatur`),
           axios.get(`${API_BASE_URL}/api/info-kelurahan`),
           axios.get(`${API_BASE_URL}/api/pkk-wilayah`)
         ]);
-        setAparaturList(resAparatur.data);
-        setInfo(resInfo.data);
-        setPkkWilayah(resPkk.data);
+
+        if (!localAparatur && resAparatur.data) setAparaturList(resAparatur.data);
+        if (!localInfo && resInfo.data) setInfo(resInfo.data);
+        if (!localPkk && resPkk.data) setPkkWilayah(resPkk.data);
       } catch (err) {
         console.error('Error fetching profil:', err);
       } finally {
