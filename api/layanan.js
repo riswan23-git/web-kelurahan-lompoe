@@ -49,6 +49,13 @@ function getKonsumenPenggunaRuns(selectedType) {
 }
 
 module.exports = (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    const url = req.url || '';
+
     // 00. FILE PREVIEW & DOWNLOAD FOR UPLOADS & SURAT SELESAI
     if (url.includes('uploads') || url.includes('download-surat-selesai')) {
         const urlParts = url.split('/');
