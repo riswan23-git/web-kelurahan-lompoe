@@ -1780,7 +1780,12 @@ function AdminDashboard() {
                   <small className="text-muted">Dokumen lampiran fisik KTP/KK/Pengantar telah diunggah dan terenkripsi aman.</small>
                 </div>
                 <button 
-                  onClick={() => alert(`Membuka lampiran berkas ${modalViewBerkas.fileName}... Berkas asli telah diverifikasi oleh Staf Kelurahan Lompoe.`)}
+                  onClick={() => {
+                    const fileUrl = modalViewBerkas.fileName.startsWith('http') 
+                      ? modalViewBerkas.fileName 
+                      : `${API_BASE_URL}/uploads/${modalViewBerkas.fileName}`;
+                    window.open(fileUrl, '_blank');
+                  }}
                   className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
                 >
                   📥 Buka / Unduh Lampiran ({modalViewBerkas.fileName})

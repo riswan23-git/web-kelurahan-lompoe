@@ -95,6 +95,17 @@ module.exports = (req, res) => {
 
             const [rtVal, rwVal] = (item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
+            const tempatTglLahirVal = item.tempat_tgl_lahir || item.tgl_lahir || 'Parepare, 24 April 1995';
+            const jenisKelaminVal = item.jenis_kelamin || 'Laki-laki';
+            const agamaVal = item.agama || 'Islam';
+            const pekerjaanVal = item.pekerjaan || 'Wiraswasta';
+            const alamatVal = item.alamat || 'Jl. Poros Lompoe';
+
+            const pejabatNama = item.pejabat_ttd || 'ASMIANTI M., SE.';
+            const pejabatJabatan = item.jabatan_pejabat || 'LURAH LOMPOE';
+            const pejabatNip = item.nip_pejabat || '19840927 201001 2 022';
+            const pejabatPangkat = item.pangkat_pejabat || 'Penata Tk. I (III/d)';
+
             const payload = {
                 'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
                 'kp_raw': getKonsumenPenggunaRuns(item.keperluan),
@@ -102,25 +113,42 @@ module.exports = (req, res) => {
                 'KECAMATAN': 'BACUKIKI',
                 'KOTA': 'PAREPARE',
                 'Kota/Kabupaten': 'PAREPARE',
-                'Pejabat yang Bertanda Tangan': 'HJ. ANDI HASNANI, S.Sos',
-                'Jabatan Pejabat yang Bertanda Tangan': 'LURAH LOMPOE',
-                'NIP Pejabat yang Bertanda Tangan': '19700101 199003 2 001',
-                'Pangkat Pejabat yang Bertanda Tangan': 'Penata Tk. I (III/d)',
+
+                'Pejabat yang Bertanda Tangan': pejabatNama,
+                'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
+                'NIP Pejabat yang Bertanda Tangan': pejabatNip,
+                'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
+
                 'NAMA PEMOHON': (item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe').toUpperCase(),
                 'Nama Pemohon': item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe',
                 'nama pemohon': item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe',
                 'NIK': item.nik || '7372011205950001',
                 'Nik': item.nik || '7372011205950001',
-                'JENIS KELAMIN': (item.jenis_kelamin || 'LAKI-LAKI').toUpperCase(),
-                'Jenis Kelamin': item.jenis_kelamin || 'Laki-laki',
-                'TEMPAT/TGL LAHIR': item.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
-                'Tempat/Tgl Lahir': item.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
-                'AGAMA': (item.agama || 'ISLAM').toUpperCase(),
-                'Agama': item.agama || 'Islam',
-                'PEKERJAAN': (item.pekerjaan || 'Wiraswasta').toUpperCase(),
-                'Pekerjaan': item.pekerjaan || 'Wiraswasta',
-                'ALAMAT': item.alamat || 'Jl. Poros Lompoe, Bacukiki, Kota Parepare',
-                'Alamat': item.alamat || 'Jl. Poros Lompoe, Bacukiki, Kota Parepare',
+
+                'TEMPAT/TGL LAHIR': tempatTglLahirVal,
+                'Tempat/Tgl Lahir': tempatTglLahirVal,
+                'tempat/tgl lahir': tempatTglLahirVal,
+                'Tempat/Tgl lahir': tempatTglLahirVal,
+                'tempat/tanggal lahir': tempatTglLahirVal,
+                'Tempat / Tgl Lahir': tempatTglLahirVal,
+
+                'JENIS KELAMIN': jenisKelaminVal.toUpperCase(),
+                'Jenis Kelamin': jenisKelaminVal,
+                'jenis kelamin': jenisKelaminVal,
+                'Jenis kelamin': jenisKelaminVal,
+
+                'AGAMA': agamaVal.toUpperCase(),
+                'Agama': agamaVal,
+                'agama': agamaVal,
+
+                'PEKERJAAN': pekerjaanVal.toUpperCase(),
+                'Pekerjaan': pekerjaanVal,
+                'pekerjaan': pekerjaanVal,
+
+                'ALAMAT': alamatVal,
+                'Alamat': alamatVal,
+                'alamat': alamatVal,
+
                 'RT': rtVal || '01',
                 'RW': rwVal || '01',
                 'Kelurahan': 'Lompoe',
@@ -130,7 +158,7 @@ module.exports = (req, res) => {
                 'penggunaan izin': item.keperluan || 'Izin Acara',
                 'hari/tanggal acara': item.tanggal_acara || 'Senin, 24 Agustus 2026',
                 'waktu acara': '09.00 - Selesai WITA',
-                'tempat acara': item.lokasi_acara || item.alamat || 'Kediaman Pemohon',
+                'tempat acara': item.lokasi_acara || alamatVal || 'Kediaman Pemohon',
                 'RT tempat acara': rtVal || '01',
                 'RW tempat acara': rwVal || '01'
             };
