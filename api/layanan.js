@@ -1,8 +1,7 @@
 const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
-const PizZip = require('pizzip');
-const Docxtemplater = require('docxtemplater');
+// Lazy loaded PizZip & Docxtemplater
 
 const TEMPLATE_MAP = {
     'Surat Izin Keramaian': 'SRIKANDI - SURAT IZIN KERAMAIAN.docx',
@@ -183,6 +182,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         }
 
         try {
+            let PizZip = require('pizzip');
+            let Docxtemplater = require('docxtemplater');
             const content = fs.readFileSync(templatePath);
             const zip = new PizZip(content);
             const doc = new Docxtemplater(zip, {
