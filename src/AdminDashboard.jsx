@@ -785,7 +785,7 @@ function AdminDashboard() {
                               <td>
                                 <div className="d-flex flex-column gap-1">
                                   <a 
-                                    href={`${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}`} 
+                                    href={`${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(item)))))}`} 
                                     target="_blank" 
                                     rel="noreferrer" 
                                     className="btn btn-sm btn-primary fw-bold"

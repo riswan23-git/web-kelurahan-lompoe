@@ -152,18 +152,43 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         let noResi = url.split('generate-docx/')[1] || '';
         noResi = noResi.split('?')[0].trim();
 
-        // Exact match search from store
-        const item = store.pengajuanList.find(p => 
+        let itemFromQuery = null;
+        if (req.query && req.query.payload) {
+            try {
+                const jsonStr = Buffer.from(req.query.payload, 'base64').toString('utf8');
+                itemFromQuery = JSON.parse(jsonStr);
+            } catch(e) {}
+        } else if (url.includes('payload=')) {
+            try {
+                const rawPayload = url.split('payload=')[1].split('&')[0];
+                const jsonStr = Buffer.from(decodeURIComponent(rawPayload), 'base64').toString('utf8');
+                itemFromQuery = JSON.parse(jsonStr);
+            } catch(e) {}
+        }
+
+        const foundInStore = store.pengajuanList.find(p => 
             (p.no_resi && p.no_resi.trim() === noResi) || 
             (p.nomor_resi && p.nomor_resi.trim() === noResi)
-        ) || store.pengajuanList[0] || {
+        );
+
+        const item = itemFromQuery || foundInStore || store.pengajuanList[0] || {
             id: 101,
             no_resi: noResi || 'LMP-102938',
-            nama_pemohon: 'Warga Kelurahan Lompoe',
-            nik: '7372011205950001',
-            jenis_surat: 'Surat Izin Keramaian',
-            rt_rw: 'RW 01 / RT 01',
-            keperluan: 'Pengurusan Administrasi'
+            nama_pemohon: 'JUMBO',
+            nik: '7372012404950001',
+            jenis_surat: 'Surat Rekomendasi Pembelian BBM',
+            rt_rw: 'RW 03 / RT 02',
+            alamat: 'Jl. Poros Lompoe No. 45, Parepare, RT 02 / RW 03',
+            keperluan: 'Usaha Mikro / pertanian / perikanan / pelayanan umum',
+            jenis_usaha: 'Usaha Mikro / Pertanian Padi',
+            jenis_alat: 'Mesin Pompa Air / Traktor',
+            jumlah_alat: '1 Unit',
+            fungsi_alat: 'Pengolahan Lahan Pertanian',
+            jenis_bbm: 'Solar (BBM Bersubsidi)',
+            kebutuhan_bbm: '2 Liter / Hari',
+            jam_operasi: '8 Jam / Hari',
+            jumlah_liter: '60 Liter / Bulan',
+            volume_bbm: '60 Liter / Bulan'
         };
 
         const templateFile = TEMPLATE_MAP[item.jenis_surat] || 'SRIKANDI - SURAT IZIN KERAMAIAN.docx';
@@ -191,7 +216,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                     const tagKey = tag.name ? tag.name.trim() : '';
                     if (tagKey === 'nomor_naskah' || tagKey === 'nomor naskah') return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
                     if (tagKey === 'tanggal_naskah' || tagKey === 'tanggal naskah') return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                    return item[tagKey] || extraJson[tagKey] || '-';
+                    const val = item[tagKey] || extraJson[tagKey];
+                    return (val !== undefined && val !== null && val !== '') ? val : '-';
                 }
             });
 
