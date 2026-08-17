@@ -295,13 +295,21 @@ function AdminDashboard() {
         file_hasil_data: fileHasilB64
       });
 
-      setPengajuanList(pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? {
+      if (fileHasilB64) {
+        localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, fileHasilB64);
+      }
+
+      const updatedListState = pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? {
         ...p,
         status: statusBaru,
         status_kelurahan: statusBaru,
         catatan_admin: catatanAdmin,
-        file_hasil: fileNameToSave
-      } : p));
+        file_hasil: fileNameToSave,
+        file_hasil_data: fileHasilB64 || p.file_hasil_data
+      } : p);
+
+      setPengajuanList(updatedListState);
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedListState));
 
       showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
       setModalUpdate(null);

@@ -386,6 +386,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             if (body.status) item.status = body.status;
             if (body.catatan_admin) item.catatan_admin = body.catatan_admin;
             if (body.file_hasil) item.file_hasil = body.file_hasil;
+            if (body.file_hasil_data) item.file_hasil_data = body.file_hasil_data;
             else if (body.status === 'Disetujui/Siap Diambil' || body.status === 'Selesai') {
                 item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
             }

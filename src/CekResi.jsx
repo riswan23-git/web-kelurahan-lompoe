@@ -221,12 +221,17 @@ function CekResi() {
                         <button 
                           type="button"
                           onClick={() => {
-                            if (hasilResi.file_hasil_data) {
+                            const localFileB64 = localStorage.getItem('file_hasil_b64_' + hasilResi.no_resi);
+                            const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+                            const matchedItem = localList.find(i => i.no_resi === hasilResi.no_resi);
+                            const realPdfB64 = hasilResi.file_hasil_data || localFileB64 || matchedItem?.file_hasil_data;
+
+                            if (realPdfB64) {
                               const win = window.open();
-                              if (hasilResi.file_hasil_data.startsWith('data:image')) {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Resmi_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan PDF Surat</a></body></html>`);
+                              if (realPdfB64.startsWith('data:image')) {
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${realPdfB64}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan PDF Surat Srikandi</a></body></html>`);
                               } else {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Resmi_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;"><iframe src="${realPdfB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
                               }
                             } else {
                               const win = window.open();
