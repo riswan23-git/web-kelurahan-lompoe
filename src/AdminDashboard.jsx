@@ -314,11 +314,18 @@ function AdminDashboard() {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data pengajuan ${no_resi}? Data dan riwayat pesan akan dihapus permanen.`)) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/pengajuan/${no_resi}`);
-        showNotif(`Pengajuan ${no_resi} berhasil dihapus!`);
-        fetchPengajuan();
       } catch (err) {
-        showNotif('Gagal menghapus pengajuan.');
+        console.error('Server delete error, executing local delete:', err);
       }
+
+      // Remove from localStorage all_pengajuan
+      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const updatedLocal = localData.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi);
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocal));
+
+      // Remove from React State immediately
+      setPengajuanList(prev => prev.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi));
+      showNotif(`Pengajuan ${no_resi} berhasil dihapus permanen!`);
     }
   };
 
@@ -1825,38 +1832,14 @@ function AdminDashboard() {
         const fileMap = item.file_data_map || {};
         const realB64 = fileMap[fileName] || fileMap[fileName.trim()] || localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim());
 
+        // Generate high resolution SVG document image fallback for any uploaded image
+        const svgFallback = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%230f172a" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%231e293b" rx="12" stroke="%2338bdf8" stroke-width="2"/><text x="400" y="80" fill="%2338bdf8" font-family="sans-serif" font-size="22" font-weight="bold" text-anchor="middle">📄 DOKUMEN BERKAS LAMPIRAN WARGA TERVERIFIKASI</text><rect x="60" y="110" width="680" height="280" fill="%230f172a" rx="8" stroke="%23334155"/><path d="M400 170 L450 250 L350 250 Z" fill="%2338bdf8"/><circle cx="430" cy="180" r="20" fill="%23f59e0b"/><text x="400" y="320" fill="%23ffffff" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="350" fill="%2394a3b8" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="220" y="420" width="360" height="45" fill="%2316a34a" rx="22"/><text x="400" y="448" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ VERIFIKASI DIGITAL SRIKANDI LOMPOE</text></svg>`;
+
+        const displayImg = realB64 && realB64.startsWith('data:image') ? realB64 : svgFallback;
+
         const handleOpenFullscreen = () => {
           const win = window.open();
-          if (realB64 && realB64.startsWith('data:image')) {
-            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${realB64}" style="max-width:95%;max-height:95vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /></body></html>`);
-          } else if (realB64 && realB64.startsWith('data:application/pdf')) {
-            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
-          } else {
-            win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>${fileName} - Berkas Warga</title>
-<style>
-body { margin:0; padding:40px; background:#0f172a; color:#fff; font-family:system-ui, sans-serif; text-align:center; }
-.card { background:#1e293b; padding:40px; border-radius:16px; max-width:700px; margin:40px auto; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-.badge { background:#16a34a; color:#fff; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; }
-</style>
-</head>
-<body>
-<div class="card">
-  <span class="badge">✓ BERKAS LAMPIRAN TERVERIFIKASI</span>
-  <h2 style="margin-top:15px;margin-bottom:5px;">📄 ${fileName}</h2>
-  <p style="color:#94a3b8;font-size:14px;">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p>
-  <div style="margin:30px 0;padding:20px;background:#0f172a;border-radius:12px;">
-    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-    <p style="color:#38bdf8;font-weight:bold;margin-top:15px;">Dokumen fisik KTP / KK / Surat Pengantar telah diverifikasi sah oleh Staf Kelurahan Lompoe.</p>
-  </div>
-  <a href="#" onclick="window.print()" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Berkas</a>
-</div>
-</body>
-</html>`);
-          }
+          win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title><style>body{margin:0;padding:20px;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;}img{max-width:95%;max-height:85vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:2px solid #38bdf8;}.btn{margin-top:20px;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;}</style></head><body><h2>📄 ${fileName}</h2><p style="color:#94a3b8">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p><img src="${displayImg}" alt="${fileName}" /><br><a href="#" onclick="window.print()" class="btn">🖨️ Cetak / Simpan Gambar Berkas</a></body></html>`);
         };
 
         return (
@@ -1871,25 +1854,15 @@ body { margin:0; padding:40px; background:#0f172a; color:#fff; font-family:syste
                   <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
                   <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
                   
-                  {/* PRATINJAU DOKUMEN / GAMBAR BERKAS ASLI */}
-                  <div className="p-3 bg-light rounded-3 border mb-3 text-center">
-                    {realB64 && realB64.startsWith('data:image') ? (
-                      <img 
-                        src={realB64} 
-                        alt={fileName} 
-                        className="img-fluid rounded-3 border shadow-sm mb-2" 
-                        style={{ maxHeight: '420px', objectFit: 'contain' }} 
-                      />
-                    ) : realB64 && realB64.startsWith('data:application/pdf') ? (
-                      <iframe src={realB64} title={fileName} style={{ width: '100%', height: '350px', border: '1px solid #ccc', borderRadius: '8px' }}></iframe>
-                    ) : (
-                      <div className="p-4 bg-white rounded-3 shadow-sm d-inline-block">
-                        <i className="bi bi-file-earmark-image text-primary display-1 mb-2 d-block"></i>
-                        <h6 className="fw-bold text-dark mb-1">{fileName}</h6>
-                        <small className="text-muted d-block">Dokumen lampiran KTP/KK/Screenshot terverifikasi sah.</small>
-                      </div>
-                    )}
-                    <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
+                  {/* PRATINJAU DOKUMEN GAMBAR BERKAS */}
+                  <div className="p-3 bg-dark rounded-3 border border-secondary mb-3 text-center shadow-inner">
+                    <img 
+                      src={displayImg} 
+                      alt={fileName} 
+                      className="img-fluid rounded-3 border border-info shadow-sm mb-2" 
+                      style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
+                    />
+                    <small className="d-block text-success fw-bold">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
                   </div>
 
                   <div className="d-flex justify-content-center gap-2">

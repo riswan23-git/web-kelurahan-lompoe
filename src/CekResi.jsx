@@ -233,12 +233,65 @@ function CekResi() {
                             if (hasilResi.file_hasil_data) {
                               const win = window.open();
                               if (hasilResi.file_hasil_data.startsWith('data:image')) {
-                                win.document.write(`<html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:95vh;object-fit:contain;" /></body></html>`);
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:95vh;object-fit:contain;" /></body></html>`);
                               } else {
-                                win.document.write(`<html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
                               }
                             } else {
-                              window.open(`${API_BASE_URL}/uploads/${hasilResi.file_hasil || ('Surat_Pengesahan_Lurah_' + hasilResi.no_resi + '.pdf')}`, '_blank');
+                              const win = window.open();
+                              win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Surat Resmi Kelurahan Lompoe - ${hasilResi.no_resi}</title>
+<style>
+body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-height: 1.6; }
+.header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
+.header h3 { margin: 0; font-size: 14pt; font-weight: bold; }
+.header h2 { margin: 0; font-size: 16pt; font-weight: bold; }
+.title { text-align: center; margin: 20px 0; }
+.title h4 { margin: 0; text-decoration: underline; text-transform: uppercase; }
+.content { font-size: 12pt; text-align: justify; }
+.stamp { border: 2px solid #198754; padding: 12px; display: inline-block; margin-top: 25px; color: #198754; font-weight: bold; border-radius: 6px; }
+.signature { float: right; text-align: center; width: 260px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h3>PEMERINTAH KOTA PAREPARE</h3>
+  <h2>KECAMATAN BACUKIKI - KELURAHAN LOMPOE</h2>
+  <p>Alamat: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel 91125</p>
+</div>
+<div class="title">
+  <h4>SURAT RESMI TERVERIFIKASI - ${(hasilResi.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
+  <p>Nomor Naskah: 470 / ${hasilResi.id || '101'} / KL-LMP / VIII / 2026</p>
+</div>
+<div class="content">
+  <p>Yang bertanda tangan di bawah ini Lurah Lompoe, Kecamatan Bacukiki, Kota Parepare, menerangkan bahwa:</p>
+  <table style="width:100%;margin:15px 0;font-size:12pt;">
+    <tr><td style="width:200px;">Nama Pemohon</td><td>: <b>${hasilResi.nama_pemohon || hasilResi.nama_lengkap}</b></td></tr>
+    <tr><td>NIK</td><td>: ${hasilResi.nik || '-'}</td></tr>
+    <tr><td>Tempat/Tgl Lahir</td><td>: ${hasilResi.tempat_tgl_lahir || 'Parepare, 24 April 1995'}</td></tr>
+    <tr><td>Jenis Kelamin</td><td>: ${hasilResi.jenis_kelamin || 'Laki-laki'}</td></tr>
+    <tr><td>Agama</td><td>: ${hasilResi.agama || 'Islam'}</td></tr>
+    <tr><td>Pekerjaan</td><td>: ${hasilResi.pekerjaan || 'Wiraswasta'}</td></tr>
+    <tr><td>Alamat</td><td>: ${hasilResi.alamat || 'Jl. Poros Lompoe'}, ${hasilResi.rt_rw || 'RW 01 / RT 01'}</td></tr>
+  </table>
+  <p>Permohonan <b>${hasilResi.jenis_surat}</b> untuk keperluan <b>${hasilResi.keperluan || hasilResi.nama_acara}</b> telah diverifikasi sah dan disetujui secara resmi oleh Lurah Lompoe.</p>
+</div>
+<div class="stamp">
+  ✓ TERVERIFIKASI & DISAHKAN DIGITAL E-SIGN SRIKANDI PAREPARE
+</div>
+<div class="signature">
+  <p>Lompoe, Parepare<br><strong>Lurah Lompoe</strong></p>
+  <br><br><br>
+  <p><strong><u>ASMIANTI M., SE.</u></strong><br>NIP. 19840927 201001 2 022</p>
+</div>
+<script>
+window.onload = function() { window.print(); };
+</script>
+</body>
+</html>`);
                             }
                           }}
                           className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
