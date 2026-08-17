@@ -37,7 +37,7 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
     const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx'];
     const extName = path.extname(file.originalname).toLowerCase();
-    
+
     // Periksa ekstensi file
     if (allowedExts.includes(extName)) {
         return cb(null, true);
@@ -184,11 +184,11 @@ async function safeAddColumn(tableName, columnName, columnDefinition) {
 // Pastikan Database Dibuat Sebelum Pool Bekerja
 function prepareDatabase() {
     try {
-        const rootConn = mysql.createConnection({ 
-            host: process.env.DB_HOST || '127.0.0.1', 
+        const rootConn = mysql.createConnection({
+            host: process.env.DB_HOST || '127.0.0.1',
             port: parseInt(process.env.DB_PORT) || 3306,
-            user: process.env.DB_USER || 'root', 
-            password: process.env.DB_PASSWORD || '' 
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || ''
         });
         rootConn.on('error', (err) => {
             console.warn('⚠️ MySQL Notice:', err.message);
@@ -197,7 +197,7 @@ function prepareDatabase() {
             if (!err) {
                 initDB().catch(e => console.warn('Init DB Notice:', e.message));
             }
-            try { rootConn.end(); } catch (e) {}
+            try { rootConn.end(); } catch (e) { }
         });
     } catch (err) {
         console.warn('Prepare DB Notice:', err.message);
@@ -564,7 +564,7 @@ app.get('/api/pkk-wilayah', async (req, res) => {
 // 2. Pengajuan Surat & Persetujuan Lurah (Dengan Support 13 Jenis Surat & Multi Lampiran Berkas)
 app.post('/api/pengajuan', upload.any(), async (req, res) => {
     try {
-        const { 
+        const {
             nik, nama_pemohon, no_hp, jenis_surat, keperluan,
             tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw,
             nama_acara, tanggal_acara, lokasi_acara, opsi_persetujuan_rt,
@@ -584,14 +584,14 @@ app.post('/api/pengajuan', upload.any(), async (req, res) => {
 
         const no_resi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
         const token_rt = 'RT-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
-        
+
         const initialStatusRt = (opsi_persetujuan_rt === 'upload') ? 'Disetujui via Surat Pengantar (Fisik)' : 'Menunggu E-Verifikasi RT/RW';
 
         // Masukkan daftar file lampiran ke data_json
         let parsedData = {};
         try {
             if (data_khusus) parsedData = JSON.parse(data_khusus);
-        } catch(e) {}
+        } catch (e) { }
         parsedData.daftar_lampiran_files = fileNames;
 
         const query = `
@@ -601,7 +601,7 @@ app.post('/api/pengajuan', upload.any(), async (req, res) => {
              nama_acara, tanggal_acara, lokasi_acara, status_rt, token_rt, data_json) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        
+
         await dbQuery(query, [
             no_resi, nik, nama_pemohon, no_hp, jenis_surat, keperluan || `Permohonan ${jenis_surat}`, fileNames.join(','),
             tempat_tgl_lahir || '', jenis_kelamin || '', agama || '', pekerjaan || '', alamat || '', rt_rw || '',
@@ -661,7 +661,7 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ message: 'Data pengajuan surat tidak ditemukan!' });
         }
-        
+
         const row = results[0];
         const templateFile = TEMPLATE_MAP[row.jenis_surat] || 'SRIKANDI - SURAT IZIN KERAMAIAN.docx';
         const templatePath = path.join(__dirname, '..', 'templates', templateFile);
@@ -673,11 +673,11 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         let extraData = {};
         try {
             if (row.data_json) extraData = JSON.parse(row.data_json);
-        } catch (e) {}
+        } catch (e) { }
 
         const content = fs.readFileSync(templatePath);
         const zip = new PizZip(content);
-        
+
         const doc = new Docxtemplater(zip, {
             delimiters: { start: '<<', end: '>>' },
             paragraphLoop: true,
@@ -857,7 +857,7 @@ app.post('/api/verifikasi-rt/:token/setujui', async (req, res) => {
     try {
         const { keputusan, nama_rt_rw, catatan_rt } = req.body; // keputusan: 'SETUJUI' | 'TOLAK'
         const status_rt = (keputusan === 'SETUJUI') ? `Disetujui Digital oleh ${nama_rt_rw || 'Ketua RT/RW'}` : `Ditolak RT/RW`;
-        
+
         await dbQuery(
             'UPDATE pengajuan_surat SET status_rt = ?, catatan_rt = ?, tgl_disetujui_rt = NOW() WHERE token_rt = ?',
             [status_rt, catatan_rt || '', req.params.token]
@@ -1245,7 +1245,7 @@ app.delete('/api/admin/berita/:id', async (req, res) => {
         await dbQuery('DELETE FROM berita WHERE id=?', [req.params.id]);
         res.json({ message: 'Berita berhasil dihapus!' });
     } catch (err) {
-        res.status(500).json({message: 'Gagal menghapus berita.'});
+        res.status(500).json({ message: 'Gagal menghapus berita.' });
     }
 });
 
@@ -1265,7 +1265,7 @@ app.put('/api/admin/statistik', async (req, res) => {
 // Admin CMS: Info Kelurahan & Batas Wilayah & Kontak
 app.put('/api/admin/info-kelurahan', async (req, res) => {
     try {
-        const { 
+        const {
             deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url,
             alamat_kantor, email_resmi, telepon_kantor, jam_pelayanan, teks_marquee
         } = req.body;

@@ -41,9 +41,9 @@ function getKonsumenPenggunaRuns(selectedType) {
     const rSep2 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
     const rIkan = `<w:r>${finalIkan ? runFonts : runFontsStrike}<w:t xml:space="preserve">perikanan</w:t></w:r>`;
     const rSep3 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rUmum = `<w:r>${finalUmum ? runFonts : runFontsStrike}<w:t xml:space="preserve">pelayanan umum</w:t></w:r>`;
-
-    return `${rHeader}${rMikro}${rSep1}${rTani}${rSep2}${rIkan}${rSep3}${rUmum}`;
+    const pPr = `<w:pPr><w:tabs><w:tab w:val="left" w:pos="2977"/><w:tab w:val="left" w:pos="3261"/></w:tabs><w:spacing w:line="240" w:lineRule="auto"/><w:ind w:left="720" w:firstLine="0"/><w:rPr><w:sz w:val="24"/><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>`;
+    const runs = rHeader + rMikro + rSep1 + rTani + rSep2 + rIkan + rSep3 + rUmum;
+    return `<w:p w:rsidR="00000000" w:rsidDel="00000000" w:rsidP="00000000" w:rsidRDefault="00000000" w:rsidRPr="00000000">${pPr}${runs}</w:p>`;
 }
 
 module.exports = (req, res) => {
@@ -206,20 +206,6 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             const zip = new PizZip(content);
             let extraJson = {};
             try { if (item.data_json) extraJson = typeof item.data_json === 'string' ? JSON.parse(item.data_json) : item.data_json; } catch(e) {}
-
-            const doc = new Docxtemplater(zip, {
-                delimiters: { start: '<<', end: '>>' },
-                paragraphLoop: true,
-                linebreaks: true,
-                nullGetter: function(tag) {
-                    const tagKey = tag.name ? tag.name.trim() : '';
-                    if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
-                    if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                    if (typeof payload !== 'undefined' && payload && payload[tagKey]) return payload[tagKey];
-                    const val = item[tagKey] || extraJson[tagKey] || item[tagKey.toLowerCase()] || extraJson[tagKey.toLowerCase()];
-                    return (val !== undefined && val !== null && val !== '') ? val : '-';
-                }
-            });
 
             const [rtVal, rwVal] = (item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 

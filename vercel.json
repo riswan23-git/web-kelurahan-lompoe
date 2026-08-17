@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.js": {
+    "api/**/*.js": {
       "includeFiles": "templates/**"
     }
   },
@@ -31,11 +31,11 @@
     },
     {
       "source": "/api/admin/generate-docx/:path*",
-      "destination": "/api/layanan"
+      "destination": "/api/admin/generate-docx"
     },
     {
       "source": "/api/admin/generate-docx",
-      "destination": "/api/layanan"
+      "destination": "/api/admin/generate-docx"
     },
     {
       "source": "/api/admin/pengajuan/:path*",
