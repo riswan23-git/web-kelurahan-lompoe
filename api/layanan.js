@@ -57,9 +57,14 @@ module.exports = (req, res) => {
     const url = req.url || '';
 
     // 00. FILE PREVIEW & DOWNLOAD FOR UPLOADS & SURAT SELESAI
-    if (url.includes('uploads') || url.includes('download-surat-selesai') || (req.query && req.query.file_action)) {
-        let rawFile = req.query?.file_name || url.split('/').pop() || '';
-        rawFile = rawFile.split('?')[0].trim();
+    if (url.includes('uploads') || url.includes('download-surat-selesai') || url.includes('file_action=')) {
+        let rawFile = '';
+        if (url.includes('file_name=')) {
+            rawFile = url.split('file_name=')[1] || '';
+        } else {
+            rawFile = url.split('/').pop() || '';
+        }
+        rawFile = rawFile.split('&')[0].split('?')[0].trim();
         try { rawFile = decodeURIComponent(rawFile); } catch (e) {}
 
         const isPdf = rawFile.toLowerCase().endsWith('.pdf') || rawFile.includes('Surat_Pengesahan') || rawFile.includes('Lurah');
