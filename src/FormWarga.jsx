@@ -178,6 +178,23 @@ function FormWarga() {
       const returnedToken = response.data?.token_rt || ('tok_rt_' + Math.floor(100000 + Math.random() * 900000));
       const returnedStatus = response.data?.status_rt || 'Disetujui RT/RW';
 
+      const newItemSaved = response.data?.data || {
+        ...payload,
+        id: Date.now(),
+        no_resi: returnedResi,
+        nomor_resi: returnedResi,
+        token_rt: returnedToken,
+        status_rt: returnedStatus,
+        status_kelurahan: 'Progres',
+        status: 'Progres',
+        tgl_pengajuan: new Date().toISOString().split('T')[0],
+        tanggal_pengajuan: new Date().toISOString().split('T')[0]
+      };
+
+      const existingLocal = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const updatedLocalList = [newItemSaved, ...existingLocal.filter(i => i.no_resi !== returnedResi)];
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocalList));
+
       setPesanSukses('Pengajuan Anda berhasil dikirim!');
       setNoResiHasil(returnedResi);
       setTokenRtHasil(returnedToken);
