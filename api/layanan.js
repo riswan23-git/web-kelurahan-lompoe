@@ -57,9 +57,8 @@ module.exports = (req, res) => {
     const url = req.url || '';
 
     // 00. FILE PREVIEW & DOWNLOAD FOR UPLOADS & SURAT SELESAI
-    if (url.includes('uploads') || url.includes('download-surat-selesai')) {
-        const urlParts = url.split('/');
-        let rawFile = urlParts[urlParts.length - 1] || '';
+    if (url.includes('uploads') || url.includes('download-surat-selesai') || (req.query && req.query.file_action)) {
+        let rawFile = req.query?.file_name || url.split('/').pop() || '';
         rawFile = rawFile.split('?')[0].trim();
         try { rawFile = decodeURIComponent(rawFile); } catch (e) {}
 
