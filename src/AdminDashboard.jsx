@@ -11,6 +11,41 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const getCleanDocxUrl = (item, apiBaseUrl) => {
+  if (!item) return '#';
+  try {
+    const cleanObj = {
+      id: item.id,
+      no_resi: item.no_resi,
+      nama_pemohon: item.nama_pemohon || item.nama_lengkap || 'Warga',
+      nik: item.nik || '',
+      jenis_surat: item.jenis_surat || '',
+      rt_rw: item.rt_rw || 'RT 01 / RW 01',
+      alamat: item.alamat || '',
+      keperluan: item.keperluan || '',
+      jenis_usaha: item.jenis_usaha || '',
+      jenis_alat: item.jenis_alat || '',
+      jumlah_alat: item.jumlah_alat || '',
+      fungsi_alat: item.fungsi_alat || '',
+      jenis_bbm: item.jenis_bbm || '',
+      kebutuhan_bbm: item.kebutuhan_bbm || '',
+      jam_operasi: item.jam_operasi || '',
+      jumlah_liter: item.jumlah_liter || item.volume_bbm || '',
+      volume_bbm: item.volume_bbm || item.jumlah_liter || '',
+      konsumen_pengguna: item.konsumen_pengguna || '',
+      data_json: item.data_json || '',
+      pejabat_ttd: item.pejabat_ttd || '',
+      jabatan_pejabat: item.jabatan_pejabat || '',
+      nip_pejabat: item.nip_pejabat || '',
+      pangkat_pejabat: item.pangkat_pejabat || ''
+    };
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}`;
+  } catch(e) {
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}`;
+  }
+};
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('pengajuan');
