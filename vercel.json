@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "templates/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/uploads/:path*",

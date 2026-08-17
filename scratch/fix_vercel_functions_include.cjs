@@ -1,0 +1,43 @@
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const apiDir = path.join(rootDir, 'api');
+
+// 1. Add "functions" config to vercel.json so Vercel includes templates/**
+const vercelJsonPath = path.join(rootDir, 'vercel.json');
+const vercelConfig = {
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "templates/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/uploads/:path*", "destination": "/api/layanan?file_action=uploads&file_name=:path*" },
+    { "source": "/uploads", "destination": "/api/layanan?file_action=uploads" },
+    { "source": "/api/uploads/:path*", "destination": "/api/layanan?file_action=uploads&file_name=:path*" },
+    { "source": "/api/uploads", "destination": "/api/layanan?file_action=uploads" },
+    { "source": "/api/download-surat-selesai/:path*", "destination": "/api/layanan?file_action=download&file_name=:path*" },
+    { "source": "/api/download-surat-selesai", "destination": "/api/layanan?file_action=download" },
+    { "source": "/api/admin/generate-docx/:path*", "destination": "/api/layanan" },
+    { "source": "/api/admin/generate-docx", "destination": "/api/layanan" },
+    { "source": "/api/admin/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/admin/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin-api" },
+    { "source": "/api/admin", "destination": "/api/admin-api" },
+    { "source": "/api/login", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt/:path*", "destination": "/api/auth" },
+    { "source": "/api/verifikasi-rt", "destination": "/api/auth" },
+    { "source": "/api/pengajuan/:path*", "destination": "/api/layanan" },
+    { "source": "/api/pengajuan", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi/:path*", "destination": "/api/layanan" },
+    { "source": "/api/cek-resi", "destination": "/api/layanan" },
+    { "source": "/api/chat/:path*", "destination": "/api/layanan" },
+    { "source": "/api/chat", "destination": "/api/layanan" },
+    { "source": "/api/:path*", "destination": "/api/public" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+};
+
+fs.writeFileSync(vercelJsonPath, JSON.stringify(vercelConfig, null, 2), 'utf8');
+console.log('Successfully updated vercel.json with functions includeFiles!');
