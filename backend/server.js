@@ -767,9 +767,18 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'Jumlah Alat': extraData.jumlah_alat || '',
             'Fungsi Alat': extraData.fungsi_alat || '',
             'Jenis BBM': extraData.jenis_bbm || '',
+            'jenis_bbm': extraData.jenis_bbm || '',
+            'BBM Jenis Tertentu': extraData.jenis_bbm || '',
             'Kebutuhan BBM': extraData.kebutuhan_bbm || extraData.jumlah_liter || '',
+            'kebutuhan_bbm': extraData.kebutuhan_bbm || extraData.jumlah_liter || '',
+            'Kebutuhan BBM Jenis Tertentu': extraData.kebutuhan_bbm || extraData.jumlah_liter || '',
             'Jam Operasi': extraData.jam_operasi || '8 Jam / Hari',
+            'jam_operasi': extraData.jam_operasi || '8 Jam / Hari',
+            'Jam atau hari Operasi': extraData.jam_operasi || '8 Jam / Hari',
             'Liter': extraData.jumlah_liter || extraData.liter || '',
+            'jumlah_liter': extraData.jumlah_liter || extraData.liter || '',
+            'volume_bbm': extraData.jumlah_liter || extraData.liter || '',
+            'Konsumen BBM Jenis Tertentu Liter Per (Jam/Hari/Minggu/Bulan)': extraData.jumlah_liter || extraData.liter || '',
 
             // Surat Keterangan Penghasilan Orang Tua
             'Penghasilan Rata-rata per bulan': extraData.penghasilan_orang_tua || '',

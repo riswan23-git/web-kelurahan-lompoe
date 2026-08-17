@@ -179,14 +179,19 @@ module.exports = (req, res) => {
             'Fungsi Alat': fungsiAlatVal,
 
             'jenis_bbm': jenisBbmVal,
+            'Jenis BBM': jenisBbmVal,
             'BBM Jenis Tertentu': jenisBbmVal,
 
             'kebutuhan_bbm': kebutuhanBbmVal,
+            'Kebutuhan BBM': kebutuhanBbmVal,
             'Kebutuhan BBM Jenis Tertentu': kebutuhanBbmVal,
 
             'jam_operasi': jamOperasiVal,
+            'Jam Operasi': jamOperasiVal,
             'Jam atau hari Operasi': jamOperasiVal,
 
+            'Liter': jumlahLiterVal,
+            'jumlah_liter': jumlahLiterVal,
             'konsumen_bbm': jumlahLiterVal,
             'Konsumen BBM Jenis Tertentu Liter Per (Jam/Hari/Minggu/Bulan)': jumlahLiterVal,
 
