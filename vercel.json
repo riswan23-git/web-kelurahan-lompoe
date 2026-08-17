@@ -7,27 +7,27 @@
   "rewrites": [
     {
       "source": "/uploads/:path*",
-      "destination": "/api/layanan?file_action=uploads&file_name=:path*"
+      "destination": "/api/uploads"
     },
     {
       "source": "/uploads",
-      "destination": "/api/layanan?file_action=uploads"
+      "destination": "/api/uploads"
     },
     {
       "source": "/api/uploads/:path*",
-      "destination": "/api/layanan?file_action=uploads&file_name=:path*"
+      "destination": "/api/uploads"
     },
     {
       "source": "/api/uploads",
-      "destination": "/api/layanan?file_action=uploads"
+      "destination": "/api/uploads"
     },
     {
       "source": "/api/download-surat-selesai/:path*",
-      "destination": "/api/layanan?file_action=download&file_name=:path*"
+      "destination": "/api/uploads"
     },
     {
       "source": "/api/download-surat-selesai",
-      "destination": "/api/layanan?file_action=download"
+      "destination": "/api/uploads"
     },
     {
       "source": "/api/admin/generate-docx/:path*",
