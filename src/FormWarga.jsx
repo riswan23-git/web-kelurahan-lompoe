@@ -220,7 +220,6 @@ function FormWarga() {
       tanggal_acara: extraData.tanggal_acara || 'Senin, 24 Agustus 2026',
       lokasi_acara: extraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
       file_berkas: fileNames.join(', '),
-      file_data_map: fileDataMap,
       data_json: JSON.stringify(extraData)
     };
 
