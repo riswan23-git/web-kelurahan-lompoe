@@ -1,6 +1,30 @@
 {
   "rewrites": [
     {
+      "source": "/uploads/:path*",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/uploads",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/api/uploads/:path*",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/api/uploads",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/api/download-surat-selesai/:path*",
+      "destination": "/api/layanan"
+    },
+    {
+      "source": "/api/download-surat-selesai",
+      "destination": "/api/layanan"
+    },
+    {
       "source": "/api/admin/generate-docx/:path*",
       "destination": "/api/layanan"
     },
