@@ -351,13 +351,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'RW tempat acara': rwVal || '01'
             };
 
-            if (zip.files['word/document.xml']) {
-                let xmlContent = zip.files['word/document.xml'].asText();
-                xmlContent = xmlContent.replace(/\{nomor_naskah\s*\}/g, '<<nomor_naskah>>')
-                                       .replace(/\{tanggal_naskah\s*\}/g, '<<tanggal_naskah>>')
-                                       .replace(/\{ttd_pengirim\s*\}/g, '<<ttd_pengirim>>');
-                zip.file('word/document.xml', xmlContent);
-            }
+
 
             const doc = new Docxtemplater(zip, {
                 delimiters: { start: '<<', end: '>>' },
