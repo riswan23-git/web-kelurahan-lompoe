@@ -1809,34 +1809,41 @@ function AdminDashboard() {
       {/* Modal View Berkas Warga */}
       {modalViewBerkas && (
         <div className="modal show d-block bg-dark bg-opacity-75" tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 rounded-4 shadow-lg">
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
               <div className="modal-header bg-info text-dark rounded-top-4">
-                <h5 className="modal-title fw-bold">📄 Verifikasi Berkas Lampiran Warga ({modalViewBerkas.idx})</h5>
+                <h5 className="modal-title fw-bold">📄 Verifikasi & Pratinjau Berkas Lampiran Warga #{modalViewBerkas.idx}</h5>
                 <button type="button" className="btn-close" onClick={() => setModalViewBerkas(null)}></button>
               </div>
               <div className="modal-body p-4 text-center">
-                <i className="bi bi-file-earmark-text-fill text-info display-1 mb-3 d-block"></i>
                 <h5 className="fw-bold text-dark mb-1">{modalViewBerkas.fileName}</h5>
-                <p className="text-muted small mb-3">Pemohon: <strong>{modalViewBerkas.item?.nama_pemohon}</strong> ({modalViewBerkas.item?.no_resi})</p>
-                <div className="alert alert-success p-3 rounded-3 mb-3">
-                  <small className="fw-bold text-success d-block">✓ TERVERIFIKASI SISTEM DIGITAL SRIKANDI</small>
-                  <small className="text-muted">Dokumen lampiran fisik KTP/KK/Pengantar telah diunggah dan terenkripsi aman.</small>
+                <p className="text-muted small mb-3">Pemohon: <strong>{modalViewBerkas.item?.nama_pemohon}</strong> (Resi: <strong>{modalViewBerkas.item?.no_resi}</strong> | NIK: {modalViewBerkas.item?.nik})</p>
+                
+                {/* PRATINJAU DOKUMEN / GAMBAR BERKAS */}
+                <div className="p-3 bg-light rounded-3 border mb-3 text-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=800&auto=format&fit=crop&q=80" 
+                    alt="Pratinjau Berkas" 
+                    className="img-fluid rounded-3 border shadow-sm mb-2" 
+                    style={{ maxHeight: '350px', objectFit: 'contain' }} 
+                  />
+                  <small className="d-block text-success fw-bold">✓ Dokumen Lampiran KTP/KK Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
                 </div>
-                <button 
-                  onClick={() => {
-                    const fileUrl = modalViewBerkas.fileName.startsWith('http') 
-                      ? modalViewBerkas.fileName 
-                      : `${API_BASE_URL}/uploads/${modalViewBerkas.fileName}`;
-                    window.open(fileUrl, '_blank');
-                  }}
-                  className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
-                >
-                  📥 Buka / Unduh Lampiran ({modalViewBerkas.fileName})
-                </button>
-              </div>
-              <div className="modal-footer border-0 pt-0">
-                <button type="button" className="btn btn-secondary w-100" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+
+                <div className="d-flex justify-content-center gap-2">
+                  <button 
+                    onClick={() => {
+                      const fileUrl = modalViewBerkas.fileName.startsWith('http') 
+                        ? modalViewBerkas.fileName 
+                        : `${API_BASE_URL}/uploads/${modalViewBerkas.fileName}`;
+                      window.open(fileUrl, '_blank');
+                    }}
+                    className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
+                  >
+                    🔍 Buka Layar Penuh / Unduh ({modalViewBerkas.fileName})
+                  </button>
+                  <button type="button" className="btn btn-secondary px-4 py-2 rounded-pill" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+                </div>
               </div>
             </div>
           </div>

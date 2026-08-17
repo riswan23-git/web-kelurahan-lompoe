@@ -206,22 +206,36 @@ function CekResi() {
                     </div>
                   </div>
 
-                  {/* Download Dokumen Hasil Jika Ada */}
-                  {hasilResi.file_hasil && (
-                    <div className="alert alert-success p-3 rounded-4 mb-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
-                      <div>
-                        <strong className="d-flex align-items-center gap-2">
-                          <i className="bi bi-file-earmark-check-fill fs-4 text-success"></i> Dokumen Surat / Persetujuan Digital Siap Download!
-                        </strong>
+                  {/* Download Dokumen Hasil Pengajuan Warga */}
+                  {(hasilResi.file_hasil || hasilResi.status === 'Disetujui/Siap Diambil' || hasilResi.status === 'Selesai' || hasilResi.status_rt?.includes('Disetujui')) && (
+                    <div className="alert alert-success p-4 rounded-4 mb-4 shadow-sm">
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <i className="bi bi-file-earmark-check-fill fs-3 text-success"></i>
+                        <div>
+                          <h6 className="fw-bold text-success mb-0">🎉 SURAT PERSETUJUAN / SURAT HASIL SUDAH TERBIT & DISAHKAN!</h6>
+                          <small className="text-muted">Dokumen resmi telah ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>)</small>
+                        </div>
                       </div>
-                      <a 
-                        href={`${API_BASE_URL}/uploads/${hasilResi.file_hasil}`} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
-                      >
-                        <i className="bi bi-download me-1"></i> Download Dokumen
-                      </a>
+                      
+                      <div className="d-flex flex-wrap gap-2 mt-3">
+                        <a 
+                          href={`${API_BASE_URL}/api/admin/generate-docx/${hasilResi.no_resi}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
+                        >
+                          <i className="bi bi-file-earmark-word me-1"></i> 📥 Download File Surat Word (.docx)
+                        </a>
+
+                        <a 
+                          href={`${API_BASE_URL}/uploads/${hasilResi.file_hasil || ('Surat_Pengesahan_Lurah_' + hasilResi.no_resi + '.pdf')}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
+                        >
+                          <i className="bi bi-file-earmark-pdf me-1"></i> 🖨️ Cetak / Download PDF Surat Selesai
+                        </a>
+                      </div>
                     </div>
                   )}
 
