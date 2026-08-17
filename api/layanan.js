@@ -60,7 +60,8 @@ module.exports = (req, res) => {
     if (url.includes('uploads') || url.includes('download-surat-selesai')) {
         const urlParts = url.split('/');
         let rawFile = urlParts[urlParts.length - 1] || '';
-        rawFile = decodeURIComponent(rawFile.split('?')[0].trim());
+        rawFile = rawFile.split('?')[0].trim();
+        try { rawFile = decodeURIComponent(rawFile); } catch (e) {}
 
         const isPdf = rawFile.toLowerCase().endsWith('.pdf') || rawFile.includes('Surat_Pengesahan') || rawFile.includes('Lurah');
 
