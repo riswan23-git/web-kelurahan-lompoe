@@ -227,14 +227,24 @@ function CekResi() {
                           <i className="bi bi-file-earmark-word me-1"></i> 📥 Download File Surat Word (.docx)
                         </a>
 
-                        <a 
-                          href={`${API_BASE_URL}/uploads/${hasilResi.file_hasil || ('Surat_Pengesahan_Lurah_' + hasilResi.no_resi + '.pdf')}`} 
-                          target="_blank" 
-                          rel="noreferrer" 
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            if (hasilResi.file_hasil_data) {
+                              const win = window.open();
+                              if (hasilResi.file_hasil_data.startsWith('data:image')) {
+                                win.document.write(`<html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${hasilResi.file_hasil_data}" style="max-width:95%;max-height:95vh;object-fit:contain;" /></body></html>`);
+                              } else {
+                                win.document.write(`<html><head><title>${hasilResi.file_hasil || 'Surat_Lompoe'}</title></head><body style="margin:0;"><iframe src="${hasilResi.file_hasil_data}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                              }
+                            } else {
+                              window.open(`${API_BASE_URL}/uploads/${hasilResi.file_hasil || ('Surat_Pengesahan_Lurah_' + hasilResi.no_resi + '.pdf')}`, '_blank');
+                            }
+                          }}
                           className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
                         >
                           <i className="bi bi-file-earmark-pdf me-1"></i> 🖨️ Cetak / Download PDF Surat Selesai
-                        </a>
+                        </button>
                       </div>
                     </div>
                   )}

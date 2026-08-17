@@ -1,3 +1,11 @@
+const readFileAsBase64 = (file) => new Promise((resolve) => {
+  if (!file) return resolve(null);
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => resolve(null);
+  reader.readAsDataURL(file);
+});
+
 import { API_BASE_URL } from './apiConfig';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -270,8 +278,11 @@ function AdminDashboard() {
 
     try {
       let fileNameToSave = modalUpdate.file_hasil || null;
+      let fileHasilB64 = modalUpdate.file_hasil_data || null;
+
       if (fileHasil) {
         fileNameToSave = fileHasil.name || `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+        fileHasilB64 = await readFileAsBase64(fileHasil);
       } else if (statusBaru === 'Disetujui/Siap Diambil' || statusBaru === 'Selesai') {
         fileNameToSave = `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
       }
@@ -280,7 +291,8 @@ function AdminDashboard() {
         status: statusBaru,
         status_kelurahan: statusBaru,
         catatan_admin: catatanAdmin,
-        file_hasil: fileNameToSave
+        file_hasil: fileNameToSave,
+        file_hasil_data: fileHasilB64
       });
 
       setPengajuanList(pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? {
@@ -1807,48 +1819,74 @@ function AdminDashboard() {
       )}
 
       {/* Modal View Berkas Warga */}
-      {modalViewBerkas && (
-        <div className="modal show d-block bg-dark bg-opacity-75" tabIndex="-1">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
-              <div className="modal-header bg-info text-dark rounded-top-4">
-                <h5 className="modal-title fw-bold">📄 Verifikasi & Pratinjau Berkas Lampiran Warga #{modalViewBerkas.idx}</h5>
-                <button type="button" className="btn-close" onClick={() => setModalViewBerkas(null)}></button>
-              </div>
-              <div className="modal-body p-4 text-center">
-                <h5 className="fw-bold text-dark mb-1">{modalViewBerkas.fileName}</h5>
-                <p className="text-muted small mb-3">Pemohon: <strong>{modalViewBerkas.item?.nama_pemohon}</strong> (Resi: <strong>{modalViewBerkas.item?.no_resi}</strong> | NIK: {modalViewBerkas.item?.nik})</p>
-                
-                {/* PRATINJAU DOKUMEN / GAMBAR BERKAS */}
-                <div className="p-3 bg-light rounded-3 border mb-3 text-center">
-                  <img 
-                    src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=800&auto=format&fit=crop&q=80" 
-                    alt="Pratinjau Berkas" 
-                    className="img-fluid rounded-3 border shadow-sm mb-2" 
-                    style={{ maxHeight: '350px', objectFit: 'contain' }} 
-                  />
-                  <small className="d-block text-success fw-bold">✓ Dokumen Lampiran KTP/KK Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
-                </div>
+      {modalViewBerkas && (() => {
+        const item = modalViewBerkas.item || {};
+        const fileName = modalViewBerkas.fileName || '';
+        const fileMap = item.file_data_map || {};
+        const realB64 = fileMap[fileName] || fileMap[fileName.trim()];
 
-                <div className="d-flex justify-content-center gap-2">
-                  <button 
-                    onClick={() => {
-                      const fileUrl = modalViewBerkas.fileName.startsWith('http') 
-                        ? modalViewBerkas.fileName 
-                        : `${API_BASE_URL}/uploads/${modalViewBerkas.fileName}`;
-                      window.open(fileUrl, '_blank');
-                    }}
-                    className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
-                  >
-                    🔍 Buka Layar Penuh / Unduh ({modalViewBerkas.fileName})
-                  </button>
-                  <button type="button" className="btn btn-secondary px-4 py-2 rounded-pill" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+        const handleOpenFullscreen = () => {
+          if (realB64) {
+            const win = window.open();
+            if (realB64.startsWith('data:image')) {
+              win.document.write(`<html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${realB64}" style="max-width:95%;max-height:95vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /></body></html>`);
+            } else {
+              win.document.write(`<html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+            }
+          } else {
+            const fileUrl = fileName.startsWith('http') ? fileName : `${API_BASE_URL}/uploads/${fileName}`;
+            window.open(fileUrl, '_blank');
+          }
+        };
+
+        return (
+          <div className="modal show d-block bg-dark bg-opacity-75" tabIndex="-1">
+            <div className="modal-dialog modal-lg modal-dialog-centered">
+              <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div className="modal-header bg-info text-dark rounded-top-4">
+                  <h5 className="modal-title fw-bold">📄 Verifikasi & Pratinjau Berkas Lampiran Warga #{modalViewBerkas.idx}</h5>
+                  <button type="button" className="btn-close" onClick={() => setModalViewBerkas(null)}></button>
+                </div>
+                <div className="modal-body p-4 text-center">
+                  <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
+                  <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
+                  
+                  {/* PRATINJAU DOKUMEN / GAMBAR BERKAS ASLI */}
+                  <div className="p-3 bg-light rounded-3 border mb-3 text-center">
+                    {realB64 && realB64.startsWith('data:image') ? (
+                      <img 
+                        src={realB64} 
+                        alt={fileName} 
+                        className="img-fluid rounded-3 border shadow-sm mb-2" 
+                        style={{ maxHeight: '420px', objectFit: 'contain' }} 
+                      />
+                    ) : realB64 && realB64.startsWith('data:application/pdf') ? (
+                      <iframe src={realB64} title={fileName} style={{ width: '100%', height: '350px', border: '1px solid #ccc', borderRadius: '8px' }}></iframe>
+                    ) : (
+                      <div className="p-4 bg-white rounded-3 shadow-sm d-inline-block">
+                        <i className="bi bi-file-earmark-check text-success display-1 mb-2 d-block"></i>
+                        <h6 className="fw-bold text-dark mb-1">{fileName}</h6>
+                        <small className="text-muted">Dokumen terlampir sah & siap dibuka di layar penuh.</small>
+                      </div>
+                    )}
+                    <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
+                  </div>
+
+                  <div className="d-flex justify-content-center gap-2">
+                    <button 
+                      onClick={handleOpenFullscreen}
+                      className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
+                    >
+                      🔍 Buka Layar Penuh Berkas Asli ({fileName})
+                    </button>
+                    <button type="button" className="btn btn-secondary px-4 py-2 rounded-pill" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

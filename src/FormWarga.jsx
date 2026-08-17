@@ -1,3 +1,11 @@
+const readFileAsBase64 = (file) => new Promise((resolve) => {
+  if (!file) return resolve(null);
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => resolve(null);
+  reader.readAsDataURL(file);
+});
+
 import { API_BASE_URL } from './apiConfig';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -142,9 +150,31 @@ function FormWarga() {
     setLoading(true);
 
     const fileNames = [];
-    if (filePengantar) fileNames.push(filePengantar.name || 'Surat_Pengantar_RT.pdf');
-    if (filesLain && filesLain.length > 0) filesLain.forEach(f => fileNames.push(f.name || 'KTP_KK_Warga.pdf'));
-    if (filePbb) fileNames.push(filePbb.name || 'Bukti_PBB_Lompoe.pdf');
+    const fileDataMap = {};
+
+    if (filePengantar) {
+      const fName = filePengantar.name || 'Surat_Pengantar_RT.pdf';
+      fileNames.push(fName);
+      const b64 = await readFileAsBase64(filePengantar);
+      if (b64) fileDataMap[fName] = b64;
+    }
+
+    if (filesLain && filesLain.length > 0) {
+      for (const f of filesLain) {
+        const fName = f.name || 'KTP_KK_Warga.pdf';
+        fileNames.push(fName);
+        const b64 = await readFileAsBase64(f);
+        if (b64) fileDataMap[fName] = b64;
+      }
+    }
+
+    if (filePbb) {
+      const fName = filePbb.name || 'Bukti_PBB_Lompoe.pdf';
+      fileNames.push(fName);
+      const b64 = await readFileAsBase64(filePbb);
+      if (b64) fileDataMap[fName] = b64;
+    }
+
     if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
 
     const userTelp = formData.no_hp || formData.telepon || formData.nomor_wa || '081234567890';
@@ -168,6 +198,7 @@ function FormWarga() {
       tanggal_acara: extraData.tanggal_acara || 'Senin, 24 Agustus 2026',
       lokasi_acara: extraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
       file_berkas: fileNames.join(', '),
+      file_data_map: fileDataMap,
       data_json: JSON.stringify(extraData)
     };
 
