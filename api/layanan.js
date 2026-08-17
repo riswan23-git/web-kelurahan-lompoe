@@ -146,12 +146,6 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.status(200).send(imgHtml);
     }
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    if (req.method === 'OPTIONS') return res.status(200).end();
-
-    const url = req.url || '';
 
     // 0. GENERATE REAL DOCX FROM SRIKANDI TEMPLATES IN /templates FOLDER
     if (url.includes('generate-docx')) {
