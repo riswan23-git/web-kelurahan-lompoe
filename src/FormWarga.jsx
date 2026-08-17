@@ -226,6 +226,13 @@ function FormWarga() {
       const updatedLocalList = [newItemSaved, ...existingLocal.filter(i => i.no_resi !== returnedResi)];
       localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocalList));
 
+      // Save fileDataMap globally
+      const globalFileMap = JSON.parse(localStorage.getItem('all_file_data_map') || '{}');
+      if (fileDataMap) {
+        Object.assign(globalFileMap, fileDataMap);
+        localStorage.setItem('all_file_data_map', JSON.stringify(globalFileMap));
+      }
+
       setPesanSukses('Pengajuan Anda berhasil dikirim!');
       setNoResiHasil(returnedResi);
       setTokenRtHasil(returnedToken);
