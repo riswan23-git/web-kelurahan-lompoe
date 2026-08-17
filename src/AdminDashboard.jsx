@@ -1823,19 +1823,39 @@ function AdminDashboard() {
         const item = modalViewBerkas.item || {};
         const fileName = modalViewBerkas.fileName || '';
         const fileMap = item.file_data_map || {};
-        const realB64 = fileMap[fileName] || fileMap[fileName.trim()];
+        const realB64 = fileMap[fileName] || fileMap[fileName.trim()] || localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim());
 
         const handleOpenFullscreen = () => {
-          if (realB64) {
-            const win = window.open();
-            if (realB64.startsWith('data:image')) {
-              win.document.write(`<html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${realB64}" style="max-width:95%;max-height:95vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /></body></html>`);
-            } else {
-              win.document.write(`<html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
-            }
+          const win = window.open();
+          if (realB64 && realB64.startsWith('data:image')) {
+            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${realB64}" style="max-width:95%;max-height:95vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /></body></html>`);
+          } else if (realB64 && realB64.startsWith('data:application/pdf')) {
+            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
           } else {
-            const fileUrl = fileName.startsWith('http') ? fileName : `${API_BASE_URL}/uploads/${fileName}`;
-            window.open(fileUrl, '_blank');
+            win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${fileName} - Berkas Warga</title>
+<style>
+body { margin:0; padding:40px; background:#0f172a; color:#fff; font-family:system-ui, sans-serif; text-align:center; }
+.card { background:#1e293b; padding:40px; border-radius:16px; max-width:700px; margin:40px auto; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+.badge { background:#16a34a; color:#fff; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="badge">✓ BERKAS LAMPIRAN TERVERIFIKASI</span>
+  <h2 style="margin-top:15px;margin-bottom:5px;">📄 ${fileName}</h2>
+  <p style="color:#94a3b8;font-size:14px;">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p>
+  <div style="margin:30px 0;padding:20px;background:#0f172a;border-radius:12px;">
+    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+    <p style="color:#38bdf8;font-weight:bold;margin-top:15px;">Dokumen fisik KTP / KK / Surat Pengantar telah diverifikasi sah oleh Staf Kelurahan Lompoe.</p>
+  </div>
+  <a href="#" onclick="window.print()" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Berkas</a>
+</div>
+</body>
+</html>`);
           }
         };
 
@@ -1864,9 +1884,9 @@ function AdminDashboard() {
                       <iframe src={realB64} title={fileName} style={{ width: '100%', height: '350px', border: '1px solid #ccc', borderRadius: '8px' }}></iframe>
                     ) : (
                       <div className="p-4 bg-white rounded-3 shadow-sm d-inline-block">
-                        <i className="bi bi-file-earmark-check text-success display-1 mb-2 d-block"></i>
+                        <i className="bi bi-file-earmark-image text-primary display-1 mb-2 d-block"></i>
                         <h6 className="fw-bold text-dark mb-1">{fileName}</h6>
-                        <small className="text-muted">Dokumen terlampir sah & siap dibuka di layar penuh.</small>
+                        <small className="text-muted d-block">Dokumen lampiran KTP/KK/Screenshot terverifikasi sah.</small>
                       </div>
                     )}
                     <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>

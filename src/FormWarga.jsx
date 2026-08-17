@@ -1691,7 +1691,17 @@ function FormWarga() {
                           type="file" 
                           className="form-control form-control-lg"
                           accept="image/*,.pdf"
-                          onChange={(e) => setFilePengantar(e.target.files[0])}
+                          onChange={async (e) => {
+                            const f = e.target.files[0];
+                            setFilePengantar(f);
+                            if (f) {
+                              const b64 = await readFileAsBase64(f);
+                              if (b64) {
+                                localStorage.setItem('file_b64_' + f.name, b64);
+                                localStorage.setItem('file_b64_' + f.name.trim(), b64);
+                              }
+                            }
+                          }}
                         />
                       </div>
 
@@ -1711,7 +1721,17 @@ function FormWarga() {
                           className="form-control form-control-lg border-primary"
                           accept="image/*,.pdf"
                           multiple
-                          onChange={(e) => setFilesLain(Array.from(e.target.files))}
+                          onChange={async (e) => {
+                            const arr = Array.from(e.target.files);
+                            setFilesLain(arr);
+                            for (const f of arr) {
+                              const b64 = await readFileAsBase64(f);
+                              if (b64) {
+                                localStorage.setItem('file_b64_' + f.name, b64);
+                                localStorage.setItem('file_b64_' + f.name.trim(), b64);
+                              }
+                            }
+                          }}
                         />
                       </div>
 
@@ -1727,7 +1747,17 @@ function FormWarga() {
                           type="file" 
                           className="form-control form-control-lg"
                           accept="image/*,.pdf"
-                          onChange={(e) => setFilePbb(e.target.files[0])}
+                          onChange={async (e) => {
+                            const f = e.target.files[0];
+                            setFilePbb(f);
+                            if (f) {
+                              const b64 = await readFileAsBase64(f);
+                              if (b64) {
+                                localStorage.setItem('file_b64_' + f.name, b64);
+                                localStorage.setItem('file_b64_' + f.name.trim(), b64);
+                              }
+                            }
+                          }}
                         />
                       </div>
 
