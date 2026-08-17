@@ -147,16 +147,28 @@ function FormWarga() {
     if (filePbb) fileNames.push(filePbb.name || 'Bukti_PBB_Lompoe.pdf');
     if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
 
+    const userTelp = formData.no_hp || formData.telepon || formData.nomor_wa || '081234567890';
     const payload = {
       ...formData,
+      ...extraData,
+      no_hp: userTelp,
+      telepon: userTelp,
+      nomor_wa: userTelp,
       nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
       nik: formData.nik || '7372011205950001',
+      tempat_tgl_lahir: formData.tempat_tgl_lahir || extraData.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
+      jenis_kelamin: formData.jenis_kelamin || extraData.jenis_kelamin || 'Laki-laki',
+      agama: formData.agama || extraData.agama || 'Islam',
+      pekerjaan: formData.pekerjaan || extraData.pekerjaan || 'Wiraswasta',
+      alamat: formData.alamat || extraData.alamat || 'Jl. Poros Lompoe',
       rt_rw: formData.rt_rw || 'RW 01 / RT 01',
-      telepon: formData.telepon || formData.nomor_wa || '081234567890',
       jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
-      keperluan: formData.keperluan || 'Pengurusan Administrasi',
-      nama_acara: extraData.nama_acara || formData.keperluan || '',
-      file_berkas: fileNames.join(', ')
+      keperluan: formData.keperluan || extraData.keperluan || extraData.nama_acara || 'Pengurusan Administrasi',
+      nama_acara: extraData.nama_acara || formData.keperluan || 'Kegiatan Kemasyarakatan',
+      tanggal_acara: extraData.tanggal_acara || 'Senin, 24 Agustus 2026',
+      lokasi_acara: extraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
+      file_berkas: fileNames.join(', '),
+      data_json: JSON.stringify(extraData)
     };
 
     try {

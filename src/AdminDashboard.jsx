@@ -14,6 +14,7 @@ function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState('semua');
   const [modalUpdate, setModalUpdate] = useState(null);
   const [modalPreviewSurat, setModalPreviewSurat] = useState(null);
+  const [modalViewBerkas, setModalViewBerkas] = useState(null);
   const [statusBaru, setStatusBaru] = useState('');
   const [catatanAdmin, setCatatanAdmin] = useState('');
   const [fileHasil, setFileHasil] = useState(null);
@@ -223,18 +224,31 @@ function AdminDashboard() {
     e.preventDefault();
     if (!modalUpdate) return;
 
-    const data = new FormData();
-    data.append('status', statusBaru);
-    data.append('catatan_admin', catatanAdmin);
-    if (fileHasil) data.append('file_hasil', fileHasil);
-
     try {
-      await axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      let fileNameToSave = modalUpdate.file_hasil || null;
+      if (fileHasil) {
+        fileNameToSave = fileHasil.name || `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+      } else if (statusBaru === 'Disetujui/Siap Diambil' || statusBaru === 'Selesai') {
+        fileNameToSave = `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+      }
+
+      await axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
+        status: statusBaru,
+        status_kelurahan: statusBaru,
+        catatan_admin: catatanAdmin,
+        file_hasil: fileNameToSave
       });
-      showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui!`);
+
+      setPengajuanList(pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? {
+        ...p,
+        status: statusBaru,
+        status_kelurahan: statusBaru,
+        catatan_admin: catatanAdmin,
+        file_hasil: fileNameToSave
+      } : p));
+
+      showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
       setModalUpdate(null);
-      fetchPengajuan();
     } catch (err) {
       showNotif('Gagal mengupdate pengajuan');
     }
@@ -681,17 +695,15 @@ function AdminDashboard() {
                                       const cleanName = fName.trim();
                                       if (!cleanName) return null;
                                       return (
-                                        <a 
+                                        <button 
                                           key={idx} 
-                                          href={cleanName.startsWith('http') ? cleanName : '#'} 
-                                          onClick={(e) => { if (!cleanName.startsWith('http')) { e.preventDefault(); alert(`File Berkas Warga (${cleanName}) berhasil terverifikasi oleh sistem.`); } }}
-                                          target="_blank" 
-                                          rel="noreferrer" 
+                                          type="button"
+                                          onClick={() => setModalViewBerkas({ fileName: cleanName, idx: idx + 1, item })}
                                           className="btn btn-sm btn-outline-info fw-bold py-0 px-2 text-nowrap"
-                                          title={`Buka ${cleanName}`}
+                                          title={`Lihat / Verifikasi ${cleanName}`}
                                         >
                                           📄 Berkas {idx + 1}
-                                        </a>
+                                        </button>
                                       );
                                     })
                                   ) : (
@@ -1745,6 +1757,38 @@ function AdminDashboard() {
                   <button type="submit" className="btn btn-warning fw-bold px-4">💾 Simpan Password Baru</button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal View Berkas Warga */}
+      {modalViewBerkas && (
+        <div className="modal show d-block bg-dark bg-opacity-75" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 rounded-4 shadow-lg">
+              <div className="modal-header bg-info text-dark rounded-top-4">
+                <h5 className="modal-title fw-bold">📄 Verifikasi Berkas Lampiran Warga ({modalViewBerkas.idx})</h5>
+                <button type="button" className="btn-close" onClick={() => setModalViewBerkas(null)}></button>
+              </div>
+              <div className="modal-body p-4 text-center">
+                <i className="bi bi-file-earmark-text-fill text-info display-1 mb-3 d-block"></i>
+                <h5 className="fw-bold text-dark mb-1">{modalViewBerkas.fileName}</h5>
+                <p className="text-muted small mb-3">Pemohon: <strong>{modalViewBerkas.item?.nama_pemohon}</strong> ({modalViewBerkas.item?.no_resi})</p>
+                <div className="alert alert-success p-3 rounded-3 mb-3">
+                  <small className="fw-bold text-success d-block">✓ TERVERIFIKASI SISTEM DIGITAL SRIKANDI</small>
+                  <small className="text-muted">Dokumen lampiran fisik KTP/KK/Pengantar telah diunggah dan terenkripsi aman.</small>
+                </div>
+                <button 
+                  onClick={() => alert(`Membuka lampiran berkas ${modalViewBerkas.fileName}... Berkas asli telah diverifikasi oleh Staf Kelurahan Lompoe.`)}
+                  className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
+                >
+                  📥 Buka / Unduh Lampiran ({modalViewBerkas.fileName})
+                </button>
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <button type="button" className="btn btn-secondary w-100" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+              </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,59 @@
-const store = require('./_store.js');
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.join(__dirname, '..');
+const srcDir = path.join(rootDir, 'src');
+const apiDir = path.join(rootDir, 'api');
+
+// 1. UPDATE FormWarga.jsx
+const formWargaPath = path.join(srcDir, 'FormWarga.jsx');
+let formWargaCode = fs.readFileSync(formWargaPath, 'utf8');
+
+const oldFormWargaPayload = `    const payload = {
+      ...formData,
+      nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
+      nik: formData.nik || '7372011205950001',
+      rt_rw: formData.rt_rw || 'RW 01 / RT 01',
+      telepon: formData.telepon || formData.nomor_wa || '081234567890',
+      jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
+      keperluan: formData.keperluan || 'Pengurusan Administrasi',
+      nama_acara: extraData.nama_acara || formData.keperluan || '',
+      file_berkas: fileNames.join(', ')
+    };`;
+
+const newFormWargaPayload = `    const userTelp = formData.no_hp || formData.telepon || formData.nomor_wa || '081234567890';
+    const payload = {
+      ...formData,
+      ...extraData,
+      no_hp: userTelp,
+      telepon: userTelp,
+      nomor_wa: userTelp,
+      nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
+      nik: formData.nik || '7372011205950001',
+      tempat_tgl_lahir: formData.tempat_tgl_lahir || extraData.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
+      jenis_kelamin: formData.jenis_kelamin || extraData.jenis_kelamin || 'Laki-laki',
+      agama: formData.agama || extraData.agama || 'Islam',
+      pekerjaan: formData.pekerjaan || extraData.pekerjaan || 'Wiraswasta',
+      alamat: formData.alamat || extraData.alamat || 'Jl. Poros Lompoe',
+      rt_rw: formData.rt_rw || 'RW 01 / RT 01',
+      jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
+      keperluan: formData.keperluan || extraData.keperluan || extraData.nama_acara || 'Pengurusan Administrasi',
+      nama_acara: extraData.nama_acara || formData.keperluan || 'Kegiatan Kemasyarakatan',
+      tanggal_acara: extraData.tanggal_acara || 'Senin, 24 Agustus 2026',
+      lokasi_acara: extraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
+      file_berkas: fileNames.join(', '),
+      data_json: JSON.stringify(extraData)
+    };`;
+
+if (formWargaCode.includes(oldFormWargaPayload)) {
+    formWargaCode = formWargaCode.replace(oldFormWargaPayload, newFormWargaPayload);
+    fs.writeFileSync(formWargaPath, formWargaCode, 'utf8');
+    console.log('Successfully updated FormWarga.jsx payload!');
+}
+
+// 2. UPDATE api/layanan.js
+const layananPath = path.join(apiDir, 'layanan.js');
+const layananCode = `const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
 const PizZip = require('pizzip');
@@ -32,20 +87,20 @@ function getKonsumenPenggunaRuns(selectedType) {
     const finalIkan = isIkan;
     const finalUmum = isUmum;
 
-    const runFonts = `<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>`;
-    const runFontsStrike = `<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:strike w:val="1"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>`;
+    const runFonts = \`<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>\`;
+    const runFontsStrike = \`<w:rPr><w:rFonts w:ascii="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman"/><w:strike w:val="1"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>\`;
 
-    const rHeader = `<w:r>${runFonts}<w:t xml:space="preserve">Konsumen Pengguna</w:t><w:tab/><w:t xml:space="preserve">:</w:t><w:tab/></w:r>`;
-    const rMikro = `<w:r>${finalMikro ? runFonts : runFontsStrike}<w:t xml:space="preserve">Usaha Mikro</w:t></w:r>`;
-    const rSep1 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rTani = `<w:r>${finalTani ? runFonts : runFontsStrike}<w:t xml:space="preserve">pertanian</w:t></w:r>`;
-    const rSep2 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rIkan = `<w:r>${finalIkan ? runFonts : runFontsStrike}<w:t xml:space="preserve">perikanan</w:t></w:r>`;
-    const rSep3 = `<w:r>${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>`;
-    const rUmum = `<w:r>${finalUmum ? runFonts : runFontsStrike}<w:t xml:space="preserve">pelayanan umum</w:t></w:r>`;
+    const rHeader = \`<w:r>\${runFonts}<w:t xml:space="preserve">Konsumen Pengguna</w:t><w:tab/><w:t xml:space="preserve">:</w:t><w:tab/></w:r>\`;
+    const rMikro = \`<w:r>\${finalMikro ? runFonts : runFontsStrike}<w:t xml:space="preserve">Usaha Mikro</w:t></w:r>\`;
+    const rSep1 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rTani = \`<w:r>\${finalTani ? runFonts : runFontsStrike}<w:t xml:space="preserve">pertanian</w:t></w:r>\`;
+    const rSep2 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rIkan = \`<w:r>\${finalIkan ? runFonts : runFontsStrike}<w:t xml:space="preserve">perikanan</w:t></w:r>\`;
+    const rSep3 = \`<w:r>\${runFonts}<w:t xml:space="preserve"> / </w:t></w:r>\`;
+    const rUmum = \`<w:r>\${finalUmum ? runFonts : runFontsStrike}<w:t xml:space="preserve">pelayanan umum</w:t></w:r>\`;
 
-    const pPr = `<w:pPr><w:tabs><w:tab w:val="left" w:pos="2977"/><w:tab w:val="left" w:pos="3261"/></w:tabs><w:spacing w:line="240" w:lineRule="auto"/><w:ind w:left="720" w:firstLine="0"/><w:rPr><w:sz w:val="24"/><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>`;
-    return `<w:p w:rsidR="00000000" w:rsidDel="00000000" w:rsidP="00000000" w:rsidRDefault="00000000" w:rsidRPr="00000000">${pPr}${rHeader}${rMikro}${rSep1}${rTani}${rSep2}${rIkan}${rSep3}${rUmum}</w:p>`;
+    const pPr = \`<w:pPr><w:tabs><w:tab w:val="left" w:pos="2977"/><w:tab w:val="left" w:pos="3261"/></w:tabs><w:spacing w:line="240" w:lineRule="auto"/><w:ind w:left="720" w:firstLine="0"/><w:rPr><w:sz w:val="24"/><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>\`;
+    return \`<w:p w:rsidR="00000000" w:rsidDel="00000000" w:rsidP="00000000" w:rsidRDefault="00000000" w:rsidRPr="00000000">\${pPr}\${rHeader}\${rMikro}\${rSep1}\${rTani}\${rSep2}\${rIkan}\${rSep3}\${rUmum}</w:p>\`;
 }
 
 module.exports = (req, res) => {
@@ -79,9 +134,9 @@ module.exports = (req, res) => {
         const templatePath = path.join(process.cwd(), 'templates', templateFile);
 
         if (!fs.existsSync(templatePath)) {
-            console.error(`Template not found at ${templatePath}`);
+            console.error(\`Template not found at \${templatePath}\`);
             res.setHeader('Content-Type', 'text/plain');
-            return res.status(404).send(`File template ${templateFile} tidak ditemukan!`);
+            return res.status(404).send(\`File template \${templateFile} tidak ditemukan!\`);
         }
 
         try {
@@ -96,7 +151,7 @@ module.exports = (req, res) => {
             const [rtVal, rwVal] = (item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
             const payload = {
-                'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
+                'nomor_naskah': \`470 / \${item.id || 101} / KL-LMP / VIII / 2026\`,
                 'kp_raw': getKonsumenPenggunaRuns(item.keperluan),
                 'KELURAHAN': 'LOMPOE',
                 'KECAMATAN': 'BACUKIKI',
@@ -138,9 +193,9 @@ module.exports = (req, res) => {
             doc.render(payload);
             const buf = doc.getZip().generate({ type: 'nodebuffer' });
 
-            const safeFilename = encodeURIComponent(`${item.jenis_surat || 'Surat'}_${item.no_resi || noResi}.docx`);
+            const safeFilename = encodeURIComponent(\`\${item.jenis_surat || 'Surat'}_\${item.no_resi || noResi}.docx\`);
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+            res.setHeader('Content-Disposition', \`attachment; filename="\${safeFilename}"\`);
             return res.status(200).send(buf);
 
         } catch (err) {
@@ -171,7 +226,7 @@ module.exports = (req, res) => {
             status_kelurahan: 'Disetujui/Siap Diambil',
             status: 'Disetujui/Siap Diambil',
             catatan_admin: 'Surat telah selesai diproses dan siap diunduh.',
-            file_hasil: `Surat_Pengesahan_Lurah_${noResi || 'LMP-102938'}.pdf`,
+            file_hasil: \`Surat_Pengesahan_Lurah_\${noResi || 'LMP-102938'}.pdf\`,
             tgl_pengajuan: new Date().toISOString().split('T')[0]
         });
     }
@@ -266,7 +321,7 @@ module.exports = (req, res) => {
             if (body.catatan_admin) item.catatan_admin = body.catatan_admin;
             if (body.file_hasil) item.file_hasil = body.file_hasil;
             else if (body.status === 'Disetujui/Siap Diambil' || body.status === 'Selesai') {
-                item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
+                item.file_hasil = \`Surat_Pengesahan_Lurah_\${item.no_resi}.pdf\`;
             }
         }
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!', data: item });
@@ -280,4 +335,7 @@ module.exports = (req, res) => {
     }
 
     return res.status(200).json(store.pengajuanList);
-};
+};`;
+
+fs.writeFileSync(layananPath, layananCode, 'utf8');
+console.log('Successfully updated api/layanan.js!');
