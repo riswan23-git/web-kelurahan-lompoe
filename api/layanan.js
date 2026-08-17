@@ -49,12 +49,13 @@ function getKonsumenPenggunaRuns(selectedType) {
 }
 
 module.exports = (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    try {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const url = req.url || '';
+        const url = req.url || '';
 
     // 00. FILE PREVIEW & DOWNLOAD FOR UPLOADS & SURAT SELESAI
     if (url.includes('uploads') || url.includes('download-surat-selesai') || url.includes('file_action=')) {
@@ -405,4 +406,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
     }
 
     return res.status(200).json(store.pengajuanList);
+    } catch (err) {
+        console.error('Layanan handler error:', err);
+        return res.status(500).send('Error: ' + (err.stack || err.message));
+    }
 };
