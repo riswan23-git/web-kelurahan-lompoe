@@ -132,14 +132,6 @@ module.exports = (req, res) => {
         const content = fs.readFileSync(templatePath);
         const zip = new PizZip(content);
 
-        // Pre-clean document.xml to convert all ${...} tags into <<...>> delimiters for Docxtemplater
-        let docXml = zip.file('word/document.xml').asText();
-        docXml = docXml.replace(/\$\{nomor_naskah[^}]*\}/g, '<<nomor_naskah>>');
-        docXml = docXml.replace(/\$\{tanggal_naskah[^}]*\}/g, '<<tanggal_naskah>>');
-        docXml = docXml.replace(/\$\{ttd_pengirim[^}]*\}/g, '<<ttd_pengirim>>');
-        docXml = docXml.replace(/\$\{([^}]+)\}/g, '<<$1>>');
-        zip.file('word/document.xml', docXml);
-
         const [rtVal, rwVal] = safeStr(item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
         const tempatTglLahirVal = safeStr(item.tempat_tgl_lahir || item.tgl_lahir, 'Parepare, 24 April 1995');
@@ -170,7 +162,7 @@ module.exports = (req, res) => {
         const jumlahTanggunganVal = safeStr(extraJson.jumlah_tanggungan || item.jumlah_tanggungan, '3');
         const namaAnakVal = safeStr(extraJson.nama_anak || item.nama_anak, 'Adil Junior');
         const nikAnakVal = safeStr(extraJson.nik_anak || item.nik_anak, item.nik || '7378020667865');
-        const tglLahirAnakVal = safeStr(extraJson.tgl_lahir_anak || extraJson.tgl_lahir_anak || item.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
+        const tglLahirAnakVal = safeStr(extraJson.tgl_lahir_anak || item.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
         const sekolahKampusVal = safeStr(extraJson.sekolah_kampus_anak || extraJson.sekolah_kampus || item.sekolah_kampus_anak || item.sekolah_kampus, 'Universitas Negeri Parepare');
         const tempatTinggalVal = safeStr(extraJson.tempat_tinggal || item.tempat_tinggal || item.alamat, 'Jl. Poros Lompoe');
         const rtTinggalVal = safeStr(extraJson.rt_tempat_tinggal_saat_ini || item.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
@@ -315,7 +307,23 @@ module.exports = (req, res) => {
         });
 
         doc.render(payload);
-        const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+        // Post-render text replacement for ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim}
+        let generatedZip = doc.getZip();
+        let renderedXml = generatedZip.file('word/document.xml').asText();
+
+        const naskahNo = `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
+        renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
+        renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
+
+        renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
+        renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
+        renderedXml = renderedXml.replace(/<w:t[^>]*>\}<\/w:t>/g, '<w:t></w:t>');
+
+        generatedZip.file('word/document.xml', renderedXml);
+        const buf = generatedZip.generate({ type: 'nodebuffer' });
 
         const safeFilename = encodeURIComponent(`${item.jenis_surat || 'Surat'}_${item.no_resi || noResi}.docx`);
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
