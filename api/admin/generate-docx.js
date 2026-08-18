@@ -308,9 +308,21 @@ module.exports = (req, res) => {
 
         doc.render(payload);
 
-        // Post-render text replacement for ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim}
+        // Post-render text replacement for ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim} and &lt;&lt;...&gt;&gt; tags
         let generatedZip = doc.getZip();
         let renderedXml = generatedZip.file('word/document.xml').asText();
+
+        // Universal replacer for escaped XML entity &lt;&lt;Key&gt;&gt; tags
+        if (payload && typeof payload === 'object') {
+            Object.keys(payload).forEach(k => {
+                const val = payload[k];
+                if (val !== undefined && val !== null) {
+                    const strVal = String(val);
+                    renderedXml = renderedXml.replaceAll(`&lt;&lt;${k}&gt;&gt;`, strVal);
+                    renderedXml = renderedXml.replaceAll(`<<${k}>>`, strVal);
+                }
+            });
+        }
 
         const naskahNo = `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
         renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
