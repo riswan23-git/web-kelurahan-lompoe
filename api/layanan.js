@@ -1,6 +1,37 @@
 const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+
+const tmpFilePath = path.join(os.tmpdir(), 'lompoe_pengajuan_store.json');
+
+function syncDiskStore() {
+    try {
+        if (fs.existsSync(tmpFilePath)) {
+            const raw = fs.readFileSync(tmpFilePath, 'utf8');
+            const list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+                list.forEach(item => {
+                    if (item && item.no_resi) {
+                        const idx = store.pengajuanList.findIndex(p => p.no_resi === item.no_resi);
+                        if (idx >= 0) {
+                            store.pengajuanList[idx] = { ...store.pengajuanList[idx], ...item };
+                        } else {
+                            store.pengajuanList.unshift(item);
+                        }
+                    }
+                });
+            }
+        }
+    } catch (e) {}
+}
+
+function saveDiskStore() {
+    try {
+        fs.writeFileSync(tmpFilePath, JSON.stringify(store.pengajuanList), 'utf8');
+    } catch (e) {}
+}
+
 // Lazy loaded PizZip & Docxtemplater
 
 const TEMPLATE_MAP = {
@@ -48,6 +79,7 @@ function getKonsumenPenggunaRuns(selectedType) {
 
 module.exports = (req, res) => {
     try {
+        syncDiskStore();
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -462,6 +494,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             store.pengajuanList.unshift(newItem);
         }
 
+        saveDiskStore();
+
         return res.status(200).json({
             success: true,
             message: 'Pengajuan surat berhasil dikirim! Silakan catat nomor resi Anda.',
@@ -499,6 +533,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
         }
 
+        saveDiskStore();
+
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!', data: item });
     }
 
@@ -506,6 +542,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         let resiFromUrl = url.split('pengajuan/')[1] || '';
         resiFromUrl = resiFromUrl.split('?')[0].trim();
         store.pengajuanList = store.pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        saveDiskStore();
         return res.status(200).json({ success: true, message: 'Pengajuan berhasil dihapus!' });
     }
 

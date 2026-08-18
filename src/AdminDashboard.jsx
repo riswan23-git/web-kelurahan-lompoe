@@ -382,6 +382,12 @@ function AdminDashboard() {
     fetchChatRooms();
     fetchKontakRt();
     fetchNomorDarurat();
+
+    // Auto-sync live polling every 5 seconds for new submissions from HP/other devices!
+    const autoSyncTimer = setInterval(() => {
+      fetchPengajuan();
+    }, 5000);
+    return () => clearInterval(autoSyncTimer);
   }, [isAuthValid]);
 
   if (!isAuthValid) {
