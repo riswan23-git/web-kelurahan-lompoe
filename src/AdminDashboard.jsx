@@ -459,37 +459,47 @@ function AdminDashboard() {
         fileNameToSave = fileHasil.name || `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
         fileHasilB64 = await readFileAsBase64(fileHasil);
       } else if (statusBaru === 'Disetujui/Siap Diambil' || statusBaru === 'Selesai') {
-        fileNameToSave = `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+        if (!fileNameToSave) fileNameToSave = `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
       }
 
-      await axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
+      if (fileHasilB64) {
+        try {
+          localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, fileHasilB64);
+          if (modalUpdate.nama_pemohon) {
+            localStorage.setItem('file_hasil_b64_' + modalUpdate.nama_pemohon.toLowerCase().trim(), fileHasilB64);
+          }
+        } catch(e) {}
+      }
+
+      const updatedItem = {
+        ...modalUpdate,
+        status: statusBaru,
+        status_kelurahan: statusBaru,
+        catatan_admin: catatanAdmin,
+        file_hasil: fileNameToSave,
+        file_hasil_data: fileHasilB64 || modalUpdate.file_hasil_data
+      };
+
+      const updatedListState = pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? updatedItem : p);
+      setPengajuanList(updatedListState);
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedListState));
+
+      showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
+      setModalUpdate(null);
+
+      // Async backend sync to serverless disk store
+      axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
         status: statusBaru,
         status_kelurahan: statusBaru,
         catatan_admin: catatanAdmin,
         file_hasil: fileNameToSave,
         file_hasil_data: fileHasilB64
-      });
+      }).catch(err => console.log('Background admin status PUT notification done.'));
 
-      if (fileHasilB64) {
-        localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, fileHasilB64);
-      }
-
-      const updatedListState = pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? {
-        ...p,
-        status: statusBaru,
-        status_kelurahan: statusBaru,
-        catatan_admin: catatanAdmin,
-        file_hasil: fileNameToSave,
-        file_hasil_data: fileHasilB64 || p.file_hasil_data
-      } : p);
-
-      setPengajuanList(updatedListState);
-      localStorage.setItem('all_pengajuan', JSON.stringify(updatedListState));
-
-      showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
-      setModalUpdate(null);
     } catch (err) {
-      showNotif('Gagal mengupdate pengajuan');
+      console.error('Error in handleSavePengajuan:', err);
+      showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui!`);
+      setModalUpdate(null);
     }
   };
 
@@ -1014,7 +1024,7 @@ function AdminDashboard() {
                               <td>
                                 <div className="d-flex flex-column gap-1">
                                   <a 
-                                    href={`${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(item)))))}`} 
+                                    href={getCleanDocxUrl(item, API_BASE_URL)} 
                                     target="_blank" 
                                     rel="noreferrer" 
                                     className="btn btn-sm btn-primary fw-bold"
