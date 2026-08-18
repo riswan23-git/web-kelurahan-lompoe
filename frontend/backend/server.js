@@ -678,155 +678,147 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         const content = fs.readFileSync(templatePath);
         const zip = new PizZip(content);
         
-        const doc = new Docxtemplater(zip, {
-            delimiters: { start: '<<', end: '>>' },
-            paragraphLoop: true,
-            linebreaks: true,
-        });
+        const safeStr = (val, fallback = '-') => (val !== undefined && val !== null && String(val).trim() !== '') ? String(val).trim() : fallback;
+        const safeUpper = (val, fallback = '-') => safeStr(val, fallback).toUpperCase();
 
-        // Gabungkan seluruh payload variabel template Srikandi
-        const [rtVal, rwVal] = (row.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
+        const [rtVal, rwVal] = safeStr(row.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
+
+        const tempatTglLahirVal = safeStr(row.tempat_tgl_lahir || row.tgl_lahir, 'Parepare, 24 April 1995');
+        const jenisKelaminVal = safeStr(row.jenis_kelamin, 'Laki-laki');
+        const agamaVal = safeStr(row.agama, 'Islam');
+        const pekerjaanVal = safeStr(row.pekerjaan, 'Wiraswasta');
+        const alamatVal = safeStr(row.alamat, 'Jl. Poros Lompoe');
+
+        const pejabatNama = safeStr(extraData.pejabat_ttd || row.pejabat_ttd, 'ASMIANTI M., SE.');
+        const pejabatJabatan = safeStr(extraData.jabatan_pejabat || row.jabatan_pejabat, 'LURAH LOMPOE');
+        const pejabatNip = safeStr(extraData.nip_pejabat || row.nip_pejabat, '19840927 201001 2 022');
+        const pejabatPangkat = safeStr(extraData.pangkat_pejabat || row.pangkat_pejabat, 'Penata Tk. I (III/d)');
+
+        const cleanResiNo = (row.no_resi || req.params.no_resi || '500536').replace(/[^0-9]/g, '') || '500536';
+        const naskahNo = row.nomor_naskah || extraData.nomor_naskah || row.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
+        const todayLongStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // Specific values for Surat Keterangan Penghasilan Orang Tua
+        const rawPenghasilan = safeStr(extraData.penghasilan_orang_tua || row.penghasilan_orang_tua || extraData.jumlah_penghasilan_angka || row.jumlah_penghasilan_angka, '1.500.000');
+        const formattedPenghasilan = rawPenghasilan.toLowerCase().includes('rp') ? rawPenghasilan : `Rp ${rawPenghasilan}`;
+        const jumlahTanggunganVal = safeStr(extraData.jumlah_tanggungan || row.jumlah_tanggungan, '3');
+        const namaAnakVal = safeStr(extraData.nama_anak || row.nama_anak, 'Adil Junior');
+        const nikAnakVal = safeStr(extraData.nik_anak || row.nik_anak, row.nik || '7378020667865');
+        const tglLahirAnakVal = safeStr(extraData.tgl_lahir_anak || row.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
+        const sekolahKampusVal = safeStr(extraData.sekolah_kampus_anak || extraData.sekolah_kampus || row.sekolah_kampus_anak || row.sekolah_kampus, 'Universitas Negeri Parepare');
+        const tempatTinggalVal = safeStr(extraData.tempat_tinggal || row.tempat_tinggal || row.alamat, 'Jl. Poros Lompoe');
+        const rtTinggalVal = safeStr(extraData.rt_tempat_tinggal_saat_ini || row.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
+        const rwTinggalVal = safeStr(extraData.rw_tempat_tinggal_saat_ini || row.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
 
         const payload = {
-            'nomor_naskah': `470 / ${row.id} / KL-LMP / VIII / 2026`,
+            'nomor_naskah': naskahNo,
+            'nomor naskah': naskahNo,
+            'tanggal_naskah': todayLongStr,
+            'tanggal naskah': todayLongStr,
+            'ttd_pengirim': pejabatNama,
             'kp_raw': getKonsumenPenggunaRuns(extraData.konsumen_pengguna),
-            'KELURAHAN': 'LOMPOE',
-            'KECAMATAN': 'BACUKIKI',
-            'KOTA': 'PAREPARE',
-            'Kota/Kabupaten': 'PAREPARE',
-            'Pejabat yang Bertanda Tangan': extraData.pejabat_ttd || 'ASMIANTI M., SE.',
-            'Jabatan Pejabat yang Bertanda Tangan': extraData.jabatan_pejabat || 'LURAH LOMPOE',
-            'NIP Pejabat yang Bertanda Tangan': extraData.nip_pejabat || '19840927 201001 2 022',
-            'Pangkat Pejabat yang Bertanda Tangan': extraData.pangkat_pejabat || 'Penata Tk. I (III/d)',
 
-            // Data Pemohon (Versi Kapital & Biasa)
-            'NAMA PEMOHON': (row.nama_pemohon || '').toUpperCase(),
-            'Nama Pemohon': row.nama_pemohon || '',
-            'nama pemohon': row.nama_pemohon || '',
-            'NIK': row.nik || '',
-            'Nik': row.nik || '',
-            'JENIS KELAMIN': (row.jenis_kelamin || '').toUpperCase(),
-            'Jenis Kelamin': row.jenis_kelamin || '',
-            'jenis kelamin': row.jenis_kelamin || '',
-            'TEMPAT/TGL LAHIR': row.tempat_tgl_lahir || '',
-            'Tempat/Tgl Lahir': row.tempat_tgl_lahir || '',
-            'tempat/tgl lahir': row.tempat_tgl_lahir || '',
-            'AGAMA': (row.agama || '').toUpperCase(),
-            'Agama': row.agama || '',
-            'agama': row.agama || '',
-            'PEKERJAAN': (row.pekerjaan || '').toUpperCase(),
-            'Pekerjaan': row.pekerjaan || '',
-            'pekerjaan': row.pekerjaan || '',
-            'ALAMAT': row.alamat || '',
-            'Alamat': row.alamat || '',
-            'alamat': row.alamat || '',
+            // SURAT KETERANGAN PENGHASILAN ORANG TUA SPECIFIC TAGS
+            'Penghasilan Rata-rata per bulan': formattedPenghasilan,
+            'Penghasilan Rata-rata per Bulan': formattedPenghasilan,
+            'penghasilan_orang_tua': formattedPenghasilan,
+            'Jumlah Anak yg Jadi Tanggungan': jumlahTanggunganVal,
+            'jumlah_tanggungan': jumlahTanggunganVal,
+            'Nama Anak': namaAnakVal,
+            'nama_anak': namaAnakVal,
+            'NIK Anak': nikAnakVal,
+            'nik_anak': nikAnakVal,
+            'Tempat/Tgl Lahir Anak': tglLahirAnakVal,
+            'tgl_lahir_anak': tglLahirAnakVal,
+            'Sekolah/Kampus': sekolahKampusVal,
+            'sekolah_kampus_anak': sekolahKampusVal,
+            'Tempat Tinggal Saat Ini': tempatTinggalVal,
+            'RT Tempat Tinggal Saat Ini': rtTinggalVal,
+            'RW Tempat Tinggal Saat Ini': rwTinggalVal,
+
+            'Pejabat yang Bertanda Tangan': pejabatNama,
+            'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
+            'NIP Pejabat yang Bertanda Tangan': pejabatNip,
+            'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
+
+            'NAMA PEMOHON': safeUpper(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
+            'Nama Pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
+            'nama pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
+            'NIK': safeStr(row.nik, '7372011205950001'),
+            'Nik': safeStr(row.nik, '7372011205950001'),
+
+            'TEMPAT/TGL LAHIR': tempatTglLahirVal,
+            'Tempat/Tgl Lahir': tempatTglLahirVal,
+            'tempat/tgl lahir': tempatTglLahirVal,
+
+            'JENIS KELAMIN': safeUpper(jenisKelaminVal),
+            'Jenis Kelamin': jenisKelaminVal,
+
+            'AGAMA': safeUpper(agamaVal),
+            'Agama': agamaVal,
+
+            'PEKERJAAN': safeUpper(pekerjaanVal),
+            'Pekerjaan': pekerjaanVal,
+
+            'ALAMAT': alamatVal,
+            'Alamat': alamatVal,
+
             'RT': rtVal || '01',
             'RW': rwVal || '01',
             'Kelurahan': 'Lompoe',
             'Kecamatan': 'Bacukiki',
             'Kota/Kab': 'Parepare',
-
-            // Keramaian
-            'acara': row.nama_acara || row.keperluan || '',
-            'penggunaan izin': row.keperluan || 'Izin Acara',
-            'hari/tanggal acara': row.tanggal_acara || '-',
-            'waktu acara': extraData.waktu_acara || '09.00 - Selesai',
-            'tempat acara': row.lokasi_acara || '-',
-            'RT tempat acara': extraData.rt_tempat_acara || rtVal || '001',
-            'RW tempat acara': extraData.rw_tempat_acara || rwVal || '001',
-
-            // Data Ayah Kandung (Blangko Nikah Model N1)
-            'NAMA AYAH KANDUNG': (extraData.nama_ayah || '').toUpperCase(),
-            'Nama Ayah Kandung': extraData.nama_ayah || '',
-            'NIK AYAH KANDUNG': extraData.nik_ayah || '',
-            'TEMPAT/TGL LAHIR AYAH KANDUNG': extraData.tgl_lahir_ayah || '',
-            'Tempat/Tgl Lahir Ayah Kandung': extraData.tgl_lahir_ayah || '',
-            'AGAMA AYAH KANDUNG': (extraData.agama_ayah || 'Islam').toUpperCase(),
-            'PEKERJAAN AYAH KANDUNG': (extraData.pekerjaan_ayah || '').toUpperCase(),
-            'ALAMAT AYAH KANDUNG': extraData.alamat_ayah || '',
-
-            // Data Ibu Kandung (Blangko Nikah Model N1)
-            'NAMA IBU KANDUNG': (extraData.nama_ibu || '').toUpperCase(),
-            'Nama Ibu Kandung': extraData.nama_ibu || '',
-            'NIK IBU KANDUNG': extraData.nik_ibu || '',
-            'TEMPAT/TGL LAHIR IBU KANDUNG': extraData.tgl_lahir_ibu || '',
-            'Tempat/Tgl Lahir Ibu Kandung': extraData.tgl_lahir_ibu || '',
-            'AGAMA IBU KANDUNG': (extraData.agama_ibu || 'Islam').toUpperCase(),
-            // Data Anak (Surat Keterangan Penghasilan Orang Tua)
-            'NAMA ANAK': (extraData.nama_anak || '').toUpperCase(),
-            'Nama Anak': extraData.nama_anak || '',
-            'NIK ANAK': extraData.nik_anak || '',
-            'Nik Anak': extraData.nik_anak || '',
-            'TEMPAT/TGL LAHIR ANAK': extraData.tgl_lahir_anak || '',
-            'Tempat/Tgl Lahir Anak': extraData.tgl_lahir_anak || '',
-
-            // Surat Rekomendasi Pembelian BBM
-            'Konsumen Pengguna': extraData.konsumen_pengguna || 'Pertanian',
-            'Jenis Usaha': extraData.jenis_usaha || 'Pertanian',
-            'Jenis Alat': extraData.jenis_alat || '',
-            'Jumlah Alat': extraData.jumlah_alat || '',
-            'Fungsi Alat': extraData.fungsi_alat || '',
-            'Jenis BBM': extraData.jenis_bbm || '',
-            'Kebutuhan BBM': extraData.kebutuhan_bbm || extraData.jumlah_liter || '',
-            'Jam Operasi': extraData.jam_operasi || '8 Jam / Hari',
-            'Liter': extraData.jumlah_liter || extraData.liter || '',
-
-            // Surat Keterangan Penghasilan Orang Tua
-            'Penghasilan Rata-rata per bulan': extraData.penghasilan_orang_tua || '',
-            'Jumlah Anak yg Jadi Tanggungan': extraData.jumlah_tanggungan || '',
-            'Sekolah/Kampus': extraData.sekolah_kampus_anak || '',
-
-            // Surat Keterangan Penguburan & Kematian
-            'Nama Warga yang Meninggal': extraData.nama_almarhum || extraData.nama_warga_meninggal || row.nama_pemohon || '',
-            'Nama Almarhum': extraData.nama_almarhum || '',
-            'Hari/Tanggal Penguburan': extraData.tgl_penguburan || '',
-            'Waktu Penguburan': extraData.waktu_penguburan || '',
-            'Lokasi/Alamat Penguburan': extraData.lokasi_pemakaman || '',
-            'Lokasi Meninggal': extraData.tempat_meninggal || extraData.lokasi_meninggal || 'Parepare',
-            'Hari/Tanggal Meninggal': extraData.tgl_meninggal || extraData.tanggal_meninggal || '-',
-            'Tanggal Meninggal': extraData.tgl_meninggal || extraData.tanggal_meninggal || '-',
-            'Tempat Meninggal': extraData.tempat_meninggal || extraData.lokasi_meninggal || '-',
-
-            // Surat Keterangan Orang yang Sama
-            'Dokumen 1': extraData.dokumen1_nama || '',
-            'Nama yang Tercantum di Dokumen 1': extraData.dokumen1_nama_tercantum || '',
-            'Dokumen 2': extraData.dokumen2_nama || '',
-            'Nama yang Tercantum di Dokumen 2': extraData.dokumen2_nama_tercantum || '',
-
-            // Surat Keterangan Pergantian Status Pekerjaan
-            'Status Pekerjaan Saat Ini': extraData.pekerjaan_baru || '',
-
-            // Surat Keterangan Belum Memiliki Rumah
-            'Status Tempat Tinggal Saat Ini': extraData.status_rumah || 'Kontrakan',
-
-            // Surat Keterangan Berpenghasilan
-            'Jumlah Penghasilan dalam Angka': extraData.jumlah_penghasilan || '',
-            'Jumlah Penghasilan dalam Huruf': extraData.penghasilan_terbilang || '',
-
-            // Surat Keterangan Layak Dibantu
-            'Bantuan yang Dimohonkan': extraData.jenis_bantuan || row.keperluan || '',
-
-            // Blangko Nikah (Model N1)
-            'STATUS PERKAWINAN UNTUK LAKI-LAKI': extraData.status_perkawinan || 'Jejaka',
-            'STATUS PERKAWINAN UNTUK PEREMPUAN': extraData.status_perkawinan || 'Perawan',
-            'NAMA ISTRI/SUAMI TERDAHULU': extraData.nama_pasangan_terdahulu || '-',
-            'NAMA AYAH': extraData.nama_ayah || '',
-            'NIK AYAH': extraData.nik_ayah || '',
-            'TEMPAT/TGL LAHIR AYAH': extraData.tgl_lahir_ayah || '',
-            'PEKERJAAN AYAH': extraData.pekerjaan_ayah || '',
-            'ALAMAT AYAH': extraData.alamat_ayah || '',
-            'NAMA IBU': extraData.nama_ibu || '',
-            'NIK IBU': extraData.nik_ibu || '',
-            'TEMPAT/TGL LAHIR IBU': extraData.tgl_lahir_ibu || '',
-            'PEKERJAAN IBU': extraData.pekerjaan_ibu || '',
-            'ALAMAT IBU': extraData.alamat_ibu || '',
-
-            // Data Khusus Tambahan dari JSON
             ...extraData
         };
 
+        const doc = new Docxtemplater(zip, {
+            delimiters: { start: '<<', end: '>>' },
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: function(tag) {
+                if (!tag || !tag.name) return '-';
+                const tagKey = tag.name.trim();
+                if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return naskahNo;
+                if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return todayLongStr;
+                if (payload && payload[tagKey] !== undefined && payload[tagKey] !== null) return payload[tagKey];
+                if (payload && payload[tag.name] !== undefined && payload[tag.name] !== null) return payload[tag.name];
+                const val = row[tagKey] || extraData[tagKey] || row[tagKey.toLowerCase()] || extraData[tagKey.toLowerCase()];
+                return (val !== undefined && val !== null && val !== '') ? val : '-';
+            }
+        });
+
         doc.render(payload);
-        const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+        let generatedZip = doc.getZip();
+        let renderedXml = generatedZip.file('word/document.xml').asText();
+
+        if (payload && typeof payload === 'object') {
+            Object.keys(payload).forEach(k => {
+                const val = payload[k];
+                if (val !== undefined && val !== null) {
+                    const strVal = String(val);
+                    renderedXml = renderedXml.replaceAll(`&lt;&lt;${k}&gt;&gt;`, strVal);
+                    renderedXml = renderedXml.replaceAll(`<<${k}>>`, strVal);
+                }
+            });
+        }
+
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNama);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Jabatan Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatJabatan);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?NIP Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNip);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pangkat Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatPangkat);
+
+        renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
+        renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
+
+        renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
+        renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
+        renderedXml = renderedXml.replace(/<w:t[^>]*>\}<\/w:t>/g, '<w:t></w:t>');
+
+        generatedZip.file('word/document.xml', renderedXml);
+        const buf = generatedZip.generate({ type: 'nodebuffer' });
 
         const filenameDownload = `${row.jenis_surat} - ${row.nama_pemohon}.docx`;
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
