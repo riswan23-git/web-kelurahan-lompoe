@@ -106,12 +106,28 @@ function AdminDashboard() {
     }
   };
 
-  // Fetch functions
   const fetchPengajuan = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
-      setPengajuanList(res.data);
-    } catch (err) { console.error(err); }
+      const serverData = Array.isArray(res.data) ? res.data : [];
+      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+
+      const combinedMap = new Map();
+      localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
+      serverData.forEach(item => {
+        if (item && item.no_resi) {
+          const existing = combinedMap.get(item.no_resi) || {};
+          const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
+          combinedMap.set(item.no_resi, { ...existing, ...item, file_data_map: mergedFileMap });
+        }
+      });
+
+      const combinedList = Array.from(combinedMap.values());
+      setPengajuanList(combinedList);
+    } catch (err) {
+      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      setPengajuanList(localData);
+    }
   };
 
   const fetchAparatur = async () => {

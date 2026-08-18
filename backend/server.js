@@ -762,24 +762,57 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'NAMA PEMOHON': safeUpper(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
             'Nama Pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
             'nama pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
+            'nama_pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
+
             'NIK': safeStr(row.nik, '7372011205950001'),
             'Nik': safeStr(row.nik, '7372011205950001'),
+            'nik': safeStr(row.nik, '7372011205950001'),
 
             'TEMPAT/TGL LAHIR': tempatTglLahirVal,
             'Tempat/Tgl Lahir': tempatTglLahirVal,
             'tempat/tgl lahir': tempatTglLahirVal,
+            'tempat_tgl_lahir': tempatTglLahirVal,
 
             'JENIS KELAMIN': safeUpper(jenisKelaminVal),
             'Jenis Kelamin': jenisKelaminVal,
+            'jenis kelamin': jenisKelaminVal,
+            'jenis_kelamin': jenisKelaminVal,
 
             'AGAMA': safeUpper(agamaVal),
             'Agama': agamaVal,
+            'agama': agamaVal,
 
             'PEKERJAAN': safeUpper(pekerjaanVal),
             'Pekerjaan': pekerjaanVal,
+            'pekerjaan': pekerjaanVal,
 
             'ALAMAT': alamatVal,
             'Alamat': alamatVal,
+            'alamat': alamatVal,
+
+            // Event tags (Surat Izin Keramaian)
+            'acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'Acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'nama_acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+
+            'penggunaan izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
+            'Penggunaan Izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
+            'penggunaan_izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
+
+            'hari/tanggal acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'Hari/Tanggal Acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'tanggal_acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+
+            'waktu acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+            'Waktu Acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+            'waktu_acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+
+            'tempat acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
+            'Tempat Acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
+            'lokasi_acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
+
+            'RT tempat acara': rtVal || '01',
+            'RW tempat acara': rwVal || '01',
 
             'RT': rtVal || '01',
             'RW': rwVal || '01',

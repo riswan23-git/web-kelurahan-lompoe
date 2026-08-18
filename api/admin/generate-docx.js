@@ -283,11 +283,26 @@ module.exports = (req, res) => {
             'Kelurahan': 'Lompoe',
             'Kecamatan': 'Bacukiki',
             'Kota/Kab': 'Parepare',
-            'acara': safeStr(item.nama_acara || item.keperluan, 'Kegiatan Syukuran'),
-            'penggunaan izin': safeStr(item.keperluan, 'Izin Acara'),
-            'hari/tanggal acara': safeStr(item.tanggal_acara, 'Senin, 24 Agustus 2026'),
-            'waktu acara': '09.00 - Selesai WITA',
-            'tempat acara': safeStr(item.lokasi_acara || alamatVal, 'Kediaman Pemohon'),
+            'acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'Acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'nama_acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+
+            'penggunaan izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
+            'Penggunaan Izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
+            'penggunaan_izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
+
+            'hari/tanggal acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'Hari/Tanggal Acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'tanggal_acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+
+            'waktu acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
+            'Waktu Acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
+            'waktu_acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
+
+            'tempat acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+            'Tempat Acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+            'lokasi_acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+
             'RT tempat acara': rtVal || '01',
             'RW tempat acara': rwVal || '01',
             ...extraJson,
