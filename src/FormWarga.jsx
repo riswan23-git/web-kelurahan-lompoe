@@ -316,7 +316,7 @@ function FormWarga() {
   let cleanWaNum = (targetRtObj && targetRtObj.no_wa) ? targetRtObj.no_wa.replace(/[^0-9]/g, '') : '';
   if (cleanWaNum.startsWith('0')) cleanWaNum = '62' + cleanWaNum.slice(1);
 
-  const urlVerifikasiRT = window.location.origin + '/verifikasi-rt?token=' + tokenRtHasil;
+  const urlVerifikasiRT = window.location.origin + '/#/verifikasi-rt?token=' + tokenRtHasil;
   const pesanWaRT = `Halo Pak RT/RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital via link: ${urlVerifikasiRT}`;
   
   const waTargetUrl = cleanWaNum 

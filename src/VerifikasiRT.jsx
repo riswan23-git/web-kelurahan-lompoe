@@ -7,7 +7,16 @@ import Footer from './Footer';
 
 function VerifikasiRT() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  let token = searchParams.get('token');
+
+  if (!token) {
+    try {
+      const fullUrl = window.location.href;
+      if (fullUrl.includes('token=')) {
+        token = fullUrl.split('token=')[1].split('&')[0].split('#')[0].split('?')[0];
+      }
+    } catch(e) {}
+  }
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

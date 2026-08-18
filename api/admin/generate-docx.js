@@ -324,7 +324,16 @@ module.exports = (req, res) => {
             });
         }
 
-        const naskahNo = `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
+        // Robust fuzzy regex replacement for Pejabat tags (even if split across XML elements)
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNama);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Jabatan Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatJabatan);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?NIP Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNip);
+        renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pangkat Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatPangkat);
+
+        // Clean authentic naskah number based on Resi or official field (no random timestamp numbers)
+        const cleanResiNo = (item.no_resi || noResi || '500536').replace(/[^0-9]/g, '') || '500536';
+        const naskahNo = item.nomor_naskah || extraJson.nomor_naskah || item.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
+
         renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
         renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
         renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
