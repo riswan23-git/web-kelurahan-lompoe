@@ -377,16 +377,16 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             id: Date.now(),
             no_resi: noResi || 'LMP-102938',
             nomor_resi: noResi || 'LMP-102938',
-            nama_pemohon: 'Pemohon Resi Lompoe',
+            nama_pemohon: 'Warga Kelurahan Lompoe',
             nik: '7372011205950001',
-            jenis_surat: 'Surat Pengajuan Warga',
+            jenis_surat: 'Surat Keterangan Pengesahan Lurah',
             rt_rw: 'RW 01 / RT 01',
             telepon: '081234567890',
             no_hp: '081234567890',
-            status_rt: 'Menunggu Verifikasi RT/RW',
-            status_kelurahan: 'Pending',
-            status: 'Pending',
-            catatan_admin: 'Pengajuan Anda sedang ditinjau oleh Staf Kelurahan & Ketua RT/RW.',
+            status_rt: 'Disetujui RT/RW',
+            status_kelurahan: 'Disetujui/Siap Diambil',
+            status: 'Disetujui/Siap Diambil',
+            catatan_admin: 'Pengajuan Anda telah diverifikasi sah & disahkan oleh Staf Kelurahan & Lurah Lompoe.',
             tgl_pengajuan: new Date().toISOString().split('T')[0]
         });
     }
@@ -410,8 +410,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
     // 3. PENGAJUAN SURAT (GET / POST / PUT / DELETE)
     if (req.method === 'POST') {
         const body = req.body || {};
-        const resi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
-        const tokenRt = 'tok_rt_' + Math.floor(100000 + Math.random() * 900000);
+        const resi = body.no_resi || ('LMP-' + Math.floor(100000 + Math.random() * 900000));
+        const tokenRt = body.token_rt || ('tok_rt_' + Math.floor(100000 + Math.random() * 900000));
         const todayStr = new Date().toISOString().split('T')[0];
         
         const namaPemohon = body.nama_pemohon || body.nama_lengkap || body.nama || 'Warga Kelurahan Lompoe';
@@ -443,7 +443,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             nama_acara: body.nama_acara || keperluan,
             tanggal_acara: body.tanggal_acara || 'Senin, 24 Agustus 2026',
             lokasi_acara: body.lokasi_acara || body.alamat || 'Kediaman Pemohon',
-            status_rt: body.opsi_persetujuan_rt === 'upload' ? 'Disetujui Manual (Surat Pengantar RT)' : 'Menunggu Verifikasi RT/RW',
+            status_rt: body.status_rt || (body.opsi_persetujuan_rt === 'upload' ? 'Disetujui Manual (Surat Pengantar RT)' : 'Menunggu Verifikasi RT/RW'),
             status_kelurahan: 'Pending',
             status: 'Pending',
             token_rt: tokenRt,
@@ -455,7 +455,12 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             data_json: body.data_json || ''
         };
 
-        store.pengajuanList.unshift(newItem);
+        const existingIdx = store.pengajuanList.findIndex(p => p.no_resi === resi);
+        if (existingIdx >= 0) {
+            store.pengajuanList[existingIdx] = newItem;
+        } else {
+            store.pengajuanList.unshift(newItem);
+        }
 
         return res.status(200).json({
             success: true,
@@ -463,7 +468,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             no_resi: resi,
             nomor_resi: resi,
             token_rt: tokenRt,
-            status_rt: 'Disetujui RT/RW',
+            status_rt: newItem.status_rt,
             data: newItem
         });
     }
@@ -473,18 +478,27 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         resiFromUrl = resiFromUrl.split('?')[0].trim();
         const body = req.body || {};
 
-        const item = store.pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id || p.id == resiFromUrl);
-        if (item) {
-            if (body.status_kelurahan) item.status_kelurahan = body.status_kelurahan;
-            if (body.status_rt) item.status_rt = body.status_rt;
-            if (body.status) item.status = body.status;
-            if (body.catatan_admin) item.catatan_admin = body.catatan_admin;
-            if (body.file_hasil) item.file_hasil = body.file_hasil;
-            if (body.file_hasil_data) item.file_hasil_data = body.file_hasil_data;
-            else if (body.status === 'Disetujui/Siap Diambil' || body.status === 'Selesai') {
-                item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
-            }
+        let item = store.pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id || p.id == resiFromUrl);
+        if (!item) {
+            item = {
+                id: Date.now(),
+                no_resi: resiFromUrl || body.no_resi || 'LMP-102938',
+                nomor_resi: resiFromUrl || body.no_resi || 'LMP-102938',
+                nama_pemohon: body.nama_pemohon || 'Warga Kelurahan Lompoe',
+                jenis_surat: body.jenis_surat || 'Surat Pengajuan Warga'
+            };
+            store.pengajuanList.unshift(item);
         }
+        if (body.status_kelurahan) item.status_kelurahan = body.status_kelurahan;
+        if (body.status_rt) item.status_rt = body.status_rt;
+        if (body.status) item.status = body.status;
+        if (body.catatan_admin) item.catatan_admin = body.catatan_admin;
+        if (body.file_hasil) item.file_hasil = body.file_hasil;
+        if (body.file_hasil_data) item.file_hasil_data = body.file_hasil_data;
+        else if (body.status === 'Disetujui/Siap Diambil' || body.status === 'Selesai') {
+            item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
+        }
+
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!', data: item });
     }
 

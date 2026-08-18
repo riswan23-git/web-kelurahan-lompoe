@@ -54,6 +54,7 @@ function AdminDashboard() {
   // 1. Data Pengajuan Surat
   const [pengajuanList, setPengajuanList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [inputResiSync, setInputResiSync] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [modalUpdate, setModalUpdate] = useState(null);
   const [modalPreviewSurat, setModalPreviewSurat] = useState(null);
@@ -229,6 +230,29 @@ function AdminDashboard() {
     } catch (err) {
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
       setPengajuanList(localData);
+    }
+  };
+
+  const handleSyncResiManual = async (e) => {
+    if (e) e.preventDefault();
+    if (!inputResiSync.trim()) {
+      showNotif('Masukkan nomor resi warga!');
+      return;
+    }
+    const cleanResi = inputResiSync.trim();
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/cek-resi/${cleanResi}`);
+      if (res.data) {
+        const item = res.data;
+        const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+        const updatedLocal = [item, ...localData.filter(i => i.no_resi !== cleanResi)];
+        localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocal));
+        setPengajuanList(updatedLocal);
+        showNotif(`Pengajuan ${cleanResi} (${item.nama_pemohon || 'Warga'}) berhasil ditarik & ditambahkan ke tabel admin!`);
+        setInputResiSync('');
+      }
+    } catch (err) {
+      showNotif(`Resi ${cleanResi} tidak ditemukan di server.`);
     }
   };
 
@@ -770,6 +794,32 @@ function AdminDashboard() {
                   <button className="btn btn-outline-secondary" onClick={() => setSearchTerm('')}>✕ Clear</button>
                 )}
               </div>
+            </div>
+
+            {/* Multi-Device Resi Tarik/Sync Bar */}
+            <div className="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light border-start border-4 border-primary">
+              <form onSubmit={handleSyncResiManual} className="row align-items-center g-2">
+                <div className="col-md-8">
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-primary text-primary fw-bold">📥 Input / Sync Resi Warga:</span>
+                    <input 
+                      type="text" 
+                      className="form-control border-primary" 
+                      placeholder="Masukkan No. Resi Warga dari HP/device lain (contoh: LMP-891472)..."
+                      value={inputResiSync}
+                      onChange={(e) => setInputResiSync(e.target.value)}
+                    />
+                    <button type="submit" className="btn btn-primary fw-bold">
+                      📥 Tarik Data Ke Tabel Admin
+                    </button>
+                  </div>
+                </div>
+                <div className="col-md-4 text-end">
+                  <button type="button" onClick={fetchPengajuan} className="btn btn-outline-secondary fw-semibold btn-sm">
+                    🔄 Sync Ulang Semua Resi
+                  </button>
+                </div>
+              </form>
             </div>
 
             {/* Filter Tabs Status Pengajuan */}

@@ -347,6 +347,14 @@ function FormWarga() {
                 )}
 
                 <div className="d-flex flex-wrap justify-content-center gap-3">
+                  <a 
+                    href={`https://wa.me/?text=${encodeURIComponent(`Halo Admin Kelurahan Lompoe, saya ${formData.nama_pemohon || 'Warga'} telah mengajukan ${formData.jenis_surat} dengan Resi: ${noResiHasil}. Mohon bantuan prosesnya. Terimakasih! Link resi: ${window.location.origin}/cek-resi?resi=${noResiHasil}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-success btn-lg px-4 fw-bold rounded-3 shadow-sm"
+                  >
+                    📱 Kirim Resi ke WhatsApp Admin
+                  </a>
                   <Link to={`/cek-resi?resi=${noResiHasil}`} className="btn btn-primary btn-lg px-4 fw-bold rounded-3">
                     🔍 Cek Status Resi Ini
                   </Link>

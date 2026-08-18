@@ -207,35 +207,45 @@ function CekResi() {
                   </div>
 
                   {/* Download Dokumen Hasil Pengajuan Warga */}
-                  {(hasilResi.file_hasil || hasilResi.status === 'Disetujui/Siap Diambil' || hasilResi.status === 'Selesai' || hasilResi.status_rt?.includes('Disetujui')) && (
-                    <div className="alert alert-success p-4 rounded-4 mb-4 shadow-sm">
-                      <div className="d-flex align-items-center gap-3 mb-2">
-                        <i className="bi bi-file-earmark-check-fill display-5 text-success"></i>
-                        <div>
-                          <h5 className="fw-bold text-success mb-1">🎉 SURAT PERSETUJUAN HASIL TELAH DISAHKAN!</h5>
-                          <p className="text-muted small mb-0">Surat pengajuan Anda telah selesai diproses oleh Staf Kelurahan & ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>)</p>
-                        </div>
+                  {/* Download Dokumen Hasil Pengajuan Warga */}
+                  <div className="alert alert-success p-4 rounded-4 mb-4 shadow-sm">
+                    <div className="d-flex align-items-center gap-3 mb-2">
+                      <i className="bi bi-file-earmark-check-fill display-5 text-success"></i>
+                      <div>
+                        <h5 className="fw-bold text-success mb-1">🎉 DOKUMEN / SURAT RESMI SRIKANDI SIAP</h5>
+                        <p className="text-muted small mb-0">Surat pengajuan Anda ({hasilResi.jenis_surat}) telah terverifikasi oleh Sistem Digital Kelurahan Lompoe & ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>)</p>
                       </div>
-                      
-                      <div className="mt-3 text-center text-sm-start">
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const localFileB64 = localStorage.getItem('file_hasil_b64_' + hasilResi.no_resi);
-                            const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-                            const matchedItem = localList.find(i => i.no_resi === hasilResi.no_resi);
-                            const realPdfB64 = hasilResi.file_hasil_data || localFileB64 || matchedItem?.file_hasil_data;
+                    </div>
+                    
+                    <div className="mt-3 d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const safeNoResi = encodeURIComponent(hasilResi.no_resi || 'LMP-102938');
+                          window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}`, '_blank');
+                        }}
+                        className="btn btn-primary btn-lg fw-bold px-4 py-3 rounded-pill shadow-sm"
+                      >
+                        <i className="bi bi-file-earmark-word-fill me-2"></i> 📥 Download Surat Word (.docx)
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const localFileB64 = localStorage.getItem('file_hasil_b64_' + hasilResi.no_resi);
+                          const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+                          const matchedItem = localList.find(i => i.no_resi === hasilResi.no_resi);
+                          const realPdfB64 = hasilResi.file_hasil_data || localFileB64 || matchedItem?.file_hasil_data;
 
-                            if (realPdfB64) {
-                              const win = window.open();
-                              if (realPdfB64.startsWith('data:image')) {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${realPdfB64}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan PDF Surat Srikandi</a></body></html>`);
-                              } else {
-                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;"><iframe src="${realPdfB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
-                              }
+                          if (realPdfB64) {
+                            const win = window.open();
+                            if (realPdfB64.startsWith('data:image')) {
+                              win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${realPdfB64}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan PDF Surat Srikandi</a></body></html>`);
                             } else {
-                              const win = window.open();
-                              win.document.write(`<!DOCTYPE html>
+                              win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;"><iframe src="${realPdfB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                            }
+                          } else {
+                            const win = window.open();
+                            win.document.write(`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -288,15 +298,14 @@ window.onload = function() { window.print(); };
 </script>
 </body>
 </html>`);
-                            }
-                          }}
-                          className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
-                        >
-                          <i className="bi bi-download me-2"></i> 📥 Download / Cetak Surat Resmi PDF (Hasil TTD Lurah Srikandi)
-                        </button>
-                      </div>
+                          }
+                        }}
+                        className="btn btn-success btn-lg fw-bold px-4 py-3 rounded-pill shadow-sm"
+                      >
+                        <i className="bi bi-printer me-2"></i> 🖨️ Cetak / Preview PDF Pengesahan Lurah
+                      </button>
                     </div>
-                  )}
+                  </div>
 
                   {/* Direct Button ke Live Chat */}
                   <div className="d-grid gap-2">
