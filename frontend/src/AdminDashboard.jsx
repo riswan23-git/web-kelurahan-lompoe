@@ -663,7 +663,7 @@ function AdminDashboard() {
                               </td>
                               <td>
                                 <span className={`badge ${item.status_rt?.includes('Disetujui') ? 'bg-success' : 'bg-warning text-dark'}`}>
-                                  {item.status_rt || 'Menunggu RT'}
+                                  {item.status_rt || 'Menunggu Verifikasi RT/RW'}
                                 </span>
                               </td>
                               <td>
@@ -702,7 +702,38 @@ function AdminDashboard() {
                               <td>
                                 <div className="d-flex flex-column gap-1">
                                   <a 
-                                    href={`${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}`} 
+                                    href={(() => {
+                                      try {
+                                        const cleanObj = {
+                                          no_resi: item.no_resi || '',
+                                          nama_pemohon: item.nama_pemohon || item.nama_lengkap || '',
+                                          nik: item.nik || '',
+                                          jenis_surat: item.jenis_surat || '',
+                                          rt_rw: item.rt_rw || 'RT 01 / RW 01',
+                                          alamat: item.alamat || '',
+                                          keperluan: item.keperluan || '',
+                                          jenis_usaha: item.jenis_usaha || '',
+                                          jenis_alat: item.jenis_alat || '',
+                                          jumlah_alat: item.jumlah_alat || '',
+                                          fungsi_alat: item.fungsi_alat || '',
+                                          jenis_bbm: item.jenis_bbm || '',
+                                          kebutuhan_bbm: item.kebutuhan_bbm || '',
+                                          jam_operasi: item.jam_operasi || '',
+                                          jumlah_liter: item.jumlah_liter || item.volume_bbm || '',
+                                          volume_bbm: item.volume_bbm || item.jumlah_liter || '',
+                                          konsumen_pengguna: item.konsumen_pengguna || '',
+                                          data_json: item.data_json || '',
+                                          pejabat_ttd: item.pejabat_ttd || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pejabat_ttd) : item.data_json.pejabat_ttd) : '') || 'ASMIANTI M., SE.',
+                                          jabatan_pejabat: item.jabatan_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').jabatan_pejabat) : item.data_json.jabatan_pejabat) : '') || 'LURAH LOMPOE',
+                                          nip_pejabat: item.nip_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').nip_pejabat) : item.data_json.nip_pejabat) : '') || '19840927 201001 2 022',
+                                          pangkat_pejabat: item.pangkat_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pangkat_pejabat) : item.data_json.pangkat_pejabat) : '') || 'Penata Tk. I (III/d)'
+                                        };
+                                        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
+                                        return `${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
+                                      } catch(e) {
+                                        return `${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?_t=${Date.now()}`;
+                                      }
+                                    })()} 
                                     target="_blank" 
                                     rel="noreferrer" 
                                     className="btn btn-sm btn-primary fw-bold"
@@ -1620,7 +1651,7 @@ function AdminDashboard() {
                       <tr>
                         <td>Status Persetujuan RT/RW</td>
                         <td>:</td>
-                        <td><span className="badge bg-success text-white px-2 py-1">{modalPreviewSurat.status_rt || 'Disetujui Digital oleh Ketua RT'}</span></td>
+                        <td><span className={`badge ${modalPreviewSurat.status_rt?.includes('Disetujui') ? 'bg-success text-white' : 'bg-warning text-dark'} px-2 py-1`}>{modalPreviewSurat.status_rt || 'Menunggu Verifikasi RT/RW'}</span></td>
                       </tr>
                     </tbody>
                   </table>

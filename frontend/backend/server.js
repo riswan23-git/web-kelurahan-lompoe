@@ -657,13 +657,26 @@ function getKonsumenPenggunaRuns(selectedType) {
 // 2d. Auto Generator Download File Word (.docx) dari Template SRIKANDI
 app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
     try {
-        const results = await dbQuery('SELECT * FROM pengajuan_surat WHERE no_resi = ?', [req.params.no_resi]);
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Data pengajuan surat tidak ditemukan!' });
+        let itemFromQuery = null;
+        if (req.query && req.query.payload) {
+            try {
+                const jsonStr = Buffer.from(req.query.payload, 'base64').toString('utf8');
+                itemFromQuery = JSON.parse(jsonStr);
+            } catch (e) { }
         }
-        
-        const row = results[0];
-        const templateFile = TEMPLATE_MAP[row.jenis_surat] || 'SRIKANDI - SURAT IZIN KERAMAIAN.docx';
+
+        let results = [];
+        try {
+            results = await dbQuery('SELECT * FROM pengajuan_surat WHERE no_resi = ?', [req.params.no_resi]);
+        } catch (dbErr) { }
+
+        const row = (results && results.length > 0) ? results[0] : (itemFromQuery || {
+            no_resi: req.params.no_resi,
+            nama_pemohon: 'Warga Kelurahan Lompoe',
+            jenis_surat: 'Surat Izin Keramaian'
+        });
+
+        const templateFile = TEMPLATE_MAP[row.jenis_surat] || TEMPLATE_MAP[Object.keys(TEMPLATE_MAP).find(k => row.jenis_surat && row.jenis_surat.toLowerCase().includes(k.toLowerCase()))] || 'SRIKANDI - SURAT IZIN KERAMAIAN.docx';
         const templatePath = path.join(__dirname, '..', 'templates', templateFile);
 
         if (!fs.existsSync(templatePath)) {
@@ -672,8 +685,11 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
 
         let extraData = {};
         try {
-            if (row.data_json) extraData = JSON.parse(row.data_json);
-        } catch (e) {}
+            if (row.data_json) extraData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+        } catch (e) { }
+        if (itemFromQuery) {
+            Object.assign(extraData, itemFromQuery);
+        }
 
         const content = fs.readFileSync(templatePath);
         const zip = new PizZip(content);
@@ -689,10 +705,17 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         const pekerjaanVal = safeStr(row.pekerjaan, 'Wiraswasta');
         const alamatVal = safeStr(row.alamat, 'Jl. Poros Lompoe');
 
-        const pejabatNama = safeStr(extraData.pejabat_ttd || row.pejabat_ttd, 'ASMIANTI M., SE.');
-        const pejabatJabatan = safeStr(extraData.jabatan_pejabat || row.jabatan_pejabat, 'LURAH LOMPOE');
-        const pejabatNip = safeStr(extraData.nip_pejabat || row.nip_pejabat, '19840927 201001 2 022');
-        const pejabatPangkat = safeStr(extraData.pangkat_pejabat || row.pangkat_pejabat, 'Penata Tk. I (III/d)');
+        const getNonEmpty = (...vals) => {
+            for (let v of vals) {
+                if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+            }
+            return null;
+        };
+
+        const pejabatNama = getNonEmpty(extraData.pejabat_ttd, row.pejabat_ttd, extraData['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
+        const pejabatJabatan = getNonEmpty(extraData.jabatan_pejabat, row.jabatan_pejabat, extraData['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
+        const pejabatNip = getNonEmpty(extraData.nip_pejabat, row.nip_pejabat, extraData['NIP Pejabat yang Bertanda Tangan']) || '19840927 201001 2 022';
+        const pejabatPangkat = getNonEmpty(extraData.pangkat_pejabat, row.pangkat_pejabat, extraData['Pangkat Pejabat yang Bertanda Tangan']) || 'Penata Tk. I (III/d)';
 
         const cleanResiNo = (row.no_resi || req.params.no_resi || '500536').replace(/[^0-9]/g, '') || '500536';
         const naskahNo = row.nomor_naskah || extraData.nomor_naskah || row.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
@@ -736,11 +759,6 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'RT Tempat Tinggal Saat Ini': rtTinggalVal,
             'RW Tempat Tinggal Saat Ini': rwTinggalVal,
 
-            'Pejabat yang Bertanda Tangan': pejabatNama,
-            'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
-            'NIP Pejabat yang Bertanda Tangan': pejabatNip,
-            'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
-
             'NAMA PEMOHON': safeUpper(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
             'Nama Pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
             'nama pemohon': safeStr(row.nama_pemohon || row.nama_lengkap, 'Warga Kelurahan Lompoe'),
@@ -768,7 +786,17 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'Kelurahan': 'Lompoe',
             'Kecamatan': 'Bacukiki',
             'Kota/Kab': 'Parepare',
-            ...extraData
+            ...extraData,
+
+            'Pejabat yang Bertanda Tangan': pejabatNama,
+            'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
+            'NIP Pejabat yang Bertanda Tangan': pejabatNip,
+            'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
+            'pejabat_ttd': pejabatNama,
+            'jabatan_pejabat': pejabatJabatan,
+            'nip_pejabat': pejabatNip,
+            'pangkat_pejabat': pejabatPangkat,
+            'ttd_pengirim': pejabatNama
         };
 
         const doc = new Docxtemplater(zip, {
@@ -776,13 +804,17 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             paragraphLoop: true,
             linebreaks: true,
             nullGetter: function(tag) {
-                if (!tag || !tag.name) return '-';
-                const tagKey = tag.name.trim();
-                if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return naskahNo;
-                if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return todayLongStr;
-                if (payload && payload[tagKey] !== undefined && payload[tagKey] !== null) return payload[tagKey];
-                if (payload && payload[tag.name] !== undefined && payload[tag.name] !== null) return payload[tag.name];
-                const val = row[tagKey] || extraData[tagKey] || row[tagKey.toLowerCase()] || extraData[tagKey.toLowerCase()];
+                const tagName = (tag && (tag.value || tag.name)) ? String(tag.value || tag.name).trim() : '';
+                if (!tagName) return '-';
+                if (tagName === 'pejabat_ttd' || tagName === 'Pejabat yang Bertanda Tangan') return pejabatNama;
+                if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
+                if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
+                if (tagName === 'pangkat_pejabat' || tagName === 'Pangkat Pejabat yang Bertanda Tangan') return pejabatPangkat;
+                if (tagName === 'ttd_pengirim') return pejabatNama;
+                if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return naskahNo;
+                if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+                if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
+                const val = row[tagName] || extraData[tagName] || row[tagName.toLowerCase()] || extraData[tagName.toLowerCase()];
                 return (val !== undefined && val !== null && val !== '') ? val : '-';
             }
         });
@@ -795,7 +827,7 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         if (payload && typeof payload === 'object') {
             Object.keys(payload).forEach(k => {
                 const val = payload[k];
-                if (val !== undefined && val !== null) {
+                if (val !== undefined && val !== null && String(val).trim() !== '') {
                     const strVal = String(val);
                     renderedXml = renderedXml.replaceAll(`&lt;&lt;${k}&gt;&gt;`, strVal);
                     renderedXml = renderedXml.replaceAll(`<<${k}>>`, strVal);
@@ -803,7 +835,17 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             });
         }
 
-        // Explicit Pejabat tag replacers
+        // Explicit Pejabat tag replacers (for all tag variations)
+        renderedXml = renderedXml.replaceAll('&lt;&lt;pejabat_ttd&gt;&gt;', pejabatNama);
+        renderedXml = renderedXml.replaceAll('&lt;&lt;jabatan_pejabat&gt;&gt;', pejabatJabatan);
+        renderedXml = renderedXml.replaceAll('&lt;&lt;nip_pejabat&gt;&gt;', pejabatNip);
+        renderedXml = renderedXml.replaceAll('&lt;&lt;pangkat_pejabat&gt;&gt;', pejabatPangkat);
+
+        renderedXml = renderedXml.replaceAll('<<pejabat_ttd>>', pejabatNama);
+        renderedXml = renderedXml.replaceAll('<<jabatan_pejabat>>', pejabatJabatan);
+        renderedXml = renderedXml.replaceAll('<<nip_pejabat>>', pejabatNip);
+        renderedXml = renderedXml.replaceAll('<<pangkat_pejabat>>', pejabatPangkat);
+
         renderedXml = renderedXml.replaceAll('&lt;&lt;Pejabat yang Bertanda Tangan&gt;&gt;', pejabatNama);
         renderedXml = renderedXml.replaceAll('&lt;&lt;Jabatan Pejabat yang Bertanda Tangan&gt;&gt;', pejabatJabatan);
         renderedXml = renderedXml.replaceAll('&lt;&lt;NIP Pejabat yang Bertanda Tangan&gt;&gt;', pejabatNip);
@@ -816,9 +858,11 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
 
         renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
         renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
 
         renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
         renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
+        renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
 
         generatedZip.file('word/document.xml', renderedXml);
         const buf = generatedZip.generate({ type: 'nodebuffer' });

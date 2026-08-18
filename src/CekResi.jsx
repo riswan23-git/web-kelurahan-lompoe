@@ -175,7 +175,7 @@ function CekResi() {
                         {hasilResi.token_rt && !hasilResi.status_rt?.includes('Disetujui') && (
                           <div className="mt-2">
                             <a 
-                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT/RW, mohon bantu persetujuan surat saya (${hasilResi.jenis_surat}) via link: ${window.location.origin}/verifikasi-rt?token=${hasilResi.token_rt}`)}`}
+                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT/RW, mohon bantu persetujuan surat saya (${hasilResi.jenis_surat}) via link: ${window.location.origin}/#/verifikasi-rt?token=${hasilResi.token_rt}`)}`}
                               target="_blank" 
                               rel="noreferrer"
                               className="btn btn-sm btn-success fw-bold me-2"
@@ -314,7 +314,37 @@ window.onload = function() { window.print(); };
                         type="button"
                         onClick={() => {
                           const safeNoResi = encodeURIComponent(hasilResi.no_resi || 'LMP-102938');
-                          window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}`, '_blank');
+                          try {
+                            const cleanObj = {
+                              no_resi: hasilResi.no_resi || '',
+                              nama_pemohon: hasilResi.nama_pemohon || hasilResi.nama_lengkap || '',
+                              nik: hasilResi.nik || '',
+                              jenis_surat: hasilResi.jenis_surat || '',
+                              rt_rw: hasilResi.rt_rw || 'RT 01 / RW 01',
+                              alamat: hasilResi.alamat || '',
+                              keperluan: hasilResi.keperluan || '',
+                              jenis_usaha: hasilResi.jenis_usaha || '',
+                              jenis_alat: hasilResi.jenis_alat || '',
+                              jumlah_alat: hasilResi.jumlah_alat || '',
+                              fungsi_alat: hasilResi.fungsi_alat || '',
+                              jenis_bbm: hasilResi.jenis_bbm || '',
+                              kebutuhan_bbm: hasilResi.kebutuhan_bbm || '',
+                              jam_operasi: hasilResi.jam_operasi || '',
+                              jumlah_liter: hasilResi.jumlah_liter || hasilResi.volume_bbm || '',
+                              volume_bbm: hasilResi.volume_bbm || hasilResi.jumlah_liter || '',
+                              konsumen_pengguna: hasilResi.konsumen_pengguna || '',
+                              data_json: typeof hasilResi.data_json === 'string' ? hasilResi.data_json : JSON.stringify(hasilResi.data_json || {}),
+                              pejabat_ttd: hasilResi.pejabat_ttd || 'ASMIANTI M., SE.',
+                              jabatan_pejabat: hasilResi.jabatan_pejabat || 'LURAH LOMPOE',
+                              nip_pejabat: hasilResi.nip_pejabat || '19840927 201001 2 022',
+                              pangkat_pejabat: hasilResi.pangkat_pejabat || 'Penata Tk. I (III/d)',
+                              ...(typeof hasilResi.data_json === 'object' ? hasilResi.data_json : (hasilResi.data_json ? JSON.parse(hasilResi.data_json || '{}') : {}))
+                            };
+                            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
+                            window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`, '_blank');
+                          } catch(e) {
+                            window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}?_t=${Date.now()}`, '_blank');
+                          }
                         }}
                         className="btn btn-outline-primary btn-lg fw-bold px-4 py-3 rounded-pill"
                       >

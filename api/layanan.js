@@ -250,10 +250,17 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             const pekerjaanVal = safeStr(item.pekerjaan, 'Wiraswasta');
             const alamatVal = safeStr(item.alamat, 'Jl. Poros Lompoe');
 
-            const pejabatNama = safeStr(extraJson.pejabat_ttd || item.pejabat_ttd, 'ASMIANTI M., SE.');
-            const pejabatJabatan = safeStr(extraJson.jabatan_pejabat || item.jabatan_pejabat, 'LURAH LOMPOE');
-            const pejabatNip = safeStr(extraJson.nip_pejabat || item.nip_pejabat, '19840927 201001 2 022');
-            const pejabatPangkat = safeStr(extraJson.pangkat_pejabat || item.pangkat_pejabat, 'Penata Tk. I (III/d)');
+            const getNonEmpty = (...vals) => {
+                for (let v of vals) {
+                    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+                }
+                return null;
+            };
+
+            const pejabatNama = getNonEmpty(extraJson.pejabat_ttd, item.pejabat_ttd, extraJson['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
+            const pejabatJabatan = getNonEmpty(extraJson.jabatan_pejabat, item.jabatan_pejabat, extraJson['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
+            const pejabatNip = getNonEmpty(extraJson.nip_pejabat, item.nip_pejabat, extraJson['NIP Pejabat yang Bertanda Tangan']) || '19840927 201001 2 022';
+            const pejabatPangkat = getNonEmpty(extraJson.pangkat_pejabat, item.pangkat_pejabat, extraJson['Pangkat Pejabat yang Bertanda Tangan']) || 'Penata Tk. I (III/d)';
 
             const jenisUsahaVal = safeStr(item.jenis_usaha || extraJson.jenis_usaha, 'Pertanian / Usaha Mikro');
             const jenisAlatVal = safeStr(item.jenis_alat || extraJson.jenis_alat, 'Mesin Pompa Air / Traktor');
@@ -354,11 +361,6 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'KOTA': 'PAREPARE',
                 'Kota/Kabupaten': 'PAREPARE',
 
-                'Pejabat yang Bertanda Tangan': pejabatNama,
-                'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
-                'NIP Pejabat yang Bertanda Tangan': pejabatNip,
-                'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
-
                 'NAMA PEMOHON': safeUpper(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
                 'Nama Pemohon': safeStr(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
                 'nama pemohon': safeStr(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
@@ -400,7 +402,18 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'waktu acara': '09.00 - Selesai WITA',
                 'tempat acara': safeStr(item.lokasi_acara || alamatVal, 'Kediaman Pemohon'),
                 'RT tempat acara': rtVal || '01',
-                'RW tempat acara': rwVal || '01'
+                'RW tempat acara': rwVal || '01',
+                ...extraJson,
+
+                'Pejabat yang Bertanda Tangan': pejabatNama,
+                'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
+                'NIP Pejabat yang Bertanda Tangan': pejabatNip,
+                'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
+                'pejabat_ttd': pejabatNama,
+                'jabatan_pejabat': pejabatJabatan,
+                'nip_pejabat': pejabatNip,
+                'pangkat_pejabat': pejabatPangkat,
+                'ttd_pengirim': pejabatNama
             };
 
             const doc = new Docxtemplater(zip, {
@@ -408,13 +421,17 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 paragraphLoop: true,
                 linebreaks: true,
                 nullGetter: function(tag) {
-                    if (!tag || !tag.name) return '-';
-                    const tagKey = tag.name.trim();
-                    if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return naskahNo;
-                    if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return todayLongStr;
-                    if (payload && payload[tagKey] !== undefined && payload[tagKey] !== null) return payload[tagKey];
-                    if (payload && payload[tag.name] !== undefined && payload[tag.name] !== null) return payload[tag.name];
-                    const val = item[tagKey] || extraJson[tagKey] || item[tagKey.toLowerCase()] || extraJson[tagKey.toLowerCase()];
+                    const tagName = (tag && (tag.value || tag.name)) ? String(tag.value || tag.name).trim() : '';
+                    if (!tagName) return '-';
+                    if (tagName === 'pejabat_ttd' || tagName === 'Pejabat yang Bertanda Tangan') return pejabatNama;
+                    if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
+                    if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
+                    if (tagName === 'pangkat_pejabat' || tagName === 'Pangkat Pejabat yang Bertanda Tangan') return pejabatPangkat;
+                    if (tagName === 'ttd_pengirim') return pejabatNama;
+                    if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return naskahNo;
+                    if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+                    if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
+                    const val = item[tagName] || extraJson[tagName] || item[tagName.toLowerCase()] || extraJson[tagName.toLowerCase()];
                     return (val !== undefined && val !== null && val !== '') ? val : '-';
                 }
             });
@@ -429,7 +446,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             if (payload && typeof payload === 'object') {
                 Object.keys(payload).forEach(k => {
                     const val = payload[k];
-                    if (val !== undefined && val !== null) {
+                    if (val !== undefined && val !== null && String(val).trim() !== '') {
                         const strVal = String(val);
                         renderedXml = renderedXml.replaceAll(`&lt;&lt;${k}&gt;&gt;`, strVal);
                         renderedXml = renderedXml.replaceAll(`<<${k}>>`, strVal);
@@ -439,6 +456,16 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
             // Robust fuzzy regex replacement for Pejabat tags (even if split across XML elements)
             // Explicit Pejabat tag replacers
+            renderedXml = renderedXml.replaceAll('&lt;&lt;pejabat_ttd&gt;&gt;', pejabatNama);
+            renderedXml = renderedXml.replaceAll('&lt;&lt;jabatan_pejabat&gt;&gt;', pejabatJabatan);
+            renderedXml = renderedXml.replaceAll('&lt;&lt;nip_pejabat&gt;&gt;', pejabatNip);
+            renderedXml = renderedXml.replaceAll('&lt;&lt;pangkat_pejabat&gt;&gt;', pejabatPangkat);
+
+            renderedXml = renderedXml.replaceAll('<<pejabat_ttd>>', pejabatNama);
+            renderedXml = renderedXml.replaceAll('<<jabatan_pejabat>>', pejabatJabatan);
+            renderedXml = renderedXml.replaceAll('<<nip_pejabat>>', pejabatNip);
+            renderedXml = renderedXml.replaceAll('<<pangkat_pejabat>>', pejabatPangkat);
+
             renderedXml = renderedXml.replaceAll('&lt;&lt;Pejabat yang Bertanda Tangan&gt;&gt;', pejabatNama);
             renderedXml = renderedXml.replaceAll('&lt;&lt;Jabatan Pejabat yang Bertanda Tangan&gt;&gt;', pejabatJabatan);
             renderedXml = renderedXml.replaceAll('&lt;&lt;NIP Pejabat yang Bertanda Tangan&gt;&gt;', pejabatNip);
@@ -451,14 +478,19 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
             renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
             renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
+            renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
 
             renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
             renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
+            renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
 
             generatedZip.file('word/document.xml', renderedXml);
             const buf = generatedZip.generate({ type: 'nodebuffer' });
 
             const safeFilename = encodeURIComponent(`${item.jenis_surat || 'Surat'}_${item.no_resi || noResi}.docx`);
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
             return res.status(200).send(buf);
@@ -527,7 +559,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             rt_rw: 'RW 01 / RT 01',
             telepon: '081234567890',
             no_hp: '081234567890',
-            status_rt: 'Disetujui RT/RW',
+            status_rt: 'Menunggu Verifikasi RT/RW',
             status_kelurahan: 'Disetujui/Siap Diambil',
             status: 'Disetujui/Siap Diambil',
             catatan_admin: 'Pengajuan Anda telah diverifikasi sah & disahkan oleh Staf Kelurahan & Lurah Lompoe.',

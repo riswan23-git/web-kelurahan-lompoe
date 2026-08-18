@@ -142,17 +142,22 @@ function FormWarga() {
     setLoading(true);
 
     const data = new FormData();
-    Object.keys(formData).forEach(key => {
-      data.append(key, formData[key]);
-    });
+    const finalExtraData = {
+      pejabat_ttd: 'ASMIANTI M., SE.',
+      jabatan_pejabat: 'LURAH LOMPOE',
+      nip_pejabat: '19840927 201001 2 022',
+      pangkat_pejabat: 'Penata Tk. I (III/d)',
+      ...extraData
+    };
     
     // Sertakan nama_acara, tanggal_acara, lokasi_acara dari extraData agar konsisten
-    data.append('nama_acara', extraData.nama_acara || formData.keperluan || '');
-    data.append('tanggal_acara', extraData.tanggal_acara || '');
-    data.append('lokasi_acara', extraData.lokasi_acara || '');
+    data.append('nama_acara', finalExtraData.nama_acara || formData.keperluan || '');
+    data.append('tanggal_acara', finalExtraData.tanggal_acara || '');
+    data.append('lokasi_acara', finalExtraData.lokasi_acara || '');
     
     // Kirim seluruh isian spesifik sebagai data_khusus JSON
-    data.append('data_khusus', JSON.stringify(extraData));
+    data.append('data_khusus', JSON.stringify(finalExtraData));
+    data.append('data_json', JSON.stringify(finalExtraData));
 
     // Kirim SEMUA berkas dari ketiga kartu lampiran Srikandi
     if (filePengantar) {
@@ -172,7 +177,7 @@ function FormWarga() {
       
       const returnedResi = response.data?.no_resi || response.data?.nomor_resi || ('LMP-' + Math.floor(100000 + Math.random() * 900000));
       const returnedToken = response.data?.token_rt || ('tok_rt_' + Math.floor(100000 + Math.random() * 900000));
-      const returnedStatus = response.data?.status_rt || 'Disetujui RT/RW';
+      const returnedStatus = response.data?.status_rt || 'Menunggu Verifikasi RT/RW';
 
       setPesanSukses('Pengajuan Anda berhasil dikirim!');
       setNoResiHasil(returnedResi);
@@ -203,7 +208,7 @@ function FormWarga() {
   let cleanWaNum = (targetRtObj && targetRtObj.no_wa) ? targetRtObj.no_wa.replace(/[^0-9]/g, '') : '';
   if (cleanWaNum.startsWith('0')) cleanWaNum = '62' + cleanWaNum.slice(1);
 
-  const urlVerifikasiRT = window.location.origin + '/verifikasi-rt?token=' + tokenRtHasil;
+  const urlVerifikasiRT = window.location.origin + '/#/verifikasi-rt?token=' + tokenRtHasil;
   const pesanWaRT = `Halo Pak RT/RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital via link: ${urlVerifikasiRT}`;
   
   const waTargetUrl = cleanWaNum 

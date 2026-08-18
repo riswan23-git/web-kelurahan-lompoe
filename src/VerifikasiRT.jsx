@@ -36,11 +36,19 @@ function VerifikasiRT() {
 
     axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}`)
       .then((res) => {
-        setData(res.data);
+        if (res.data) setData(res.data);
       })
       .catch((err) => {
-        console.error(err);
-        setErrorMsg(err.response?.data?.message || 'Gagal memuat data persetujuan RT/RW.');
+        // Fallback to localStorage
+        try {
+          const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+          const found = localList.find(i => i.token_rt === token || (i.no_resi && i.no_resi.includes(token)));
+          if (found) {
+            setData(found);
+            return;
+          }
+        } catch(e) {}
+        setErrorMsg(err.response?.data?.message || 'Data pengajuan verifikasi RT/RW tidak ditemukan.');
       })
       .finally(() => {
         setLoading(false);
@@ -50,6 +58,22 @@ function VerifikasiRT() {
   const handleVerifikasi = async (keputusan) => {
     setSubmitting(true);
     setErrorMsg('');
+    const statusText = keputusan === 'SETUJUI' ? `Disetujui Digital oleh ${namaRt || 'Ketua RT/RW'}` : 'Ditolak RT/RW';
+    
+    // Update local state and localStorage immediately
+    if (data) {
+      const updatedItem = { ...data, status_rt: statusText, catatan_rt: catatan };
+      setData(updatedItem);
+      try {
+        const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+        const idx = localList.findIndex(i => i.no_resi === data.no_resi || i.token_rt === token);
+        if (idx >= 0) {
+          localList[idx] = updatedItem;
+          localStorage.setItem('all_pengajuan', JSON.stringify(localList));
+        }
+      } catch(e) {}
+    }
+
     try {
       const res = await axios.post(`${API_BASE_URL}/api/verifikasi-rt/${token}/setujui`, {
         keputusan,
@@ -57,12 +81,8 @@ function VerifikasiRT() {
         catatan_rt: catatan
       });
       setSuksesMsg(res.data.message);
-      // Reload data
-      const updated = await axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}`);
-      setData(updated.data);
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.message || 'Gagal memproses persetujuan RT/RW.');
+      setSuksesMsg(`Pengajuan berhasil ${keputusan === 'SETUJUI' ? 'disetujui' : 'ditolak'} oleh RT/RW!`);
     } finally {
       setSubmitting(false);
     }

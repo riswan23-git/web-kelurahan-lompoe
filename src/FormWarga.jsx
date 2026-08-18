@@ -243,33 +243,40 @@ function FormWarga() {
     if (fileNames.length === 0) fileNames.push('Surat_Pengantar_RT.pdf', 'KTP_Warga.pdf', 'KK_Warga.pdf');
 
     const userTelp = formData.no_hp || formData.telepon || formData.nomor_wa || '081234567890';
+    const finalExtraData = {
+      pejabat_ttd: 'ASMIANTI M., SE.',
+      jabatan_pejabat: 'LURAH LOMPOE',
+      nip_pejabat: '19840927 201001 2 022',
+      pangkat_pejabat: 'Penata Tk. I (III/d)',
+      ...extraData
+    };
     const payload = {
       ...formData,
-      ...extraData,
+      ...finalExtraData,
       no_hp: userTelp,
       telepon: userTelp,
       nomor_wa: userTelp,
       nama_pemohon: formData.nama_pemohon || 'Warga Kelurahan Lompoe',
       nik: formData.nik || '7372011205950001',
-      tempat_tgl_lahir: formData.tempat_tgl_lahir || extraData.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
-      jenis_kelamin: formData.jenis_kelamin || extraData.jenis_kelamin || 'Laki-laki',
-      agama: formData.agama || extraData.agama || 'Islam',
-      pekerjaan: formData.pekerjaan || extraData.pekerjaan || 'Wiraswasta',
-      alamat: formData.alamat || extraData.alamat || 'Jl. Poros Lompoe',
+      tempat_tgl_lahir: formData.tempat_tgl_lahir || finalExtraData.tempat_tgl_lahir || 'Parepare, 12 Mei 1995',
+      jenis_kelamin: formData.jenis_kelamin || finalExtraData.jenis_kelamin || 'Laki-laki',
+      agama: formData.agama || finalExtraData.agama || 'Islam',
+      pekerjaan: formData.pekerjaan || finalExtraData.pekerjaan || 'Wiraswasta',
+      alamat: formData.alamat || finalExtraData.alamat || 'Jl. Poros Lompoe',
       rt_rw: formData.rt_rw || 'RW 01 / RT 01',
       jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
-      keperluan: formData.keperluan || extraData.keperluan || extraData.nama_acara || 'Pengurusan Administrasi',
-      nama_acara: extraData.nama_acara || formData.keperluan || 'Kegiatan Kemasyarakatan',
-      tanggal_acara: extraData.tanggal_acara || 'Senin, 24 Agustus 2026',
-      lokasi_acara: extraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
+      keperluan: formData.keperluan || finalExtraData.keperluan || finalExtraData.nama_acara || 'Pengurusan Administrasi',
+      nama_acara: finalExtraData.nama_acara || formData.keperluan || 'Kegiatan Kemasyarakatan',
+      tanggal_acara: finalExtraData.tanggal_acara || 'Senin, 24 Agustus 2026',
+      lokasi_acara: finalExtraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
       file_berkas: fileNames.join(', '),
-      data_json: JSON.stringify(extraData)
+      data_json: JSON.stringify(finalExtraData)
     };
 
     // Instant 0-millisecond response generation
     const generatedResi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
     const generatedToken = 'tok_rt_' + Math.floor(100000 + Math.random() * 900000);
-    const initialRtStatus = formData.opsi_persetujuan_rt === 'digital' ? 'Menunggu Verifikasi RT/RW' : 'Disetujui RT/RW';
+    const initialRtStatus = 'Menunggu Verifikasi RT/RW';
 
     const newItemSaved = {
       ...payload,

@@ -73,15 +73,15 @@ const getCleanDocxUrl = (item, apiBaseUrl) => {
       volume_bbm: item.volume_bbm || item.jumlah_liter || '',
       konsumen_pengguna: item.konsumen_pengguna || '',
       data_json: item.data_json || '',
-      pejabat_ttd: item.pejabat_ttd || '',
-      jabatan_pejabat: item.jabatan_pejabat || '',
-      nip_pejabat: item.nip_pejabat || '',
-      pangkat_pejabat: item.pangkat_pejabat || ''
+      pejabat_ttd: item.pejabat_ttd || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pejabat_ttd) : item.data_json.pejabat_ttd) : '') || 'ASMIANTI M., SE.',
+      jabatan_pejabat: item.jabatan_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').jabatan_pejabat) : item.data_json.jabatan_pejabat) : '') || 'LURAH LOMPOE',
+      nip_pejabat: item.nip_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').nip_pejabat) : item.data_json.nip_pejabat) : '') || '19840927 201001 2 022',
+      pangkat_pejabat: item.pangkat_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pangkat_pejabat) : item.data_json.pangkat_pejabat) : '') || 'Penata Tk. I (III/d)'
     };
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
-    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}`;
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
   } catch(e) {
-    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}`;
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?_t=${Date.now()}`;
   }
 };
 
@@ -987,7 +987,7 @@ function AdminDashboard() {
                               </td>
                               <td>
                                 <span className={`badge ${item.status_rt?.includes('Disetujui') ? 'bg-success' : 'bg-warning text-dark'}`}>
-                                  {item.status_rt || 'Disetujui RT/RW'}
+                                  {item.status_rt || 'Menunggu Verifikasi RT/RW'}
                                 </span>
                               </td>
                               <td>
@@ -1970,7 +1970,7 @@ function AdminDashboard() {
                       <tr>
                         <td>Status Persetujuan RT/RW</td>
                         <td>:</td>
-                        <td><span className="badge bg-success text-white px-2 py-1">{modalPreviewSurat.status_rt || 'Disetujui Digital oleh Ketua RT'}</span></td>
+                        <td><span className={`badge ${modalPreviewSurat.status_rt?.includes('Disetujui') ? 'bg-success text-white' : 'bg-warning text-dark'} px-2 py-1`}>{modalPreviewSurat.status_rt || 'Menunggu Verifikasi RT/RW'}</span></td>
                       </tr>
                     </tbody>
                   </table>

@@ -175,7 +175,7 @@ function CekResi() {
                         {hasilResi.token_rt && !hasilResi.status_rt?.includes('Disetujui') && (
                           <div className="mt-2">
                             <a 
-                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT/RW, mohon bantu persetujuan surat saya (${hasilResi.jenis_surat}) via link: ${window.location.origin}/verifikasi-rt?token=${hasilResi.token_rt}`)}`}
+                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT/RW, mohon bantu persetujuan surat saya (${hasilResi.jenis_surat}) via link: ${window.location.origin}/#/verifikasi-rt?token=${hasilResi.token_rt}`)}`}
                               target="_blank" 
                               rel="noreferrer"
                               className="btn btn-sm btn-success fw-bold me-2"
