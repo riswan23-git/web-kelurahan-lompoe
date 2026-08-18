@@ -59,11 +59,11 @@
     },
     {
       "source": "/api/verifikasi-rt/:path*",
-      "destination": "/api/auth"
+      "destination": "/api/layanan"
     },
     {
       "source": "/api/verifikasi-rt",
-      "destination": "/api/auth"
+      "destination": "/api/layanan"
     },
     {
       "source": "/api/pengajuan/:path*",

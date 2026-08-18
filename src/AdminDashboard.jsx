@@ -2048,21 +2048,23 @@ function AdminDashboard() {
       {modalViewBerkas && (() => {
         const item = modalViewBerkas.item || {};
         const fileName = modalViewBerkas.fileName || '';
-        const fileMap = item.file_data_map || {};
+        const fileMap = item.file_data_map || item.file_berkas_data || {};
         const globalFileMap = JSON.parse(localStorage.getItem('all_file_data_map') || '{}');
 
         const realB64 = fileMap[fileName] || fileMap[fileName.trim()] || 
                         globalFileMap[fileName] || globalFileMap[fileName.trim()] || 
-                        localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim());
+                        localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim()) ||
+                        Object.values(fileMap)[modalViewBerkas.idx - 1];
 
-        // Always generate a clean visual SVG image data URL so an <img> element is 100% GUARANTEED to render
+        // Always generate a clean visual SVG image data URL fallback
         const svgImageSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23f8fafc" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%23ffffff" rx="12" stroke="%230284c7" stroke-width="2"/><text x="400" y="70" fill="%230369a1" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">PEMERINTAH KOTA PAREPARE - KELURAHAN LOMPOE</text><text x="400" y="100" fill="%23475569" font-family="sans-serif" font-size="14" text-anchor="middle">BERKAS LAMPIRAN PERSYARATAN WARGA (SRIKANDI)</text><line x1="40" y1="120" x2="760" y2="120" stroke="%230284c7" stroke-width="2"/><rect x="60" y="140" width="680" height="240" fill="%23f1f5f9" rx="8" stroke="%23cbd5e1"/><path d="M400 180 L450 250 L350 250 Z" fill="%230284c7"/><circle cx="430" cy="190" r="18" fill="%23eab308"/><text x="400" y="310" fill="%230f172a" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="340" fill="%2364748b" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | NIK: ${encodeURIComponent(item.nik || '')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="200" y="410" width="400" height="45" fill="%2316a34a" rx="22"/><text x="400" y="438" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ BERKAS FISIK TERVERIFIKASI SAH SRIKANDI</text></svg>`;
 
-        const displayImgSrc = (realB64 && realB64.startsWith('data:image')) ? realB64 : svgImageSrc;
+        const isPdf = (realB64 && realB64.startsWith('data:application/pdf')) || fileName.toLowerCase().endsWith('.pdf');
+        const displayImgSrc = (realB64 && (realB64.startsWith('data:image') || realB64.startsWith('data:'))) ? realB64 : svgImageSrc;
 
         const handleOpenFullscreen = () => {
           const win = window.open();
-          if (realB64 && realB64.startsWith('data:application/pdf')) {
+          if (isPdf && realB64) {
             win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
           } else {
             win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${fileName}</h2><p style="color:#94a3b8">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p><img src="${displayImgSrc}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:2px solid #38bdf8;" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Gambar Berkas</a></body></html>`);
@@ -2081,15 +2083,19 @@ function AdminDashboard() {
                   <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
                   <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
                   
-                  {/* PRATINJAU DOKUMEN GAMBAR BERKAS 100% DISPLAY IMAGE */}
+                  {/* PRATINJAU DOKUMEN GAMBAR / PDF BERKAS */}
                   <div className="p-3 bg-light rounded-3 border mb-3 text-center shadow-sm">
-                    <img 
-                      src={displayImgSrc} 
-                      alt={fileName} 
-                      className="img-fluid rounded-3 border shadow-sm mb-2" 
-                      style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
-                    />
-                    <small className="d-block text-success fw-bold">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
+                    {isPdf && realB64 ? (
+                      <iframe src={realB64} width="100%" height="420px" style={{ border: 'none', borderRadius: '8px' }} title={fileName} />
+                    ) : (
+                      <img 
+                        src={displayImgSrc} 
+                        alt={fileName} 
+                        className="img-fluid rounded-3 border shadow-sm mb-2" 
+                        style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
+                      />
+                    )}
+                    <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
                   </div>
 
                   <div className="d-flex justify-content-center gap-2">

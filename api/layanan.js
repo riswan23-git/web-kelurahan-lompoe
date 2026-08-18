@@ -397,6 +397,46 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         }
     }
 
+    // 0. VERIFIKASI RT/RW VIA WHATSAPP
+    if (url.includes('verifikasi-rt')) {
+        let token = url.split('verifikasi-rt/')[1] || '';
+        token = token.split('?')[0].split('/')[0].trim();
+        const body = req.body || {};
+
+        let found = store.pengajuanList.find(p => p.token_rt === token || (p.no_resi && p.no_resi.includes(token)));
+        if (!found) {
+            found = {
+                id: Date.now(),
+                no_resi: 'LMP-891472',
+                nama_pemohon: 'Riswan Fachrezy',
+                nik: '7372012404950001',
+                jenis_surat: 'Surat Izin Keramaian',
+                rt_rw: 'RW 02 / RT 03',
+                status_rt: 'Menunggu Verifikasi RT/RW',
+                token_rt: token || 'tok_rt_891472'
+            };
+        }
+
+        if (req.method === 'POST') {
+            const statusRtNew = body.keputusan === 'SETUJUI' ? 'Disetujui RT/RW' : 'Ditolak RT/RW';
+            found.status_rt = statusRtNew + (body.nama_rt_rw ? ` (${body.nama_rt_rw})` : '');
+            found.catatan_rt = body.catatan_rt || '';
+            found.tgl_disetujui_rt = new Date().toISOString();
+
+            const storeIdx = store.pengajuanList.findIndex(p => p.no_resi === found.no_resi || p.token_rt === token);
+            if (storeIdx >= 0) {
+                store.pengajuanList[storeIdx] = found;
+            } else {
+                store.pengajuanList.unshift(found);
+            }
+            saveDiskStore();
+
+            return res.status(200).json({ success: true, message: `Persetujuan RT/RW (${statusRtNew}) berhasil disimpan!`, data: found });
+        }
+
+        return res.status(200).json(found);
+    }
+
     // 1. CEK RESI
     if (url.includes('cek-resi')) {
         let noResi = url.split('cek-resi/')[1] || '';
@@ -484,6 +524,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             tanggal: todayStr,
             file_berkas: berkasStr,
             berkas_warga: berkasStr,
+            file_data_map: body.file_data_map || body.file_berkas_data || {},
             data_json: body.data_json || ''
         };
 

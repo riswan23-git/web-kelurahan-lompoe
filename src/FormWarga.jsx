@@ -269,7 +269,7 @@ function FormWarga() {
     localStorage.setItem('user_nama', formData.nama_pemohon || 'Warga');
 
     // Fire API call asynchronously in background (do not block UI!)
-    axios.post(`${API_BASE_URL}/api/pengajuan`, { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus })
+    axios.post(`${API_BASE_URL}/api/pengajuan`, { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus, file_data_map: fileDataMap })
       .catch(err => console.log('Background sync notification done.'));
   };
 
