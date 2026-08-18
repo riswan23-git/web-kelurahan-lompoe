@@ -487,8 +487,9 @@ function AdminDashboard() {
       showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
       setModalUpdate(null);
 
-      // Async backend sync to serverless disk store
+      // Async backend sync to serverless disk store (preserving all item fields)
       axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
+        ...modalUpdate,
         status: statusBaru,
         status_kelurahan: statusBaru,
         catatan_admin: catatanAdmin,

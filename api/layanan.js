@@ -556,14 +556,18 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         let item = store.pengajuanList.find(p => p.no_resi == resiFromUrl || p.id == body.id || p.id == resiFromUrl);
         if (!item) {
             item = {
-                id: Date.now(),
+                id: body.id || Date.now(),
                 no_resi: resiFromUrl || body.no_resi || 'LMP-102938',
                 nomor_resi: resiFromUrl || body.no_resi || 'LMP-102938',
-                nama_pemohon: body.nama_pemohon || 'Warga Kelurahan Lompoe',
-                jenis_surat: body.jenis_surat || 'Surat Pengajuan Warga'
+                nama_pemohon: body.nama_pemohon || body.nama_lengkap || 'Warga Kelurahan Lompoe',
+                jenis_surat: body.jenis_surat || 'Surat Pengajuan Warga',
+                ...body
             };
             store.pengajuanList.unshift(item);
+        } else {
+            Object.assign(item, body);
         }
+
         if (body.status_kelurahan) item.status_kelurahan = body.status_kelurahan;
         if (body.status_rt) item.status_rt = body.status_rt;
         if (body.status) item.status = body.status;
@@ -571,7 +575,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         if (body.file_hasil) item.file_hasil = body.file_hasil;
         if (body.file_hasil_data) item.file_hasil_data = body.file_hasil_data;
         else if (body.status === 'Disetujui/Siap Diambil' || body.status === 'Selesai') {
-            item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
+            if (!item.file_hasil) item.file_hasil = `Surat_Pengesahan_Lurah_${item.no_resi}.pdf`;
         }
 
         saveDiskStore();
