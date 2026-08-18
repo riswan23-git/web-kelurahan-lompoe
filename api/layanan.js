@@ -445,12 +445,9 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
             renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
             renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
-            renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
 
             renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
             renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
-            renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
-            renderedXml = renderedXml.replace(/<w:t[^>]*>\}<\/w:t>/g, '<w:t></w:t>');
 
             generatedZip.file('word/document.xml', renderedXml);
             const buf = generatedZip.generate({ type: 'nodebuffer' });

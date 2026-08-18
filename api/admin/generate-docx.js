@@ -336,12 +336,9 @@ module.exports = (req, res) => {
 
         renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
         renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
-        renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
 
         renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
         renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
-        renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
-        renderedXml = renderedXml.replace(/<w:t[^>]*>\}<\/w:t>/g, '<w:t></w:t>');
 
         generatedZip.file('word/document.xml', renderedXml);
         const buf = generatedZip.generate({ type: 'nodebuffer' });

@@ -1656,30 +1656,31 @@ function FormWarga() {
                               </select>
                             </div>
                           </div>
-
-                          <div className="p-3 bg-white rounded-3 border mb-2">
-                            <h6 className="fw-bold text-primary mb-3">👨‍💼 Pejabat Penandatangan Resmi (Terkonfirmasi Srikandi):</h6>
-                            <div className="row g-3">
-                              <div className="col-md-6">
-                                <label className="form-label fw-semibold small">Pejabat yang Bertanda Tangan *</label>
-                                <input type="text" name="pejabat_ttd" className="form-control" value={extraData.pejabat_ttd || 'ASMIANTI M., SE.'} onChange={handleExtraChange} required />
-                              </div>
-                              <div className="col-md-6">
-                                <label className="form-label fw-semibold small">Jabatan Pejabat *</label>
-                                <input type="text" name="jabatan_pejabat" className="form-control" value={extraData.jabatan_pejabat || 'LURAH LOMPOE'} onChange={handleExtraChange} required />
-                              </div>
-                              <div className="col-md-6">
-                                <label className="form-label fw-semibold small">NIP Pejabat *</label>
-                                <input type="text" name="nip_pejabat" className="form-control" value={extraData.nip_pejabat || '19840927 201001 2 022'} onChange={handleExtraChange} required />
-                              </div>
-                              <div className="col-md-6">
-                                <label className="form-label fw-semibold small">Pangkat Pejabat *</label>
-                                <input type="text" name="pangkat_pejabat" className="form-control" value={extraData.pangkat_pejabat || 'Penata Tk. I (III/d)'} onChange={handleExtraChange} required />
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       )}
+
+                      {/* BLOCK PEJABAT PENANDATANGAN RESMI UNTUK SEMUA JENIS SURAT */}
+                      <div className="p-3 bg-white rounded-3 border mt-4">
+                        <h6 className="fw-bold text-primary mb-3">👨‍💼 Pejabat Penandatangan Resmi (Terkonfirmasi Srikandi):</h6>
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold small">Pejabat yang Bertanda Tangan *</label>
+                            <input type="text" name="pejabat_ttd" className="form-control" value={extraData.pejabat_ttd || 'ASMIANTI M., SE.'} onChange={handleExtraChange} required />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold small">Jabatan Pejabat *</label>
+                            <input type="text" name="jabatan_pejabat" className="form-control" value={extraData.jabatan_pejabat || 'LURAH LOMPOE'} onChange={handleExtraChange} required />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold small">NIP Pejabat *</label>
+                            <input type="text" name="nip_pejabat" className="form-control" value={extraData.nip_pejabat || '19840927 201001 2 022'} onChange={handleExtraChange} required />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold small">Pangkat / Golongan Pejabat *</label>
+                            <input type="text" name="pangkat_pejabat" className="form-control" value={extraData.pangkat_pejabat || 'Penata Tk. I (III/d)'} onChange={handleExtraChange} required />
+                          </div>
+                        </div>
+                      </div>
 
                     </div>
 
