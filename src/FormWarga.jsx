@@ -1,7 +1,46 @@
 const readFileAsBase64 = (file) => new Promise((resolve) => {
   if (!file) return resolve(null);
+  const isImage = file.type ? file.type.startsWith('image/') : (/\.(jpg|jpeg|png|webp|gif|bmp)$/i).test(file.name || '');
+
   const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
+  reader.onload = (event) => {
+    const rawDataUrl = event.target.result;
+    if (!isImage || !rawDataUrl || typeof rawDataUrl !== 'string') {
+      return resolve(rawDataUrl);
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        let width = img.width || 800;
+        let height = img.height || 600;
+        const maxDim = 1000;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+        resolve(compressedDataUrl);
+      } catch (err) {
+        resolve(rawDataUrl);
+      }
+    };
+    img.onerror = () => resolve(rawDataUrl);
+    img.src = rawDataUrl;
+  };
   reader.onerror = () => resolve(null);
   reader.readAsDataURL(file);
 });
