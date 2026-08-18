@@ -239,36 +239,73 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             let extraJson = {};
             try { if (item.data_json) extraJson = typeof item.data_json === 'string' ? JSON.parse(item.data_json) : item.data_json; } catch(e) {}
 
-            const [rtVal, rwVal] = (item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
+            const safeStr = (val, fallback = '-') => (val !== undefined && val !== null && String(val).trim() !== '') ? String(val).trim() : fallback;
+            const safeUpper = (val, fallback = '-') => safeStr(val, fallback).toUpperCase();
 
-            const tempatTglLahirVal = item.tempat_tgl_lahir || item.tgl_lahir || 'Parepare, 24 April 1995';
-            const jenisKelaminVal = item.jenis_kelamin || 'Laki-laki';
-            const agamaVal = item.agama || 'Islam';
-            const pekerjaanVal = item.pekerjaan || 'Wiraswasta';
-            const alamatVal = item.alamat || 'Jl. Poros Lompoe';
+            const [rtVal, rwVal] = safeStr(item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
-            const pejabatNama = item.pejabat_ttd || 'ASMIANTI M., SE.';
-            const pejabatJabatan = item.jabatan_pejabat || 'LURAH LOMPOE';
-            const pejabatNip = item.nip_pejabat || '19840927 201001 2 022';
-            const pejabatPangkat = item.pangkat_pejabat || 'Penata Tk. I (III/d)';
+            const tempatTglLahirVal = safeStr(item.tempat_tgl_lahir || item.tgl_lahir, 'Parepare, 24 April 1995');
+            const jenisKelaminVal = safeStr(item.jenis_kelamin, 'Laki-laki');
+            const agamaVal = safeStr(item.agama, 'Islam');
+            const pekerjaanVal = safeStr(item.pekerjaan, 'Wiraswasta');
+            const alamatVal = safeStr(item.alamat, 'Jl. Poros Lompoe');
 
-            const jenisUsahaVal = item.jenis_usaha || extraJson.jenis_usaha || 'Pertanian / Usaha Mikro';
-            const jenisAlatVal = item.jenis_alat || extraJson.jenis_alat || 'Mesin Pompa Air / Traktor';
-            const jumlahAlatVal = item.jumlah_alat || extraJson.jumlah_alat || '1 Unit';
-            const fungsiAlatVal = item.fungsi_alat || extraJson.fungsi_alat || 'Pengolahan Lahan Pertanian';
-            const jenisBbmVal = item.jenis_bbm || extraJson.jenis_bbm || 'Solar (BBM Bersubsidi)';
-            const kebutuhanBbmVal = item.kebutuhan_bbm || extraJson.kebutuhan_bbm || '2 Liter / Hari';
-            const jamOperasiVal = item.jam_operasi || extraJson.jam_operasi || '8 Jam / Hari';
-            const jumlahLiterVal = item.jumlah_liter || extraJson.jumlah_liter || item.volume_bbm || extraJson.volume_bbm || '60 Liter / Bulan';
-            const konsumenPenggunaVal = item.konsumen_pengguna || extraJson.konsumen_pengguna || item.keperluan || 'Usaha Mikro / Pertanian';
+            const pejabatNama = safeStr(extraJson.pejabat_ttd || item.pejabat_ttd, 'ASMIANTI M., SE.');
+            const pejabatJabatan = safeStr(extraJson.jabatan_pejabat || item.jabatan_pejabat, 'LURAH LOMPOE');
+            const pejabatNip = safeStr(extraJson.nip_pejabat || item.nip_pejabat, '19840927 201001 2 022');
+            const pejabatPangkat = safeStr(extraJson.pangkat_pejabat || item.pangkat_pejabat, 'Penata Tk. I (III/d)');
+
+            const jenisUsahaVal = safeStr(item.jenis_usaha || extraJson.jenis_usaha, 'Pertanian / Usaha Mikro');
+            const jenisAlatVal = safeStr(item.jenis_alat || extraJson.jenis_alat, 'Mesin Pompa Air / Traktor');
+            const jumlahAlatVal = safeStr(item.jumlah_alat || extraJson.jumlah_alat, '1 Unit');
+            const fungsiAlatVal = safeStr(item.fungsi_alat || extraJson.fungsi_alat, 'Pengolahan Lahan Pertanian');
+            const jenisBbmVal = safeStr(item.jenis_bbm || extraJson.jenis_bbm, 'Solar (BBM Bersubsidi)');
+            const kebutuhanBbmVal = safeStr(item.kebutuhan_bbm || extraJson.kebutuhan_bbm, '2 Liter / Hari');
+            const jamOperasiVal = safeStr(item.jam_operasi || extraJson.jam_operasi, '8 Jam / Hari');
+            const jumlahLiterVal = safeStr(item.jumlah_liter || extraJson.jumlah_liter || item.volume_bbm || extraJson.volume_bbm, '60 Liter / Bulan');
+            const konsumenPenggunaVal = safeStr(item.konsumen_pengguna || extraJson.konsumen_pengguna || item.keperluan, 'Usaha Mikro / Pertanian');
             const todayLongStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
+            // Specific values for Surat Keterangan Penghasilan Orang Tua
+            const rawPenghasilan = safeStr(extraJson.penghasilan_orang_tua || item.penghasilan_orang_tua || extraJson.jumlah_penghasilan_angka || item.jumlah_penghasilan_angka, '1.500.000');
+            const formattedPenghasilan = rawPenghasilan.toLowerCase().includes('rp') ? rawPenghasilan : `Rp ${rawPenghasilan}`;
+            const jumlahTanggunganVal = safeStr(extraJson.jumlah_tanggungan || item.jumlah_tanggungan, '3');
+            const namaAnakVal = safeStr(extraJson.nama_anak || item.nama_anak, 'Adil Junior');
+            const nikAnakVal = safeStr(extraJson.nik_anak || item.nik_anak, item.nik || '7378020667865');
+            const tglLahirAnakVal = safeStr(extraJson.tgl_lahir_anak || item.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
+            const sekolahKampusVal = safeStr(extraJson.sekolah_kampus_anak || extraJson.sekolah_kampus || item.sekolah_kampus_anak || item.sekolah_kampus, 'Universitas Negeri Parepare');
+            const tempatTinggalVal = safeStr(extraJson.tempat_tinggal || item.tempat_tinggal || item.alamat, 'Jl. Poros Lompoe');
+            const rtTinggalVal = safeStr(extraJson.rt_tempat_tinggal_saat_ini || item.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
+            const rwTinggalVal = safeStr(extraJson.rw_tempat_tinggal_saat_ini || item.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
+
+            const cleanResiNo = (item.no_resi || noResi || '500536').replace(/[^0-9]/g, '') || '500536';
+            const naskahNo = item.nomor_naskah || extraJson.nomor_naskah || item.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
+
             const payload = {
-                'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
-                'nomor naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
+                'nomor_naskah': naskahNo,
+                'nomor naskah': naskahNo,
                 'tanggal_naskah': todayLongStr,
                 'tanggal naskah': todayLongStr,
-                'kp_raw': getKonsumenPenggunaRuns(item.keperluan),
+                'ttd_pengirim': pejabatNama,
+                'kp_raw': getKonsumenPenggunaRuns(item.keperluan || konsumenPenggunaVal),
+
+                // SURAT KETERANGAN PENGHASILAN ORANG TUA SPECIFIC TAGS
+                'Penghasilan Rata-rata per bulan': formattedPenghasilan,
+                'Penghasilan Rata-rata per Bulan': formattedPenghasilan,
+                'penghasilan_orang_tua': formattedPenghasilan,
+                'Jumlah Anak yg Jadi Tanggungan': jumlahTanggunganVal,
+                'jumlah_tanggungan': jumlahTanggunganVal,
+                'Nama Anak': namaAnakVal,
+                'nama_anak': namaAnakVal,
+                'NIK Anak': nikAnakVal,
+                'nik_anak': nikAnakVal,
+                'Tempat/Tgl Lahir Anak': tglLahirAnakVal,
+                'tgl_lahir_anak': tglLahirAnakVal,
+                'Sekolah/Kampus': sekolahKampusVal,
+                'sekolah_kampus_anak': sekolahKampusVal,
+                'Tempat Tinggal Saat Ini': tempatTinggalVal,
+                'RT Tempat Tinggal Saat Ini': rtTinggalVal,
+                'RW Tempat Tinggal Saat Ini': rwTinggalVal,
 
                 // BBM SPECIFIC TAGS
                 'jenis_usaha': jenisUsahaVal,
@@ -322,11 +359,11 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'NIP Pejabat yang Bertanda Tangan': pejabatNip,
                 'Pangkat Pejabat yang Bertanda Tangan': pejabatPangkat,
 
-                'NAMA PEMOHON': (item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe').toUpperCase(),
-                'Nama Pemohon': item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe',
-                'nama pemohon': item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe',
-                'NIK': item.nik || '7372011205950001',
-                'Nik': item.nik || '7372011205950001',
+                'NAMA PEMOHON': safeUpper(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
+                'Nama Pemohon': safeStr(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
+                'nama pemohon': safeStr(item.nama_pemohon || item.nama_lengkap, 'Warga Kelurahan Lompoe'),
+                'NIK': safeStr(item.nik, '7372011205950001'),
+                'Nik': safeStr(item.nik, '7372011205950001'),
 
                 'TEMPAT/TGL LAHIR': tempatTglLahirVal,
                 'Tempat/Tgl Lahir': tempatTglLahirVal,
@@ -335,16 +372,16 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'tempat/tanggal lahir': tempatTglLahirVal,
                 'Tempat / Tgl Lahir': tempatTglLahirVal,
 
-                'JENIS KELAMIN': jenisKelaminVal.toUpperCase(),
+                'JENIS KELAMIN': safeUpper(jenisKelaminVal),
                 'Jenis Kelamin': jenisKelaminVal,
                 'jenis kelamin': jenisKelaminVal,
                 'Jenis kelamin': jenisKelaminVal,
 
-                'AGAMA': agamaVal.toUpperCase(),
+                'AGAMA': safeUpper(agamaVal),
                 'Agama': agamaVal,
                 'agama': agamaVal,
 
-                'PEKERJAAN': pekerjaanVal.toUpperCase(),
+                'PEKERJAAN': safeUpper(pekerjaanVal),
                 'Pekerjaan': pekerjaanVal,
                 'pekerjaan': pekerjaanVal,
 
@@ -357,34 +394,66 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'Kelurahan': 'Lompoe',
                 'Kecamatan': 'Bacukiki',
                 'Kota/Kab': 'Parepare',
-                'acara': item.nama_acara || item.keperluan || 'Kegiatan Syukuran',
-                'penggunaan izin': item.keperluan || 'Izin Acara',
-                'hari/tanggal acara': item.tanggal_acara || 'Senin, 24 Agustus 2026',
+                'acara': safeStr(item.nama_acara || item.keperluan, 'Kegiatan Syukuran'),
+                'penggunaan izin': safeStr(item.keperluan, 'Izin Acara'),
+                'hari/tanggal acara': safeStr(item.tanggal_acara, 'Senin, 24 Agustus 2026'),
                 'waktu acara': '09.00 - Selesai WITA',
-                'tempat acara': item.lokasi_acara || alamatVal || 'Kediaman Pemohon',
+                'tempat acara': safeStr(item.lokasi_acara || alamatVal, 'Kediaman Pemohon'),
                 'RT tempat acara': rtVal || '01',
                 'RW tempat acara': rwVal || '01'
             };
-
-
 
             const doc = new Docxtemplater(zip, {
                 delimiters: { start: '<<', end: '>>' },
                 paragraphLoop: true,
                 linebreaks: true,
                 nullGetter: function(tag) {
-                    const tagKey = tag.name ? tag.name.trim() : '';
-                    if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
+                    if (!tag || !tag.name) return '-';
+                    const tagKey = tag.name.trim();
+                    if (tagKey.includes('nomor_naskah') || tagKey.includes('nomor naskah')) return naskahNo;
                     if (tagKey.includes('tanggal_naskah') || tagKey.includes('tanggal naskah')) return todayLongStr;
-                    if (payload && payload[tagKey] !== undefined) return payload[tagKey];
-                    if (payload && payload[tag.name] !== undefined) return payload[tag.name];
+                    if (payload && payload[tagKey] !== undefined && payload[tagKey] !== null) return payload[tagKey];
+                    if (payload && payload[tag.name] !== undefined && payload[tag.name] !== null) return payload[tag.name];
                     const val = item[tagKey] || extraJson[tagKey] || item[tagKey.toLowerCase()] || extraJson[tagKey.toLowerCase()];
                     return (val !== undefined && val !== null && val !== '') ? val : '-';
                 }
             });
 
             doc.render(payload);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+            // Post-render text replacement for ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim} and &lt;&lt;...&gt;&gt; tags
+            let generatedZip = doc.getZip();
+            let renderedXml = generatedZip.file('word/document.xml').asText();
+
+            // Universal replacer for escaped XML entity &lt;&lt;Key&gt;&gt; tags
+            if (payload && typeof payload === 'object') {
+                Object.keys(payload).forEach(k => {
+                    const val = payload[k];
+                    if (val !== undefined && val !== null) {
+                        const strVal = String(val);
+                        renderedXml = renderedXml.replaceAll(`&lt;&lt;${k}&gt;&gt;`, strVal);
+                        renderedXml = renderedXml.replaceAll(`<<${k}>>`, strVal);
+                    }
+                });
+            }
+
+            // Robust fuzzy regex replacement for Pejabat tags (even if split across XML elements)
+            renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNama);
+            renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Jabatan Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatJabatan);
+            renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?NIP Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatNip);
+            renderedXml = renderedXml.replace(/(&lt;&lt;|&lt;&lt;|<<)[\s\S]*?Pangkat Pejabat yang Bertanda Tangan[\s\S]*?(&gt;&gt;|&gt;&gt;|>>)/g, pejabatPangkat);
+
+            renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
+            renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
+            renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
+
+            renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
+            renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
+            renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
+            renderedXml = renderedXml.replace(/<w:t[^>]*>\}<\/w:t>/g, '<w:t></w:t>');
+
+            generatedZip.file('word/document.xml', renderedXml);
+            const buf = generatedZip.generate({ type: 'nodebuffer' });
 
             const safeFilename = encodeURIComponent(`${item.jenis_surat || 'Surat'}_${item.no_resi || noResi}.docx`);
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
