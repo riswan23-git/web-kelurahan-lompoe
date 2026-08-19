@@ -244,18 +244,19 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
             const [rtVal, rwVal] = safeStr(item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
-            const tempatTglLahirVal = safeStr(item.tempat_tgl_lahir || item.tgl_lahir, 'Parepare, 24 April 1995');
-            const jenisKelaminVal = safeStr(item.jenis_kelamin, 'Laki-laki');
-            const agamaVal = safeStr(item.agama, 'Islam');
-            const pekerjaanVal = safeStr(item.pekerjaan, 'Wiraswasta');
-            const alamatVal = safeStr(item.alamat, 'Jl. Poros Lompoe');
-
             const getNonEmpty = (...vals) => {
                 for (let v of vals) {
                     if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
                 }
                 return null;
             };
+
+            const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, item.tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], extraJson['Tempat/Tgl Lahir'], extraJson['Tempat/Tgl lahir'], extraJson['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
+            const rawJk = getNonEmpty(item.jenis_kelamin, extraJson.jenis_kelamin, extraJson['jenis kelamin'], extraJson['Jenis Kelamin'], extraJson['jenis_kelamin'], extraJson['Jenis kelamin'], extraJson.jk, item.jk);
+            const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
+            const agamaVal = getNonEmpty(item.agama, extraJson.agama, extraJson['agama'], extraJson['Agama'], extraJson['AGAMA']) || 'Islam';
+            const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan'], extraJson['Pekerjaan'], extraJson['PEKERJAAN']) || 'Wiraswasta';
+            const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat'], extraJson['Alamat'], extraJson['ALAMAT']) || 'Jl. Poros Lompoe';
 
             const pejabatNama = getNonEmpty(extraJson.pejabat_ttd, item.pejabat_ttd, extraJson['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
             const pejabatJabatan = getNonEmpty(extraJson.jabatan_pejabat, item.jabatan_pejabat, extraJson['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
@@ -289,6 +290,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             const naskahNo = item.nomor_naskah || extraJson.nomor_naskah || item.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
 
             const payload = {
+                ...extraJson,
                 'nomor_naskah': naskahNo,
                 'nomor naskah': naskahNo,
                 'tanggal_naskah': todayLongStr,
@@ -403,7 +405,6 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 'tempat acara': safeStr(item.lokasi_acara || alamatVal, 'Kediaman Pemohon'),
                 'RT tempat acara': rtVal || '01',
                 'RW tempat acara': rwVal || '01',
-                ...extraJson,
 
                 'Pejabat yang Bertanda Tangan': pejabatNama,
                 'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
@@ -422,7 +423,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 linebreaks: true,
                 nullGetter: function(tag) {
                     const tagName = (tag && (tag.value || tag.name)) ? String(tag.value || tag.name).trim() : '';
-                    if (!tagName) return '-';
+                    if (!tagName) return '';
                     if (tagName === 'pejabat_ttd' || tagName === 'Pejabat yang Bertanda Tangan') return pejabatNama;
                     if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
                     if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
@@ -430,9 +431,15 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                     if (tagName === 'ttd_pengirim') return pejabatNama;
                     if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return naskahNo;
                     if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+
+                    if (tagName.includes('Tempat/Tgl') || tagName.includes('tempat/tgl') || tagName.includes('Tempat, Tanggal')) return tempatTglLahirVal || 'Parepare, 12 Mei 1995';
+                    if (tagName.includes('Pekerjaan') || tagName.includes('pekerjaan') || tagName.includes('PEKERJAAN')) return pekerjaanVal || 'Wiraswasta';
+                    if (tagName.includes('Agama') || tagName.includes('agama') || tagName.includes('AGAMA')) return agamaVal || 'Islam';
+                    if (tagName.includes('Jenis Kelamin') || tagName.includes('jenis kelamin') || tagName.includes('Jenis kelamin')) return jenisKelaminVal || 'Perempuan';
+
                     if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
                     const val = item[tagName] || extraJson[tagName] || item[tagName.toLowerCase()] || extraJson[tagName.toLowerCase()];
-                    return (val !== undefined && val !== null && val !== '') ? val : '-';
+                    return (val !== undefined && val !== null && val !== '') ? val : '';
                 }
             });
 

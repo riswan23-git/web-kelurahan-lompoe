@@ -141,14 +141,14 @@ module.exports = (req, res) => {
             return null;
         };
 
-        const namaPemohonVal = getNonEmpty(item.nama_pemohon, item.nama_lengkap, extraJson.nama_pemohon, extraJson.nama_lengkap, extraJson['nama_pemohon'], extraJson['nama pemohon']) || '';
-        const nikVal = getNonEmpty(item.nik, extraJson.nik, extraJson['nik'], extraJson['NIK']) || '';
-        const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, item.tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], extraJson['Tempat/Tgl Lahir'], extraJson['Tempat/Tgl lahir'], extraJson['tempat / tgl lahir']) || '';
+        const namaPemohonVal = getNonEmpty(item.nama_pemohon, item.nama_lengkap, extraJson.nama_pemohon, extraJson.nama_lengkap, extraJson['nama_pemohon'], extraJson['nama pemohon']) || 'Warga Kelurahan Lompoe';
+        const nikVal = getNonEmpty(item.nik, extraJson.nik, extraJson['nik'], extraJson['NIK']) || '7372011205950001';
+        const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, item.tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], extraJson['Tempat/Tgl Lahir'], extraJson['Tempat/Tgl lahir'], extraJson['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
         const rawJk = getNonEmpty(item.jenis_kelamin, extraJson.jenis_kelamin, extraJson['jenis kelamin'], extraJson['Jenis Kelamin'], extraJson['jenis_kelamin'], extraJson['Jenis kelamin'], extraJson.jk, item.jk);
         const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
         const agamaVal = getNonEmpty(item.agama, extraJson.agama, extraJson['agama'], extraJson['Agama'], extraJson['AGAMA']) || 'Islam';
-        const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan'], extraJson['Pekerjaan'], extraJson['PEKERJAAN']) || '';
-        const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat'], extraJson['Alamat'], extraJson['ALAMAT']) || '';
+        const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan'], extraJson['Pekerjaan'], extraJson['PEKERJAAN']) || 'Wiraswasta';
+        const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat'], extraJson['Alamat'], extraJson['ALAMAT']) || 'Jl. Poros Lompoe';
 
         const namaMeninggalVal = getNonEmpty(extraJson.nama_meninggal, item.nama_meninggal, extraJson['Nama Warga yang Meninggal'], extraJson['nama_warga_yang_meninggal']) || namaPemohonVal;
         const nikMeninggalVal = getNonEmpty(extraJson.nik_meninggal, item.nik_meninggal, extraJson['nik_meninggal']) || nikVal;
@@ -209,6 +209,7 @@ module.exports = (req, res) => {
         const isKematianSurat = String(item.jenis_surat || '').toLowerCase().includes('kematian');
 
         const payload = {
+            ...extraJson,
             'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
             'nomor naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
             'tanggal_naskah': todayLongStr,
@@ -393,7 +394,6 @@ module.exports = (req, res) => {
             'lokasi_acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
             'RT tempat acara': rtVal || '01',
             'RW tempat acara': rwVal || '01',
-            ...extraJson,
 
             'Pejabat yang Bertanda Tangan': pejabatNama,
             'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
@@ -419,8 +419,14 @@ module.exports = (req, res) => {
                 if (tagName === 'ttd_pengirim') return pejabatNama;
                 if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
                 if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+
+                if (tagName.includes('Tempat/Tgl') || tagName.includes('tempat/tgl') || tagName.includes('Tempat, Tanggal')) return tempatTglLahirVal || 'Parepare, 12 Mei 1995';
+                if (tagName.includes('Pekerjaan') || tagName.includes('pekerjaan') || tagName.includes('PEKERJAAN')) return pekerjaanVal || 'Wiraswasta';
+                if (tagName.includes('Agama') || tagName.includes('agama') || tagName.includes('AGAMA')) return agamaVal || 'Islam';
+                if (tagName.includes('Jenis Kelamin') || tagName.includes('jenis kelamin') || tagName.includes('Jenis kelamin')) return jenisKelaminVal || 'Perempuan';
+
                 if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
-                return '';
+                return item[tagName] || extraJson[tagName] || '';
             }
         });
 

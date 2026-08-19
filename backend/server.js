@@ -778,14 +778,14 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             return null;
         };
 
-        const namaPemohonVal = getNonEmpty(row.nama_pemohon, row.nama_lengkap, extraData.nama_pemohon, extraData.nama_lengkap, extraData['nama_pemohon'], extraData['nama pemohon']) || '';
-        const nikVal = getNonEmpty(row.nik, extraData.nik, extraData['nik'], extraData['NIK']) || '';
-        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, row.tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], extraData['Tempat/Tgl Lahir'], extraData['Tempat/Tgl lahir'], extraData['tempat / tgl lahir']) || '';
+        const namaPemohonVal = getNonEmpty(row.nama_pemohon, row.nama_lengkap, extraData.nama_pemohon, extraData.nama_lengkap, extraData['nama_pemohon'], extraData['nama pemohon']) || 'Warga Kelurahan Lompoe';
+        const nikVal = getNonEmpty(row.nik, extraData.nik, extraData['nik'], extraData['NIK']) || '7372011205950001';
+        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, row.tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], extraData['Tempat/Tgl Lahir'], extraData['Tempat/Tgl lahir'], extraData['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
         const rawJk = getNonEmpty(row.jenis_kelamin, extraData.jenis_kelamin, extraData['jenis kelamin'], extraData['Jenis Kelamin'], extraData['jenis_kelamin'], extraData['Jenis kelamin'], extraData.jk, row.jk);
         const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
         const agamaVal = getNonEmpty(row.agama, extraData.agama, extraData['agama'], extraData['Agama'], extraData['AGAMA']) || 'Islam';
-        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan'], extraData['Pekerjaan'], extraData['PEKERJAAN']) || '';
-        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat'], extraData['Alamat'], extraData['ALAMAT']) || '';
+        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan'], extraData['Pekerjaan'], extraData['PEKERJAAN']) || 'Wiraswasta';
+        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat'], extraData['Alamat'], extraData['ALAMAT']) || 'Jl. Poros Lompoe';
 
         const namaMeninggalVal = getNonEmpty(extraData.nama_meninggal, row.nama_meninggal, extraData['Nama Warga yang Meninggal'], extraData['nama_warga_yang_meninggal']) || namaPemohonVal;
         const nikMeninggalVal = getNonEmpty(extraData.nik_meninggal, row.nik_meninggal, extraData['nik_meninggal']) || nikVal;
@@ -840,6 +840,7 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         const agamaMeninggalVal = getNonEmpty(extraData.agama_meninggal, row.agama_meninggal) || agamaVal;
 
         const payload = {
+            ...extraData,
             'nomor_naskah': naskahNo,
             'nomor naskah': naskahNo,
             'tanggal_naskah': todayLongStr,
@@ -1026,7 +1027,6 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'lokasi_acara': safeStr(row.lokasi_acara || extraData.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
             'RT tempat acara': rtVal || '01',
             'RW tempat acara': rwVal || '01',
-            ...extraData,
 
             'Pejabat yang Bertanda Tangan': pejabatNama,
             'Jabatan Pejabat yang Bertanda Tangan': pejabatJabatan,
@@ -1053,8 +1053,12 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
                 if (tagName === 'ttd_pengirim') return pejabatNama;
                 if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return naskahNo;
                 if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
-                if (tagName.includes('Penghasilan') || tagName.includes('penghasilan')) return formattedPenghasilanAngka;
-                if (tagName.includes('Tinggal') || tagName.includes('tinggal')) return tempatTinggalVal;
+
+                if (tagName.includes('Tempat/Tgl') || tagName.includes('tempat/tgl') || tagName.includes('Tempat, Tanggal')) return tempatTglLahirVal || 'Parepare, 12 Mei 1995';
+                if (tagName.includes('Pekerjaan') || tagName.includes('pekerjaan') || tagName.includes('PEKERJAAN')) return pekerjaanVal || 'Wiraswasta';
+                if (tagName.includes('Agama') || tagName.includes('agama') || tagName.includes('AGAMA')) return agamaVal || 'Islam';
+                if (tagName.includes('Jenis Kelamin') || tagName.includes('jenis kelamin') || tagName.includes('Jenis kelamin')) return jenisKelaminVal || 'Perempuan';
+
                 if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
                 const val = row[tagName] || extraData[tagName] || row[tagName.toLowerCase()] || extraData[tagName.toLowerCase()];
                 return (val !== undefined && val !== null && val !== '') ? val : '';
