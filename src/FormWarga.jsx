@@ -997,10 +997,36 @@ function FormWarga() {
                               <input type="text" name="nik_meninggal" className="form-control" placeholder="737201xxxxxxxxxx" maxLength="16" value={extraData.nik_meninggal || ''} onChange={handleExtraChange} required />
                             </div>
                           </div>
+
                           <div className="row g-3 mb-3">
-                            <div className="col-md-4">
+                            <div className="col-md-6">
                               <label className="form-label fw-semibold">Tempat / Tgl Lahir Almarhum *</label>
                               <input type="text" name="tgl_lahir_meninggal" className="form-control" placeholder="Parepare, 12 Mei 1955" value={extraData.tgl_lahir_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label fw-semibold">Jenis Kelamin Almarhum *</label>
+                              <select name="jk_meninggal" className="form-select" value={extraData.jk_meninggal || 'Laki-laki'} onChange={handleExtraChange}>
+                                <option value="Laki-laki">Laki-laki</option>
+                                <option value="Perempuan">Perempuan</option>
+                              </select>
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label fw-semibold">Agama Almarhum *</label>
+                              <select name="agama_meninggal" className="form-select" value={extraData.agama_meninggal || 'Islam'} onChange={handleExtraChange}>
+                                <option value="Islam">Islam</option>
+                                <option value="Kristen">Kristen</option>
+                                <option value="Katolik">Katolik</option>
+                                <option value="Hindu">Hindu</option>
+                                <option value="Buddha">Buddha</option>
+                                <option value="Konghucu">Konghucu</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="row g-3 mb-3">
+                            <div className="col-md-4">
+                              <label className="form-label fw-semibold">Kewarganegaraan *</label>
+                              <input type="text" name="kewarganegaraan" className="form-control" value={extraData.kewarganegaraan || 'WNI'} onChange={handleExtraChange} required />
                             </div>
                             <div className="col-md-4">
                               <label className="form-label fw-semibold">Tanggal Meninggal Dunia *</label>
