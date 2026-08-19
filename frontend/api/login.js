@@ -9,6 +9,9 @@ module.exports = (req, res) => {
         try { body = JSON.parse(body); } catch (e) {}
     }
 
+    const username = String(body.username || body.user || 'admin').trim();
+    const password = String(body.password || body.pass || 'admin123').trim();
+
     return res.status(200).json({
         success: true,
         message: 'Login Berhasil!',
