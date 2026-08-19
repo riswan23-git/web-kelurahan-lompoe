@@ -4,21 +4,25 @@ import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
+const DEFAULT_SARANA = [
+  { id: 1, nama_sarana: 'Kantor Kelurahan Lompoe', kategori: 'Pemerintahan', lokasi: 'Jl. Poros Lompoe', deskripsi: 'Pusat pelayanan administrasi publik dan pelayanan masyarakat.', kondisi: 'Baik', foto: null },
+  { id: 2, nama_sarana: 'Puskesmas Pembantu Bacukiki', kategori: 'Kesehatan', lokasi: 'Lompoe', deskripsi: 'Fasilitas pelayanan kesehatan dasar bagi warga.', kondisi: 'Baik', foto: null }
+];
+
 function Sarana() {
-  const [saranaList, setSaranaList] = useState([]);
+  const [saranaList, setSaranaList] = useState(DEFAULT_SARANA);
   const [loading, setLoading] = useState(true);
   const [kategori, setKategori] = useState('Semua');
 
   useEffect(() => {
     const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-    if (localSarana) {
+    if (Array.isArray(localSarana) && localSarana.length > 0) {
       setSaranaList(localSarana);
-      setLoading(false);
     }
     const fetchSarana = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/sarana`);
-        if (Array.isArray(response.data) && response.data.length > 0 && !localSarana) {
+        const response = await axios.get(`${API_BASE_URL}/api/sarana`).catch(() => null);
+        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
           setSaranaList(response.data);
         }
       } catch (err) {

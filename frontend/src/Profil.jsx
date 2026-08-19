@@ -4,23 +4,37 @@ import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
+const DEFAULT_PKK = Array.from({ length: 10 }, (_, i) => ({
+  id: i + 1,
+  nama_wilayah: `RW 0${i + 1}`,
+  pkk_rw: i + 1,
+  pkk_rt: i === 0 ? 3 : i === 1 ? 3 : 2,
+  dasa_wisma: 4 + (i % 3),
+  krt: 250 + i * 15,
+  kk: 300 + i * 20,
+  pria: 600 + i * 25,
+  wanita: 590 + i * 25
+}));
+
 function Profil() {
   const [aparaturList, setAparaturList] = useState([]);
   const [info, setInfo] = useState({});
-  const [pkkWilayah, setPkkWilayah] = useState([]);
+  const [pkkWilayah, setPkkWilayah] = useState(DEFAULT_PKK);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [resAparatur, resInfo, resPkk] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/aparatur`),
-          axios.get(`${API_BASE_URL}/api/info-kelurahan`),
-          axios.get(`${API_BASE_URL}/api/pkk-wilayah`)
+          axios.get(`${API_BASE_URL}/api/aparatur`).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/api/info-kelurahan`).catch(() => ({ data: {} })),
+          axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => ({ data: [] }))
         ]);
         setAparaturList(resAparatur.data);
         setInfo(resInfo.data);
-        setPkkWilayah(resPkk.data);
+        if (Array.isArray(resPkk.data) && resPkk.data.length > 0) {
+          setPkkWilayah(resPkk.data);
+        }
       } catch (err) {
         console.error('Error fetching profil:', err);
       } finally {

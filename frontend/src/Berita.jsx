@@ -4,18 +4,36 @@ import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
+const DEFAULT_BERITA = [
+  {
+    id: 1,
+    judul: 'Kegiatan Penguatan Ketahanan Pangan & Gotong Royong Warga Lompoe',
+    kategori: 'Pengumuman',
+    ringkasan: 'Warga Kelurahan Lompoe bersama aparatur kelurahan dan TP PKK melaksanakan kegiatan kebersihan lingkungan dan penanaman bibit tanaman pangan.',
+    isi: 'Kegiatan gotong royong rutin dilaksanakan di seluruh wilayah RW Kelurahan Lompoe untuk menjaga kebersihan dan kekeluargaan antar warga.',
+    tanggal: '2026-08-10',
+    gambar: null
+  }
+];
+
 function Berita() {
-  const [beritaList, setBeritaList] = useState([]);
+  const [beritaList, setBeritaList] = useState(DEFAULT_BERITA);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('Semua');
   const [selectedBerita, setSelectedBerita] = useState(null);
 
   useEffect(() => {
+    const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
+    if (Array.isArray(localBerita) && localBerita.length > 0) {
+      setBeritaList(localBerita);
+    }
     const fetchBerita = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/berita`);
-        setBeritaList(response.data);
+        const response = await axios.get(`${API_BASE_URL}/api/berita`).catch(() => null);
+        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+          setBeritaList(response.data);
+        }
       } catch (err) {
         console.error('Error fetching berita:', err);
       } finally {

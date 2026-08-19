@@ -318,28 +318,26 @@ function AdminDashboard() {
   const fetchPkk = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah`);
-      const apiData = Array.isArray(res.data) ? res.data : [];
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_PKK;
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       const finalList = local && local.length > 0 ? local : apiData;
       setPkkList(finalList);
-      if (!local && apiData.length > 0) localStorage.setItem('store_pkk', JSON.stringify(apiData));
     } catch (err) {
-      const local = JSON.parse(localStorage.getItem('store_pkk') || '[]');
-      setPkkList(local);
+      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
     }
   };
 
   const fetchBerita = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/berita`);
-      const apiData = Array.isArray(res.data) ? res.data : [];
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_BERITA;
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       const finalList = local && local.length > 0 ? local : apiData;
       setBeritaList(finalList);
-      if (!local && apiData.length > 0) localStorage.setItem('store_berita', JSON.stringify(apiData));
     } catch (err) {
-      const local = JSON.parse(localStorage.getItem('store_berita') || '[]');
-      setBeritaList(local);
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
     }
   };
 
@@ -364,14 +362,13 @@ function AdminDashboard() {
   const fetchSarana = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/sarana`);
-      const apiData = Array.isArray(res.data) ? res.data : [];
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_SARANA;
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       const finalList = local && local.length > 0 ? local : apiData;
       setSaranaList(finalList);
-      if (!local && apiData.length > 0) localStorage.setItem('store_sarana', JSON.stringify(apiData));
     } catch (err) {
-      const local = JSON.parse(localStorage.getItem('store_sarana') || '[]');
-      setSaranaList(local);
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
     }
   };
 
