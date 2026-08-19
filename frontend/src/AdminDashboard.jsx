@@ -186,7 +186,6 @@ function AdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('admin_user');
-    localStorage.clear();
     navigate('/login', { replace: true });
   };
 

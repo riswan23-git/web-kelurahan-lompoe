@@ -52,6 +52,8 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+const inMemoryPengajuan = [];
+
 // Pre-loaded Seed Data for Serverless Fallback Resilience
 const FALLBACK_DATA = {
     admin: [

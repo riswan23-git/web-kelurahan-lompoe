@@ -52,6 +52,8 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+const inMemoryPengajuan = [];
+
 // Pre-loaded Seed Data for Serverless Fallback Resilience
 const FALLBACK_DATA = {
     admin: [
@@ -604,35 +606,76 @@ app.post('/api/pengajuan', upload.any(), async (req, res) => {
         if (body.file_data_map) parsedData.file_data_map = body.file_data_map;
         parsedData.daftar_lampiran_files = fileNames;
 
-        // Save or update in database
-        const existing = await dbQuery('SELECT id FROM pengajuan_surat WHERE no_resi = ?', [no_resi]);
-        if (existing && existing.length > 0) {
-            await dbQuery(`
-                UPDATE pengajuan_surat SET
-                nik = ?, nama_pemohon = ?, no_hp = ?, jenis_surat = ?, keperluan = ?, file_berkas = ?,
-                tempat_tgl_lahir = ?, jenis_kelamin = ?, agama = ?, pekerjaan = ?, alamat = ?, rt_rw = ?,
-                nama_acara = ?, tanggal_acara = ?, lokasi_acara = ?, status_rt = ?, token_rt = ?, data_json = ?
-                WHERE no_resi = ?
-            `, [
-                nik, nama_pemohon, no_hp, jenis_surat, keperluan, fileNames.join(','),
-                tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw,
-                nama_acara, tanggal_acara, lokasi_acara, initialStatusRt, token_rt, JSON.stringify(parsedData),
-                no_resi
-            ]);
-        } else {
-            const query = `
-                INSERT INTO pengajuan_surat 
-                (no_resi, nik, nama_pemohon, no_hp, jenis_surat, keperluan, file_berkas, 
-                 tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw, 
-                 nama_acara, tanggal_acara, lokasi_acara, status_rt, token_rt, data_json) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+        const newItem = {
+            id: Date.now(),
+            no_resi,
+            nomor_resi: no_resi,
+            nik,
+            nama_pemohon,
+            nama_lengkap: nama_pemohon,
+            no_hp,
+            telepon: no_hp,
+            nomor_wa: no_hp,
+            jenis_surat,
+            keperluan,
+            tempat_tgl_lahir,
+            jenis_kelamin,
+            agama,
+            pekerjaan,
+            alamat,
+            rt_rw,
+            nama_acara,
+            tanggal_acara,
+            lokasi_acara,
+            status_rt: initialStatusRt,
+            status_kelurahan: 'Pending',
+            status: 'Pending',
+            token_rt,
+            file_berkas: fileNames.join(','),
+            berkas_warga: fileNames.join(','),
+            tanggal_pengajuan: new Date().toISOString().split('T')[0],
+            tgl_pengajuan: new Date().toISOString().split('T')[0],
+            file_data_map: body.file_data_map || {},
+            data_json: JSON.stringify(parsedData)
+        };
 
-            await dbQuery(query, [
-                no_resi, nik, nama_pemohon, no_hp, jenis_surat, keperluan, fileNames.join(','),
-                tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw,
-                nama_acara, tanggal_acara, lokasi_acara, initialStatusRt, token_rt, JSON.stringify(parsedData)
-            ]);
+        const existingIdx = inMemoryPengajuan.findIndex(p => p.no_resi === no_resi);
+        if (existingIdx >= 0) inMemoryPengajuan[existingIdx] = newItem;
+        else inMemoryPengajuan.unshift(newItem);
+
+        // Save or update in database
+        try {
+            const existing = await dbQuery('SELECT id FROM pengajuan_surat WHERE no_resi = ?', [no_resi]);
+            if (existing && existing.length > 0) {
+                await dbQuery(`
+                    UPDATE pengajuan_surat SET
+                    nik = ?, nama_pemohon = ?, no_hp = ?, jenis_surat = ?, keperluan = ?, file_berkas = ?,
+                    tempat_tgl_lahir = ?, jenis_kelamin = ?, agama = ?, pekerjaan = ?, alamat = ?, rt_rw = ?,
+                    nama_acara = ?, tanggal_acara = ?, lokasi_acara = ?, status_rt = ?, token_rt = ?, data_json = ?
+                    WHERE no_resi = ?
+                `, [
+                    nik, nama_pemohon, no_hp, jenis_surat, keperluan, fileNames.join(','),
+                    tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw,
+                    nama_acara, tanggal_acara, lokasi_acara, initialStatusRt, token_rt, JSON.stringify(parsedData),
+                    no_resi
+                ]);
+            } else {
+                const query = `
+                    INSERT INTO pengajuan_surat 
+                    (no_resi, nik, nama_pemohon, no_hp, jenis_surat, keperluan, file_berkas, 
+                     tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw, 
+                     nama_acara, tanggal_acara, lokasi_acara, status_rt, token_rt, data_json) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
+
+                await dbQuery(query, [
+                    no_resi, nik, nama_pemohon, no_hp, jenis_surat, keperluan, fileNames.join(','),
+                    tempat_tgl_lahir, jenis_kelamin, agama, pekerjaan, alamat, rt_rw,
+                    nama_acara, tanggal_acara, lokasi_acara, initialStatusRt, token_rt, JSON.stringify(parsedData)
+                ]);
+            }
+        } catch(e) {
+            console.error('MySQL insert error:', e.message);
         }
 
         try {
@@ -1224,10 +1267,22 @@ app.delete('/api/admin/pkk-wilayah/:id', async (req, res) => {
 // Admin Management: Pengajuan Surat
 app.get('/api/admin/pengajuan', async (req, res) => {
     try {
-        const results = await dbQuery('SELECT * FROM pengajuan_surat ORDER BY tanggal_pengajuan DESC');
-        res.json(results);
+        const results = await dbQuery('SELECT * FROM pengajuan_surat ORDER BY id DESC');
+        const dbList = Array.isArray(results) ? results : [];
+        
+        const combinedMap = new Map();
+        inMemoryPengajuan.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
+        dbList.forEach(item => {
+            if (item && item.no_resi) {
+                const existing = combinedMap.get(item.no_resi) || {};
+                combinedMap.set(item.no_resi, { ...existing, ...item });
+            }
+        });
+
+        const combinedList = Array.from(combinedMap.values());
+        res.json(combinedList);
     } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data pengajuan.' });
+        res.json(inMemoryPengajuan);
     }
 });
 

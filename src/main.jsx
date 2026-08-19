@@ -18,8 +18,8 @@ class GlobalErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    localStorage.clear();
     window.location.href = '/#/';
+    window.location.reload();
   };
 
   render() {
