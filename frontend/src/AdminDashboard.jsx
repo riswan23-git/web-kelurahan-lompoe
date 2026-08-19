@@ -59,37 +59,44 @@ const getCleanDocxUrl = (item, apiBaseUrl) => {
         extraJson = typeof item.data_json === 'string' ? JSON.parse(item.data_json) : item.data_json;
       } catch (e) {}
     }
-    const cleanObj = {
-      ...item,
-      ...extraJson,
-      id: item.id,
-      no_resi: item.no_resi,
-      nama_pemohon: item.nama_pemohon || item.nama_lengkap || 'Warga',
-      nik: item.nik || '',
-      tempat_tgl_lahir: item.tempat_tgl_lahir || item.tgl_lahir || extraJson.tempat_tgl_lahir || extraJson.tgl_lahir || '',
-      jenis_kelamin: item.jenis_kelamin || item.jk || extraJson.jenis_kelamin || extraJson.jk || '',
-      agama: item.agama || extraJson.agama || '',
-      pekerjaan: item.pekerjaan || extraJson.pekerjaan || '',
-      jenis_surat: item.jenis_surat || '',
-      rt_rw: item.rt_rw || 'RT 01 / RW 01',
-      alamat: item.alamat || extraJson.alamat || extraJson.tempat_tinggal_saat_ini || '',
-      keperluan: item.keperluan || '',
-      jenis_usaha: item.jenis_usaha || extraJson.jenis_usaha || '',
-      jenis_alat: item.jenis_alat || extraJson.jenis_alat || '',
-      jumlah_alat: item.jumlah_alat || extraJson.jumlah_alat || '',
-      fungsi_alat: item.fungsi_alat || extraJson.fungsi_alat || '',
-      jenis_bbm: item.jenis_bbm || extraJson.jenis_bbm || '',
-      kebutuhan_bbm: item.kebutuhan_bbm || extraJson.kebutuhan_bbm || '',
-      jam_operasi: item.jam_operasi || extraJson.jam_operasi || '',
-      jumlah_liter: item.jumlah_liter || extraJson.jumlah_liter || item.volume_bbm || extraJson.volume_bbm || '',
-      volume_bbm: item.volume_bbm || extraJson.volume_bbm || item.jumlah_liter || extraJson.jumlah_liter || '',
-      konsumen_pengguna: item.konsumen_pengguna || extraJson.konsumen_pengguna || '',
-      data_json: item.data_json || '',
-      pejabat_ttd: item.pejabat_ttd || extraJson.pejabat_ttd || 'ASMIANTI M., SE.',
-      jabatan_pejabat: item.jabatan_pejabat || extraJson.jabatan_pejabat || 'LURAH LOMPOE',
-      nip_pejabat: item.nip_pejabat || extraJson.nip_pejabat || '19840927 201001 2 022',
-      pangkat_pejabat: item.pangkat_pejabat || extraJson.pangkat_pejabat || 'Penata Tk. I (III/d)'
-    };
+
+    const cleanObj = {};
+    
+    // Copy text values (exclude heavy base64 strings to avoid Vercel URI_TOO_LONG 414 error)
+    const combined = { ...extraJson, ...item };
+    Object.keys(combined).forEach(key => {
+      const val = combined[key];
+      if (
+        key !== 'data_json' && 
+        key !== 'file_berkas' && 
+        key !== 'fileDataMap' && 
+        key !== 'file_data_map' && 
+        !key.toLowerCase().includes('pdf') &&
+        !key.toLowerCase().includes('base64') &&
+        typeof val === 'string' &&
+        val.length < 400
+      ) {
+        cleanObj[key] = val.trim();
+      }
+    });
+
+    cleanObj.id = item.id;
+    cleanObj.no_resi = item.no_resi || '';
+    cleanObj.nama_pemohon = item.nama_pemohon || item.nama_lengkap || extraJson.nama_pemohon || '';
+    cleanObj.nik = item.nik || extraJson.nik || '';
+    cleanObj.tempat_tgl_lahir = item.tempat_tgl_lahir || item.tgl_lahir || extraJson.tempat_tgl_lahir || extraJson.tgl_lahir || '';
+    cleanObj.jenis_kelamin = item.jenis_kelamin || item.jk || extraJson.jenis_kelamin || extraJson.jk || '';
+    cleanObj.agama = item.agama || extraJson.agama || '';
+    cleanObj.pekerjaan = item.pekerjaan || extraJson.pekerjaan || '';
+    cleanObj.jenis_surat = item.jenis_surat || '';
+    cleanObj.rt_rw = item.rt_rw || 'RT 01 / RW 01';
+    cleanObj.alamat = item.alamat || extraJson.alamat || extraJson.tempat_tinggal_saat_ini || '';
+    cleanObj.keperluan = item.keperluan || '';
+    cleanObj.pejabat_ttd = item.pejabat_ttd || extraJson.pejabat_ttd || 'ASMIANTI M., SE.';
+    cleanObj.jabatan_pejabat = item.jabatan_pejabat || extraJson.jabatan_pejabat || 'LURAH LOMPOE';
+    cleanObj.nip_pejabat = item.nip_pejabat || extraJson.nip_pejabat || '19840927 201001 2 022';
+    cleanObj.pangkat_pejabat = item.pangkat_pejabat || extraJson.pangkat_pejabat || 'Penata Tk. I (III/d)';
+
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
     return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
   } catch (e) {
