@@ -310,13 +310,12 @@ function FormWarga() {
     setTokenRtHasil(generatedToken);
     setStatusRtHasil(initialRtStatus);
     setLoading(false);
-
     localStorage.setItem('last_resi', generatedResi);
     localStorage.setItem('user_nama', formData.nama_pemohon || 'Warga');
 
     // Fire API call asynchronously in background (do not block UI!)
-    axios.post(`${API_BASE_URL}/api/pengajuan`, { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus, file_data_map: fileDataMap })
-      .catch(err => console.log('Background sync notification done.'));
+    const finalSyncItem = { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus, file_data_map: fileDataMap };
+    axios.post(`${API_BASE_URL}/api/pengajuan`, finalSyncItem).catch(err => console.log('Background sync notification done.'));
   };
 
   const targetRtObj = Array.isArray(listKontakRt) ? listKontakRt.find(k => k && k.rt_rw === formData.rt_rw) : null;

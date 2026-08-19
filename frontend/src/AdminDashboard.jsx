@@ -80,7 +80,7 @@ const getCleanDocxUrl = (item, apiBaseUrl) => {
     };
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
     return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
-  } catch(e) {
+  } catch (e) {
     return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?_t=${Date.now()}`;
   }
 };
@@ -223,24 +223,13 @@ function AdminDashboard() {
   // Fetch functions
   const fetchPengajuan = async () => {
     try {
-      const [resServer, resCloud] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/pengajuan`).catch(() => null),
-        axios.get('https://crudcrud.com/api/2b04437260f041bbae94b6f3ea97418a/pengajuan').catch(() => null)
-      ]);
-      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
-      const cloudData = resCloud?.data && Array.isArray(resCloud.data) ? resCloud.data : [];
+      const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
+      const serverData = Array.isArray(res.data) ? res.data : [];
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
 
       const combinedMap = new Map();
       localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
       serverData.forEach(item => {
-        if (item && item.no_resi) {
-          const existing = combinedMap.get(item.no_resi) || {};
-          const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
-          combinedMap.set(item.no_resi, { ...existing, ...item, file_data_map: mergedFileMap });
-        }
-      });
-      cloudData.forEach(item => {
         if (item && item.no_resi) {
           const existing = combinedMap.get(item.no_resi) || {};
           const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
@@ -475,7 +464,7 @@ function AdminDashboard() {
           if (modalUpdate.nama_pemohon) {
             localStorage.setItem('file_hasil_b64_' + modalUpdate.nama_pemohon.toLowerCase().trim(), fileHasilB64);
           }
-        } catch(e) {}
+        } catch (e) { }
       }
 
       const updatedItem = {
@@ -536,11 +525,11 @@ function AdminDashboard() {
     try {
       let updated;
       if (editPkkMode) {
-        axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk).catch(() => {});
+        axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk).catch(() => { });
         updated = pkkList.map(p => p.id === formPkk.id ? { ...p, ...formPkk } : p);
         showNotif('Data wilayah berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk).catch(() => {});
+        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk).catch(() => { });
         const newItem = res?.data?.data || { ...formPkk, id: Date.now() };
         updated = [...pkkList, newItem];
         showNotif('Wilayah baru berhasil ditambahkan!');
@@ -562,7 +551,7 @@ function AdminDashboard() {
   const handleDeletePkk = async (id) => {
     if (window.confirm('Yakin ingin menghapus data wilayah ini?')) {
       try {
-        axios.delete(`${API_BASE_URL}/api/admin/pkk-wilayah/${id}`).catch(() => {});
+        axios.delete(`${API_BASE_URL}/api/admin/pkk-wilayah/${id}`).catch(() => { });
         const updated = pkkList.filter(p => p.id !== id);
         setPkkList(updated);
         localStorage.setItem('store_pkk', JSON.stringify(updated));
@@ -577,14 +566,14 @@ function AdminDashboard() {
     try {
       let updated;
       if (editAparaturMode) {
-        axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, formAparatur).catch(() => {});
+        axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, formAparatur).catch(() => { });
         updated = aparaturList.map(a => a.id === formAparatur.id ? { ...a, ...formAparatur } : a);
         if (formAparatur.is_lurah) {
           updated = updated.map(a => a.id === formAparatur.id ? a : { ...a, is_lurah: 0 });
         }
         showNotif('Data aparatur berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, formAparatur).catch(() => {});
+        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, formAparatur).catch(() => { });
         const newItem = res?.data?.data || { ...formAparatur, id: Date.now() };
         updated = [...aparaturList, newItem];
         if (formAparatur.is_lurah) {
@@ -610,7 +599,7 @@ function AdminDashboard() {
   const handleDeleteAparatur = async (id) => {
     if (window.confirm('Yakin ingin menghapus data aparatur ini?')) {
       try {
-        axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`).catch(() => {});
+        axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`).catch(() => { });
         const updated = aparaturList.filter(a => a.id !== id);
         setAparaturList(updated);
         localStorage.setItem('store_aparatur', JSON.stringify(updated));
@@ -625,11 +614,11 @@ function AdminDashboard() {
     try {
       let updated;
       if (editBeritaMode) {
-        axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, formBerita).catch(() => {});
+        axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, formBerita).catch(() => { });
         updated = beritaList.map(b => b.id === formBerita.id ? { ...b, ...formBerita } : b);
         showNotif('Berita berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, formBerita).catch(() => {});
+        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, formBerita).catch(() => { });
         const newItem = res?.data?.data || { ...formBerita, id: Date.now(), tanggal: new Date().toISOString().split('T')[0] };
         updated = [newItem, ...beritaList];
         showNotif('Berita baru berhasil diterbitkan!');
@@ -652,7 +641,7 @@ function AdminDashboard() {
   const handleDeleteBerita = async (id) => {
     if (window.confirm('Yakin ingin menghapus berita ini?')) {
       try {
-        axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`).catch(() => {});
+        axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`).catch(() => { });
         const updated = beritaList.filter(b => b.id !== id);
         setBeritaList(updated);
         localStorage.setItem('store_berita', JSON.stringify(updated));
@@ -665,7 +654,7 @@ function AdminDashboard() {
   const handleSaveStats = async (e) => {
     e.preventDefault();
     try {
-      axios.put(`${API_BASE_URL}/api/admin/statistik`, stats).catch(() => {});
+      axios.put(`${API_BASE_URL}/api/admin/statistik`, stats).catch(() => { });
       localStorage.setItem('store_stats', JSON.stringify(stats));
       showNotif('Statistik penduduk berhasil diupdate!');
     } catch (err) { showNotif('Gagal update statistik'); }
@@ -674,7 +663,7 @@ function AdminDashboard() {
   const handleSaveInfo = async (e) => {
     e.preventDefault();
     try {
-      axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info).catch(() => {});
+      axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info).catch(() => { });
       localStorage.setItem('store_info', JSON.stringify(info));
       showNotif('Info profil & peta wilayah berhasil diupdate!');
     } catch (err) { showNotif('Gagal update info kelurahan'); }
@@ -686,11 +675,11 @@ function AdminDashboard() {
     try {
       let updated;
       if (editSaranaMode) {
-        axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, formSarana).catch(() => {});
+        axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, formSarana).catch(() => { });
         updated = saranaList.map(s => s.id === formSarana.id ? { ...s, ...formSarana } : s);
         showNotif('Sarana & prasarana berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, formSarana).catch(() => {});
+        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, formSarana).catch(() => { });
         const newItem = res?.data?.data || { ...formSarana, id: Date.now() };
         updated = [...saranaList, newItem];
         showNotif('Sarana & prasarana berhasil ditambahkan!');
@@ -706,7 +695,7 @@ function AdminDashboard() {
   const handleDeleteSarana = async (id) => {
     if (window.confirm('Hapus sarana prasarana ini?')) {
       try {
-        axios.delete(`${API_BASE_URL}/api/admin/sarana/${id}`).catch(() => {});
+        axios.delete(`${API_BASE_URL}/api/admin/sarana/${id}`).catch(() => { });
         const updated = saranaList.filter(s => s.id !== id);
         setSaranaList(updated);
         localStorage.setItem('store_sarana', JSON.stringify(updated));
@@ -736,7 +725,7 @@ function AdminDashboard() {
 
   return (
     <div className="min-vh-100 d-flex flex-column" style={{ backgroundColor: '#f4f7f6' }}>
-      
+
       {/* Navbar Admin */}
       <nav className="navbar navbar-dark sticky-top shadow" style={{ backgroundColor: '#1b262c' }}>
         <div className="container-fluid px-4">
@@ -768,72 +757,72 @@ function AdminDashboard() {
         <div className="container-fluid px-4">
           <ul className="nav nav-tabs border-0 font-bold fw-semibold">
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('pengajuan')} 
+              <button
+                onClick={() => setActiveTab('pengajuan')}
                 className={`nav-link py-3 ${activeTab === 'pengajuan' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 📑 Layanan Surat ({pengajuanList.length})
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('pkk')} 
+              <button
+                onClick={() => setActiveTab('pkk')}
                 className={`nav-link py-3 ${activeTab === 'pkk' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 📊 Data Wilayah & PKK ({pkkList.length})
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('aparatur')} 
+              <button
+                onClick={() => setActiveTab('aparatur')}
                 className={`nav-link py-3 ${activeTab === 'aparatur' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 👨‍💼 Aparatur & Struktur
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('berita')} 
+              <button
+                onClick={() => setActiveTab('berita')}
                 className={`nav-link py-3 ${activeTab === 'berita' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 📰 Kabar Kelurahan
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('statistik')} 
+              <button
+                onClick={() => setActiveTab('statistik')}
                 className={`nav-link py-3 ${activeTab === 'statistik' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 ⚙️ Ringkasan Statistik
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('sarana')} 
+              <button
+                onClick={() => setActiveTab('sarana')}
                 className={`nav-link py-3 ${activeTab === 'sarana' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 🏥 Sarana & Prasarana
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('chat')} 
+              <button
+                onClick={() => setActiveTab('chat')}
                 className={`nav-link py-3 ${activeTab === 'chat' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 💬 Live Chat Center
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('kontak_rt')} 
+              <button
+                onClick={() => setActiveTab('kontak_rt')}
                 className={`nav-link py-3 ${activeTab === 'kontak_rt' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 📇 Kontak RT/RW ({kontakRtList.length})
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                onClick={() => setActiveTab('nomor_darurat')} 
+              <button
+                onClick={() => setActiveTab('nomor_darurat')}
                 className={`nav-link py-3 ${activeTab === 'nomor_darurat' ? 'active border-primary border-bottom border-3 text-primary' : 'text-dark'}`}
               >
                 🚨 Nomor Darurat ({nomorDaruratList.length})
@@ -852,12 +841,12 @@ function AdminDashboard() {
               <h4 className="fw-bold mb-0">Manajemen Pengajuan Surat & Persetujuan Lurah</h4>
               <div className="input-group" style={{ maxWidth: '380px' }}>
                 <span className="input-group-text bg-white border-primary text-primary fw-bold">🔍 Search</span>
-                <input 
-                  type="text" 
-                  className="form-control border-primary" 
-                  placeholder="Cari Nama Pemohon, Resi, NIK, Surat..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
+                <input
+                  type="text"
+                  className="form-control border-primary"
+                  placeholder="Cari Nama Pemohon, Resi, NIK, Surat..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 {searchTerm && (
                   <button className="btn btn-outline-secondary" onClick={() => setSearchTerm('')}>✕ Clear</button>
@@ -871,9 +860,9 @@ function AdminDashboard() {
                 <div className="col-md-8">
                   <div className="input-group">
                     <span className="input-group-text bg-white border-primary text-primary fw-bold">📥 Input / Sync Resi Warga:</span>
-                    <input 
-                      type="text" 
-                      className="form-control border-primary" 
+                    <input
+                      type="text"
+                      className="form-control border-primary"
                       placeholder="Masukkan No. Resi Warga dari HP/device lain (contoh: LMP-891472)..."
                       value={inputResiSync}
                       onChange={(e) => setInputResiSync(e.target.value)}
@@ -893,26 +882,26 @@ function AdminDashboard() {
 
             {/* Filter Tabs Status Pengajuan */}
             <div className="d-flex flex-wrap gap-2 mb-3">
-              <button 
-                onClick={() => setFilterStatus('semua')} 
+              <button
+                onClick={() => setFilterStatus('semua')}
                 className={`btn btn-sm fw-bold px-3 py-2 rounded-pill ${filterStatus === 'semua' ? 'btn-dark shadow-sm' : 'btn-outline-dark'}`}
               >
                 📋 Semua Data ({pengajuanList.length})
               </button>
-              <button 
-                onClick={() => setFilterStatus('pending')} 
+              <button
+                onClick={() => setFilterStatus('pending')}
                 className={`btn btn-sm fw-bold px-3 py-2 rounded-pill ${filterStatus === 'pending' ? 'btn-warning text-dark shadow-sm' : 'btn-outline-warning text-dark'}`}
               >
                 🟡 Perlu Diproses ({pengajuanList.filter(i => i.status !== 'Disetujui/Siap Diambil' && i.status !== 'Selesai' && i.status !== 'Ditolak').length})
               </button>
-              <button 
-                onClick={() => setFilterStatus('selesai')} 
+              <button
+                onClick={() => setFilterStatus('selesai')}
                 className={`btn btn-sm fw-bold px-3 py-2 rounded-pill ${filterStatus === 'selesai' ? 'btn-success shadow-sm' : 'btn-outline-success'}`}
               >
                 🟢 Riwayat Selesai ({pengajuanList.filter(i => i.status === 'Disetujui/Siap Diambil' || i.status === 'Selesai').length})
               </button>
-              <button 
-                onClick={() => setFilterStatus('ditolak')} 
+              <button
+                onClick={() => setFilterStatus('ditolak')}
                 className={`btn btn-sm fw-bold px-3 py-2 rounded-pill ${filterStatus === 'ditolak' ? 'btn-danger shadow-sm' : 'btn-outline-danger'}`}
               >
                 🔴 Ditolak ({pengajuanList.filter(i => i.status === 'Ditolak').length})
@@ -985,11 +974,11 @@ function AdminDashboard() {
                               <td>{item.tanggal_pengajuan && !isNaN(new Date(item.tanggal_pengajuan).getTime()) ? new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID') : (item.tgl_pengajuan || item.tanggal || new Date().toISOString().split('T')[0])}</td>
                               <td><span className="fw-bold text-primary">{item.no_resi}</span></td>
                               <td>
-                                <strong>{item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong><br/>
+                                <strong>{item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong><br />
                                 <small className="text-muted">NIK: {item.nik || '-'} | WA: {item.no_hp || item.telepon || item.nomor_wa || '-'}</small>
                               </td>
                               <td>
-                                <span className="badge bg-secondary mb-1">{item.jenis_surat}</span><br/>
+                                <span className="badge bg-secondary mb-1">{item.jenis_surat}</span><br />
                                 <small className="text-muted d-inline-block text-truncate" style={{ maxWidth: '180px' }}>{item.nama_acara || item.keperluan}</small>
                               </td>
                               <td>
@@ -998,11 +987,10 @@ function AdminDashboard() {
                                 </span>
                               </td>
                               <td>
-                                <span className={`badge ${
-                                  item.status === 'Disetujui/Siap Diambil' || item.status === 'Selesai' ? 'bg-success' :
-                                  item.status === 'Diproses' ? 'bg-primary' :
-                                  item.status === 'Ditolak' ? 'bg-danger' : 'bg-warning text-dark'
-                                }`}>
+                                <span className={`badge ${item.status === 'Disetujui/Siap Diambil' || item.status === 'Selesai' ? 'bg-success' :
+                                    item.status === 'Diproses' ? 'bg-primary' :
+                                      item.status === 'Ditolak' ? 'bg-danger' : 'bg-warning text-dark'
+                                  }`}>
                                   {item.status || 'Progres'}
                                 </span>
                               </td>
@@ -1013,8 +1001,8 @@ function AdminDashboard() {
                                       const cleanName = fName.trim();
                                       if (!cleanName) return null;
                                       return (
-                                        <button 
-                                          key={idx} 
+                                        <button
+                                          key={idx}
                                           type="button"
                                           onClick={() => setModalViewBerkas({ fileName: cleanName, idx: idx + 1, item })}
                                           className="btn btn-sm btn-outline-info fw-bold py-0 px-2 text-nowrap"
@@ -1031,10 +1019,10 @@ function AdminDashboard() {
                               </td>
                               <td>
                                 <div className="d-flex flex-column gap-1">
-                                  <a 
-                                    href={getCleanDocxUrl(item, API_BASE_URL)} 
-                                    target="_blank" 
-                                    rel="noreferrer" 
+                                  <a
+                                    href={getCleanDocxUrl(item, API_BASE_URL)}
+                                    target="_blank"
+                                    rel="noreferrer"
                                     className="btn btn-sm btn-primary fw-bold"
                                   >
                                     📥 Download Word (.docx)
@@ -1070,40 +1058,40 @@ function AdminDashboard() {
                 <form onSubmit={handleSavePkk}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Nama Wilayah / RW *</label>
-                    <input type="text" className="form-control" placeholder="Contoh: Kp. Baru Labempa / Wekke'e" required value={formPkk.nama_wilayah} onChange={(e) => setFormPkk({...formPkk, nama_wilayah: e.target.value})} />
+                    <input type="text" className="form-control" placeholder="Contoh: Kp. Baru Labempa / Wekke'e" required value={formPkk.nama_wilayah} onChange={(e) => setFormPkk({ ...formPkk, nama_wilayah: e.target.value })} />
                   </div>
                   <div className="row g-2 mb-3">
                     <div className="col-4">
                       <label className="form-label fw-semibold small">PKK RW</label>
-                      <input type="number" className="form-control" value={formPkk.pkk_rw} onChange={(e) => setFormPkk({...formPkk, pkk_rw: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.pkk_rw} onChange={(e) => setFormPkk({ ...formPkk, pkk_rw: parseInt(e.target.value) || 0 })} />
                     </div>
                     <div className="col-4">
                       <label className="form-label fw-semibold small">PKK RT</label>
-                      <input type="number" className="form-control" value={formPkk.pkk_rt} onChange={(e) => setFormPkk({...formPkk, pkk_rt: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.pkk_rt} onChange={(e) => setFormPkk({ ...formPkk, pkk_rt: parseInt(e.target.value) || 0 })} />
                     </div>
                     <div className="col-4">
                       <label className="form-label fw-semibold small">Dasa Wisma</label>
-                      <input type="number" className="form-control" value={formPkk.dasa_wisma} onChange={(e) => setFormPkk({...formPkk, dasa_wisma: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.dasa_wisma} onChange={(e) => setFormPkk({ ...formPkk, dasa_wisma: parseInt(e.target.value) || 0 })} />
                     </div>
                   </div>
                   <div className="row g-2 mb-3">
                     <div className="col-6">
                       <label className="form-label fw-semibold small">Jumlah KRT</label>
-                      <input type="number" className="form-control" value={formPkk.krt} onChange={(e) => setFormPkk({...formPkk, krt: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.krt} onChange={(e) => setFormPkk({ ...formPkk, krt: parseInt(e.target.value) || 0 })} />
                     </div>
                     <div className="col-6">
                       <label className="form-label fw-semibold small">Jumlah KK</label>
-                      <input type="number" className="form-control" value={formPkk.kk} onChange={(e) => setFormPkk({...formPkk, kk: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.kk} onChange={(e) => setFormPkk({ ...formPkk, kk: parseInt(e.target.value) || 0 })} />
                     </div>
                   </div>
                   <div className="row g-2 mb-4">
                     <div className="col-6">
                       <label className="form-label fw-semibold small">Jiwa Laki-laki (L)</label>
-                      <input type="number" className="form-control" value={formPkk.pria} onChange={(e) => setFormPkk({...formPkk, pria: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.pria} onChange={(e) => setFormPkk({ ...formPkk, pria: parseInt(e.target.value) || 0 })} />
                     </div>
                     <div className="col-6">
                       <label className="form-label fw-semibold small">Jiwa Perempuan (P)</label>
-                      <input type="number" className="form-control" value={formPkk.wanita} onChange={(e) => setFormPkk({...formPkk, wanita: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={formPkk.wanita} onChange={(e) => setFormPkk({ ...formPkk, wanita: parseInt(e.target.value) || 0 })} />
                     </div>
                   </div>
                   <div className="d-flex gap-2">
@@ -1168,19 +1156,19 @@ function AdminDashboard() {
                 <form onSubmit={handleSaveAparatur}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Nama Lengkap & Gelar *</label>
-                    <input type="text" className="form-control" required value={formAparatur.nama} onChange={(e) => setFormAparatur({...formAparatur, nama: e.target.value})} />
+                    <input type="text" className="form-control" required value={formAparatur.nama} onChange={(e) => setFormAparatur({ ...formAparatur, nama: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">NIP</label>
-                    <input type="text" className="form-control" value={formAparatur.nip || ''} onChange={(e) => setFormAparatur({...formAparatur, nip: e.target.value})} />
+                    <input type="text" className="form-control" value={formAparatur.nip || ''} onChange={(e) => setFormAparatur({ ...formAparatur, nip: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Jabatan *</label>
-                    <input type="text" className="form-control" required value={formAparatur.jabatan} onChange={(e) => setFormAparatur({...formAparatur, jabatan: e.target.value})} />
+                    <input type="text" className="form-control" required value={formAparatur.jabatan} onChange={(e) => setFormAparatur({ ...formAparatur, jabatan: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Apakah Lurah Lompoe?</label>
-                    <select className="form-select" value={formAparatur.is_lurah} onChange={(e) => setFormAparatur({...formAparatur, is_lurah: parseInt(e.target.value)})}>
+                    <select className="form-select" value={formAparatur.is_lurah} onChange={(e) => setFormAparatur({ ...formAparatur, is_lurah: parseInt(e.target.value) })}>
                       <option value={0}>Bukan (Staf / Kasi / Seklur)</option>
                       <option value={1}>Ya (Lurah)</option>
                     </select>
@@ -1188,12 +1176,12 @@ function AdminDashboard() {
                   {formAparatur.is_lurah === 1 && (
                     <div className="mb-3">
                       <label className="form-label fw-semibold">Pesan / Sambutan Lurah</label>
-                      <textarea className="form-control" rows="3" value={formAparatur.sambutan || ''} onChange={(e) => setFormAparatur({...formAparatur, sambutan: e.target.value})}></textarea>
+                      <textarea className="form-control" rows="3" value={formAparatur.sambutan || ''} onChange={(e) => setFormAparatur({ ...formAparatur, sambutan: e.target.value })}></textarea>
                     </div>
                   )}
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Urutan Tampilan</label>
-                    <input type="number" className="form-control" value={formAparatur.urutan || 0} onChange={(e) => setFormAparatur({...formAparatur, urutan: parseInt(e.target.value)})} />
+                    <input type="number" className="form-control" value={formAparatur.urutan || 0} onChange={(e) => setFormAparatur({ ...formAparatur, urutan: parseInt(e.target.value) })} />
                   </div>
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Foto Profil</label>
@@ -1235,7 +1223,7 @@ function AdminDashboard() {
                               ) : '🧑🏻‍💼'}
                             </td>
                             <td>
-                              <strong>{item.nama}</strong> {item.is_lurah === 1 && <span className="badge bg-warning text-dark">Lurah</span>}<br/>
+                              <strong>{item.nama}</strong> {item.is_lurah === 1 && <span className="badge bg-warning text-dark">Lurah</span>}<br />
                               <small className="text-muted">NIP: {item.nip || '-'}</small>
                             </td>
                             <td>{item.jabatan}</td>
@@ -1264,11 +1252,11 @@ function AdminDashboard() {
                 <form onSubmit={handleSaveBerita}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Judul Berita / Pengumuman *</label>
-                    <input type="text" className="form-control" required value={formBerita.judul} onChange={(e) => setFormBerita({...formBerita, judul: e.target.value})} />
+                    <input type="text" className="form-control" required value={formBerita.judul} onChange={(e) => setFormBerita({ ...formBerita, judul: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Kategori</label>
-                    <select className="form-select" value={formBerita.kategori} onChange={(e) => setFormBerita({...formBerita, kategori: e.target.value})}>
+                    <select className="form-select" value={formBerita.kategori} onChange={(e) => setFormBerita({ ...formBerita, kategori: e.target.value })}>
                       <option value="Pengumuman">Pengumuman</option>
                       <option value="Kegiatan">Kegiatan Warga</option>
                       <option value="Penting">Info Penting</option>
@@ -1276,7 +1264,7 @@ function AdminDashboard() {
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Isi Berita / Keterangan *</label>
-                    <textarea className="form-control" rows="5" required value={formBerita.isi} onChange={(e) => setFormBerita({...formBerita, isi: e.target.value})}></textarea>
+                    <textarea className="form-control" rows="5" required value={formBerita.isi} onChange={(e) => setFormBerita({ ...formBerita, isi: e.target.value })}></textarea>
                   </div>
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Gambar Banner Berita</label>
@@ -1313,7 +1301,7 @@ function AdminDashboard() {
                           <tr key={item.id}>
                             <td>{new Date(item.created_at).toLocaleDateString('id-ID')}</td>
                             <td>
-                              <strong>{item.judul}</strong><br/>
+                              <strong>{item.judul}</strong><br />
                               <small className="text-muted">{item.isi.substring(0, 70)}...</small>
                             </td>
                             <td><span className="badge bg-secondary">{item.kategori}</span></td>
@@ -1341,29 +1329,29 @@ function AdminDashboard() {
                 <form onSubmit={handleSaveStats}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Jumlah Penduduk Laki-laki</label>
-                    <input type="number" className="form-control" value={stats.total_pria} onChange={(e) => setStats({...stats, total_pria: parseInt(e.target.value) || 0})} />
+                    <input type="number" className="form-control" value={stats.total_pria} onChange={(e) => setStats({ ...stats, total_pria: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Jumlah Penduduk Perempuan</label>
-                    <input type="number" className="form-control" value={stats.total_wanita} onChange={(e) => setStats({...stats, total_wanita: parseInt(e.target.value) || 0})} />
+                    <input type="number" className="form-control" value={stats.total_wanita} onChange={(e) => setStats({ ...stats, total_wanita: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Jumlah Kepala Keluarga (KK)</label>
-                    <input type="number" className="form-control" value={stats.total_kk} onChange={(e) => setStats({...stats, total_kk: parseInt(e.target.value) || 0})} />
+                    <input type="number" className="form-control" value={stats.total_kk} onChange={(e) => setStats({ ...stats, total_kk: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="row g-3 mb-3">
                     <div className="col-6">
                       <label className="form-label fw-semibold">Jumlah RT</label>
-                      <input type="number" className="form-control" value={stats.total_rt} onChange={(e) => setStats({...stats, total_rt: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={stats.total_rt} onChange={(e) => setStats({ ...stats, total_rt: parseInt(e.target.value) || 0 })} />
                     </div>
                     <div className="col-6">
                       <label className="form-label fw-semibold">Jumlah RW</label>
-                      <input type="number" className="form-control" value={stats.total_rw} onChange={(e) => setStats({...stats, total_rw: parseInt(e.target.value) || 0})} />
+                      <input type="number" className="form-control" value={stats.total_rw} onChange={(e) => setStats({ ...stats, total_rw: parseInt(e.target.value) || 0 })} />
                     </div>
                   </div>
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Luas Wilayah</label>
-                    <input type="text" className="form-control" value={stats.luas_wilayah} onChange={(e) => setStats({...stats, luas_wilayah: e.target.value})} />
+                    <input type="text" className="form-control" value={stats.luas_wilayah} onChange={(e) => setStats({ ...stats, luas_wilayah: e.target.value })} />
                   </div>
                   <button type="submit" className="btn btn-primary w-100 fw-bold">Update Ringkasan Statistik</button>
                 </form>
@@ -1376,47 +1364,47 @@ function AdminDashboard() {
                 <form onSubmit={handleSaveInfo}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Deskripsi Profil Kelurahan</label>
-                    <textarea className="form-control" rows="3" value={info.deskripsi_profil || ''} onChange={(e) => setInfo({...info, deskripsi_profil: e.target.value})}></textarea>
+                    <textarea className="form-control" rows="3" value={info.deskripsi_profil || ''} onChange={(e) => setInfo({ ...info, deskripsi_profil: e.target.value })}></textarea>
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Batas Utara</label>
-                    <input type="text" className="form-control" value={info.batas_utara || ''} onChange={(e) => setInfo({...info, batas_utara: e.target.value})} />
+                    <input type="text" className="form-control" value={info.batas_utara || ''} onChange={(e) => setInfo({ ...info, batas_utara: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Batas Selatan</label>
-                    <input type="text" className="form-control" value={info.batas_selatan || ''} onChange={(e) => setInfo({...info, batas_selatan: e.target.value})} />
+                    <input type="text" className="form-control" value={info.batas_selatan || ''} onChange={(e) => setInfo({ ...info, batas_selatan: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Batas Timur</label>
-                    <input type="text" className="form-control" value={info.batas_timur || ''} onChange={(e) => setInfo({...info, batas_timur: e.target.value})} />
+                    <input type="text" className="form-control" value={info.batas_timur || ''} onChange={(e) => setInfo({ ...info, batas_timur: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Batas Barat</label>
-                    <input type="text" className="form-control" value={info.batas_barat || ''} onChange={(e) => setInfo({...info, batas_barat: e.target.value})} />
+                    <input type="text" className="form-control" value={info.batas_barat || ''} onChange={(e) => setInfo({ ...info, batas_barat: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">📍 Alamat Lengkap Kantor Kelurahan</label>
-                    <input type="text" className="form-control" placeholder="Contoh: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel" value={info.alamat_kantor || ''} onChange={(e) => setInfo({...info, alamat_kantor: e.target.value})} />
+                    <input type="text" className="form-control" placeholder="Contoh: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel" value={info.alamat_kantor || ''} onChange={(e) => setInfo({ ...info, alamat_kantor: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">📧 Email Resmi Kelurahan</label>
-                    <input type="email" className="form-control" placeholder="Contoh: kelurahan.lompoe@pareparekota.go.id" value={info.email_resmi || ''} onChange={(e) => setInfo({...info, email_resmi: e.target.value})} />
+                    <input type="email" className="form-control" placeholder="Contoh: kelurahan.lompoe@pareparekota.go.id" value={info.email_resmi || ''} onChange={(e) => setInfo({ ...info, email_resmi: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">📞 Nomor Telepon Kantor</label>
-                    <input type="text" className="form-control" placeholder="Contoh: (0421) 12345" value={info.telepon_kantor || ''} onChange={(e) => setInfo({...info, telepon_kantor: e.target.value})} />
+                    <input type="text" className="form-control" placeholder="Contoh: (0421) 12345" value={info.telepon_kantor || ''} onChange={(e) => setInfo({ ...info, telepon_kantor: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">🕒 Jam Pelayanan Kantor Loket</label>
-                    <input type="text" className="form-control" placeholder="Contoh: Senin - Jumat (08.00 - 16.00 WITA)" value={info.jam_pelayanan || ''} onChange={(e) => setInfo({...info, jam_pelayanan: e.target.value})} />
+                    <input type="text" className="form-control" placeholder="Contoh: Senin - Jumat (08.00 - 16.00 WITA)" value={info.jam_pelayanan || ''} onChange={(e) => setInfo({ ...info, jam_pelayanan: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">📢 Teks Running Marquee Pengumuman Header</label>
-                    <textarea className="form-control" rows="2" placeholder="Tulis pengumuman bergerak di bagian paling atas beranda" value={info.teks_marquee || ''} onChange={(e) => setInfo({...info, teks_marquee: e.target.value})}></textarea>
+                    <textarea className="form-control" rows="2" placeholder="Tulis pengumuman bergerak di bagian paling atas beranda" value={info.teks_marquee || ''} onChange={(e) => setInfo({ ...info, teks_marquee: e.target.value })}></textarea>
                   </div>
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Link Embed / Share Google Maps URL</label>
-                    <textarea className="form-control" rows="2" placeholder="Contoh: https://maps.app.goo.gl/zdHwb9f13x8q8K1U8" value={info.embed_map_url || ''} onChange={(e) => setInfo({...info, embed_map_url: e.target.value})}></textarea>
+                    <textarea className="form-control" rows="2" placeholder="Contoh: https://maps.app.goo.gl/zdHwb9f13x8q8K1U8" value={info.embed_map_url || ''} onChange={(e) => setInfo({ ...info, embed_map_url: e.target.value })}></textarea>
                     <small className="text-muted d-block mt-1">💡 Tips: Anda dapat memasukkan link bagikan (contoh: https://maps.app.goo.gl/zdHwb9f13x8q8K1U8). Sistem otomatis mengonversi ke peta interaktif.</small>
                   </div>
                   <button type="submit" className="btn btn-primary w-100 fw-bold">Update Info & Batas Wilayah</button>
@@ -1435,11 +1423,11 @@ function AdminDashboard() {
                 <form onSubmit={handleSaveSarana}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Nama Sarana / Fasilitas *</label>
-                    <input type="text" className="form-control" required value={formSarana.nama_sarana} onChange={(e) => setFormSarana({...formSarana, nama_sarana: e.target.value})} />
+                    <input type="text" className="form-control" required value={formSarana.nama_sarana} onChange={(e) => setFormSarana({ ...formSarana, nama_sarana: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Kategori</label>
-                    <select className="form-select" value={formSarana.kategori} onChange={(e) => setFormSarana({...formSarana, kategori: e.target.value})}>
+                    <select className="form-select" value={formSarana.kategori} onChange={(e) => setFormSarana({ ...formSarana, kategori: e.target.value })}>
                       <option value="Layanan Publik">Layanan Publik</option>
                       <option value="Kesehatan">Kesehatan</option>
                       <option value="Peribadatan">Peribadatan</option>
@@ -1450,11 +1438,11 @@ function AdminDashboard() {
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Lokasi / Alamat</label>
-                    <input type="text" className="form-control" value={formSarana.lokasi || ''} onChange={(e) => setFormSarana({...formSarana, lokasi: e.target.value})} />
+                    <input type="text" className="form-control" value={formSarana.lokasi || ''} onChange={(e) => setFormSarana({ ...formSarana, lokasi: e.target.value })} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Kondisi Fasilitas</label>
-                    <select className="form-select" value={formSarana.kondisi} onChange={(e) => setFormSarana({...formSarana, kondisi: e.target.value})}>
+                    <select className="form-select" value={formSarana.kondisi} onChange={(e) => setFormSarana({ ...formSarana, kondisi: e.target.value })}>
                       <option value="Sangat Baik">Sangat Baik</option>
                       <option value="Baik">Baik</option>
                       <option value="Perlu Perbaikan">Perlu Perbaikan</option>
@@ -1575,8 +1563,8 @@ function AdminDashboard() {
                   </div>
                   <div className="card-footer bg-white p-3 border-0">
                     <form onSubmit={handleSendAdminChat} className="d-flex gap-2">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control form-control-lg"
                         placeholder="Balas pesan warga sebagai Admin Kelurahan..."
                         value={adminChatInput}
@@ -1626,9 +1614,9 @@ function AdminDashboard() {
                 <div className="row g-3 align-items-end">
                   <div className="col-md-4">
                     <label className="form-label fw-semibold">Wilayah RT / RW *</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
+                    <input
+                      type="text"
+                      className="form-control"
                       placeholder="Contoh: RT 01 / RW 01"
                       required
                       value={formKontakRt.rt_rw}
@@ -1637,9 +1625,9 @@ function AdminDashboard() {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label fw-semibold">Nama Ketua RT/RW</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
+                    <input
+                      type="text"
+                      className="form-control"
                       placeholder="Contoh: Pak Suparman"
                       value={formKontakRt.nama_ketua}
                       onChange={(e) => setFormKontakRt({ ...formKontakRt, nama_ketua: e.target.value })}
@@ -1647,9 +1635,9 @@ function AdminDashboard() {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label fw-semibold">Nomor WhatsApp (Contoh: 08123456789)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
+                    <input
+                      type="text"
+                      className="form-control"
                       placeholder="08xxxxxxxxxx"
                       value={formKontakRt.no_wa}
                       onChange={(e) => setFormKontakRt({ ...formKontakRt, no_wa: e.target.value })}
@@ -1693,7 +1681,7 @@ function AdminDashboard() {
                           )}
                         </td>
                         <td className="text-end">
-                          <button 
+                          <button
                             className="btn btn-sm btn-outline-primary fw-bold px-3 me-1"
                             onClick={() => {
                               setFormKontakRt(item);
@@ -1702,7 +1690,7 @@ function AdminDashboard() {
                           >
                             ✏️ Edit Nomor
                           </button>
-                          <button 
+                          <button
                             className="btn btn-sm btn-outline-danger fw-bold px-3"
                             onClick={async () => {
                               if (window.confirm(`Apakah Anda yakin ingin menghapus data kontak ${item.rt_rw}?`)) {
@@ -1743,9 +1731,9 @@ function AdminDashboard() {
               <div className="row g-3">
                 <div className="col-md-4">
                   <label className="form-label fw-semibold">Nama Instansi / Layanan *</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                  <input
+                    type="text"
+                    className="form-control"
                     placeholder="Contoh: Call Center Parepare / Polsek Bacukiki"
                     required
                     value={formDarurat.nama_instansi}
@@ -1754,9 +1742,9 @@ function AdminDashboard() {
                 </div>
                 <div className="col-md-3">
                   <label className="form-label fw-semibold">Nomor Telepon *</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                  <input
+                    type="text"
+                    className="form-control"
                     placeholder="Contoh: 112 / (0421) 12345"
                     required
                     value={formDarurat.nomor_telepon}
@@ -1765,9 +1753,9 @@ function AdminDashboard() {
                 </div>
                 <div className="col-md-3">
                   <label className="form-label fw-semibold">Simbol Emoji / Ikon</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                  <input
+                    type="text"
+                    className="form-control"
                     placeholder="Contoh: 🚨 / 🚓 / 🚒 / 🏥"
                     value={formDarurat.icon}
                     onChange={(e) => setFormDarurat({ ...formDarurat, icon: e.target.value })}
@@ -1801,13 +1789,13 @@ function AdminDashboard() {
                       <td className="fw-bold text-dark">{item.nama_instansi}</td>
                       <td><span className="badge bg-danger fs-6 px-3 py-1 rounded-pill">📞 {item.nomor_telepon}</span></td>
                       <td className="text-end">
-                        <button 
+                        <button
                           className="btn btn-sm btn-outline-primary fw-bold me-2 px-3"
                           onClick={() => { setFormDarurat(item); setEditDaruratMode(true); }}
                         >
                           ✏️ Edit
                         </button>
-                        <button 
+                        <button
                           className="btn btn-sm btn-outline-danger fw-bold px-3"
                           onClick={() => handleDeleteDarurat(item.id)}
                         >
@@ -1850,10 +1838,10 @@ function AdminDashboard() {
                   </div>
                   <div className="mb-3 p-3 bg-light rounded-3 border border-success border-opacity-50">
                     <label className="form-label fw-bold text-success">📄 Upload File Surat Hasil TTD Lurah dari SRIKANDI (PDF Resmi)</label>
-                    <input 
-                      type="file" 
-                      className="form-control border-success" 
-                      accept="image/*,.pdf,.docx" 
+                    <input
+                      type="file"
+                      className="form-control border-success"
+                      accept="image/*,.pdf,.docx"
                       onChange={async (e) => {
                         const f = e.target.files[0];
                         setFileHasil(f);
@@ -1866,7 +1854,7 @@ function AdminDashboard() {
                             }
                           }
                         }
-                      }} 
+                      }}
                     />
                     <small className="text-muted d-block mt-2">
                       Upload file <b>PDF resmi dari Srikandi</b> yang sudah ditandatangani digital oleh Pak Lurah dan menerbitkan Nomor/Tanggal Naskah. File ini bisa langsung didownload warga secara mandiri dari rumah!
@@ -1892,11 +1880,11 @@ function AdminDashboard() {
                 <h5 className="modal-title fw-bold text-white">🖨️ Pratinjau Dokumen Cetak Surat Resmi (Auto-Fill System)</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setModalPreviewSurat(null)}></button>
               </div>
-              
+
               <div className="modal-body p-4 bg-light">
                 {/* PAPER SIMULATION */}
                 <div className="bg-white p-5 shadow-sm border mx-auto font-monospace text-dark" style={{ maxWidth: '800px', minHeight: '900px', fontSize: '14px', fontFamily: 'Times New Roman, serif' }}>
-                  
+
                   {/* KOP SURAT KELURAHAN */}
                   <div className="text-center border-bottom border-3 border-dark pb-3 mb-4">
                     <h5 className="fw-bold mb-0 text-uppercase tracking-wide" style={{ letterSpacing: '1px' }}>PEMERINTAH KOTA PAREPARE</h5>
@@ -1999,12 +1987,12 @@ function AdminDashboard() {
                     <div className="col-6 text-center ms-auto">
                       <p className="mb-1">Lompoe, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                       <p className="fw-bold mb-2">LURAH LOMPOE</p>
-                      
+
                       {/* E-SIGN QR CODE STAMP */}
                       <div className="my-2 p-2 border border-2 border-primary d-inline-block rounded-3 bg-light position-relative">
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://web-kelurahan-lompoe.id/verifikasi-ttd-lurah?resi=' + modalPreviewSurat.no_resi)}`} 
-                          alt="QR Code TTD Lurah" 
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://web-kelurahan-lompoe.id/verifikasi-ttd-lurah?resi=' + modalPreviewSurat.no_resi)}`}
+                          alt="QR Code TTD Lurah"
                           style={{ width: '90px', height: '90px' }}
                         />
                         <small className="d-block text-primary fw-bold mt-1" style={{ fontSize: '9px' }}>TTD DIGITAL E-SIGN LURAH</small>
@@ -2047,12 +2035,12 @@ function AdminDashboard() {
                   new_password: formGantiPass.new_password,
                   pin_recovery: formGantiPass.pin_recovery
                 })
-                .then(res => {
-                  showNotif(res.data.message);
-                  setModalGantiPassword(false);
-                  setFormGantiPass({ old_password: '', new_password: '', pin_recovery: '123456' });
-                })
-                .catch(err => showNotif(err.response?.data?.message || 'Gagal mengubah password.'));
+                  .then(res => {
+                    showNotif(res.data.message);
+                    setModalGantiPassword(false);
+                    setFormGantiPass({ old_password: '', new_password: '', pin_recovery: '123456' });
+                  })
+                  .catch(err => showNotif(err.response?.data?.message || 'Gagal mengubah password.'));
               }}>
                 <div className="modal-body p-4">
                   <p className="small text-muted mb-3">
@@ -2061,8 +2049,8 @@ function AdminDashboard() {
 
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Password Saat Ini (Lama) *</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="form-control"
                       placeholder="Masukkan password lama"
                       required
@@ -2073,8 +2061,8 @@ function AdminDashboard() {
 
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Password Baru *</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="form-control"
                       placeholder="Masukkan password baru"
                       required
@@ -2085,8 +2073,8 @@ function AdminDashboard() {
 
                   <div className="mb-3">
                     <label className="form-label fw-semibold">PIN Pemulihan Rahasia (6 Angka)</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="form-control"
                       placeholder="Contoh: 123456"
                       maxLength="10"
@@ -2114,10 +2102,10 @@ function AdminDashboard() {
         const fileMap = item.file_data_map || item.file_berkas_data || {};
         const globalFileMap = JSON.parse(localStorage.getItem('all_file_data_map') || '{}');
 
-        const realB64 = fileMap[fileName] || fileMap[fileName.trim()] || 
-                        globalFileMap[fileName] || globalFileMap[fileName.trim()] || 
-                        localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim()) ||
-                        Object.values(fileMap)[modalViewBerkas.idx - 1];
+        const realB64 = fileMap[fileName] || fileMap[fileName.trim()] ||
+          globalFileMap[fileName] || globalFileMap[fileName.trim()] ||
+          localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim()) ||
+          Object.values(fileMap)[modalViewBerkas.idx - 1];
 
         // Always generate a clean visual SVG image data URL fallback
         const svgImageSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23f8fafc" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%23ffffff" rx="12" stroke="%230284c7" stroke-width="2"/><text x="400" y="70" fill="%230369a1" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">PEMERINTAH KOTA PAREPARE - KELURAHAN LOMPOE</text><text x="400" y="100" fill="%23475569" font-family="sans-serif" font-size="14" text-anchor="middle">BERKAS LAMPIRAN PERSYARATAN WARGA (SRIKANDI)</text><line x1="40" y1="120" x2="760" y2="120" stroke="%230284c7" stroke-width="2"/><rect x="60" y="140" width="680" height="240" fill="%23f1f5f9" rx="8" stroke="%23cbd5e1"/><path d="M400 180 L450 250 L350 250 Z" fill="%230284c7"/><circle cx="430" cy="190" r="18" fill="%23eab308"/><text x="400" y="310" fill="%230f172a" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="340" fill="%2364748b" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | NIK: ${encodeURIComponent(item.nik || '')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="200" y="410" width="400" height="45" fill="%2316a34a" rx="22"/><text x="400" y="438" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ BERKAS FISIK TERVERIFIKASI SAH SRIKANDI</text></svg>`;
@@ -2145,24 +2133,24 @@ function AdminDashboard() {
                 <div className="modal-body p-4 text-center">
                   <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
                   <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
-                  
+
                   {/* PRATINJAU DOKUMEN GAMBAR / PDF BERKAS */}
                   <div className="p-3 bg-light rounded-3 border mb-3 text-center shadow-sm">
                     {isPdf && realB64 ? (
                       <iframe src={realB64} width="100%" height="420px" style={{ border: 'none', borderRadius: '8px' }} title={fileName} />
                     ) : (
-                      <img 
-                        src={displayImgSrc} 
-                        alt={fileName} 
-                        className="img-fluid rounded-3 border shadow-sm mb-2" 
-                        style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
+                      <img
+                        src={displayImgSrc}
+                        alt={fileName}
+                        className="img-fluid rounded-3 border shadow-sm mb-2"
+                        style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }}
                       />
                     )}
                     <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
                   </div>
 
                   <div className="d-flex justify-content-center gap-2">
-                    <button 
+                    <button
                       onClick={handleOpenFullscreen}
                       className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
                     >
