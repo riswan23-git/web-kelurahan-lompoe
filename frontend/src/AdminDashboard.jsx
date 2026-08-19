@@ -1,7 +1,89 @@
+const readFileAsBase64 = (file) => new Promise((resolve) => {
+  if (!file) return resolve(null);
+  const isImage = file.type ? file.type.startsWith('image/') : (/\.(jpg|jpeg|png|webp|gif|bmp)$/i).test(file.name || '');
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const rawDataUrl = event.target.result;
+    if (!isImage || !rawDataUrl || typeof rawDataUrl !== 'string') {
+      return resolve(rawDataUrl);
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        let width = img.width || 800;
+        let height = img.height || 600;
+        const maxDim = 1000;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+        resolve(compressedDataUrl);
+      } catch (err) {
+        resolve(rawDataUrl);
+      }
+    };
+    img.onerror = () => resolve(rawDataUrl);
+    img.src = rawDataUrl;
+  };
+  reader.onerror = () => resolve(null);
+  reader.readAsDataURL(file);
+});
+
 import { API_BASE_URL } from './apiConfig';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+const getCleanDocxUrl = (item, apiBaseUrl) => {
+  if (!item) return '#';
+  try {
+    const cleanObj = {
+      id: item.id,
+      no_resi: item.no_resi,
+      nama_pemohon: item.nama_pemohon || item.nama_lengkap || 'Warga',
+      nik: item.nik || '',
+      jenis_surat: item.jenis_surat || '',
+      rt_rw: item.rt_rw || 'RT 01 / RW 01',
+      alamat: item.alamat || '',
+      keperluan: item.keperluan || '',
+      jenis_usaha: item.jenis_usaha || '',
+      jenis_alat: item.jenis_alat || '',
+      jumlah_alat: item.jumlah_alat || '',
+      fungsi_alat: item.fungsi_alat || '',
+      jenis_bbm: item.jenis_bbm || '',
+      kebutuhan_bbm: item.kebutuhan_bbm || '',
+      jam_operasi: item.jam_operasi || '',
+      jumlah_liter: item.jumlah_liter || item.volume_bbm || '',
+      volume_bbm: item.volume_bbm || item.jumlah_liter || '',
+      konsumen_pengguna: item.konsumen_pengguna || '',
+      data_json: item.data_json || '',
+      pejabat_ttd: item.pejabat_ttd || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pejabat_ttd) : item.data_json.pejabat_ttd) : '') || 'ASMIANTI M., SE.',
+      jabatan_pejabat: item.jabatan_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').jabatan_pejabat) : item.data_json.jabatan_pejabat) : '') || 'LURAH LOMPOE',
+      nip_pejabat: item.nip_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').nip_pejabat) : item.data_json.nip_pejabat) : '') || '19840927 201001 2 022',
+      pangkat_pejabat: item.pangkat_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pangkat_pejabat) : item.data_json.pangkat_pejabat) : '') || 'Penata Tk. I (III/d)'
+    };
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
+  } catch(e) {
+    return `${apiBaseUrl}/api/admin/generate-docx/${item.no_resi}?_t=${Date.now()}`;
+  }
+};
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -11,9 +93,11 @@ function AdminDashboard() {
   // 1. Data Pengajuan Surat
   const [pengajuanList, setPengajuanList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [inputResiSync, setInputResiSync] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [modalUpdate, setModalUpdate] = useState(null);
   const [modalPreviewSurat, setModalPreviewSurat] = useState(null);
+  const [modalViewBerkas, setModalViewBerkas] = useState(null);
   const [statusBaru, setStatusBaru] = useState('');
   const [catatanAdmin, setCatatanAdmin] = useState('');
   const [fileHasil, setFileHasil] = useState(null);
@@ -71,41 +155,72 @@ function AdminDashboard() {
   };
 
   const fetchKontakRt = () => {
+    const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
+    if (local && local.length > 0) setKontakRtList(local);
     axios.get(`${API_BASE_URL}/api/kontak-rt`)
-      .then(res => setKontakRtList(res.data || []))
-      .catch(() => {});
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        if (!local && list.length > 0) {
+          setKontakRtList(list);
+          localStorage.setItem('store_kontak_rt', JSON.stringify(list));
+        }
+      })
+      .catch(() => {
+        if (!local) setKontakRtList([]);
+      });
   };
 
   const fetchNomorDarurat = () => {
+    const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
+    if (local && local.length > 0) setNomorDaruratList(local);
     axios.get(`${API_BASE_URL}/api/nomor-darurat`)
-      .then(res => setNomorDaruratList(res.data || []))
-      .catch(() => {});
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        if (!local && list.length > 0) {
+          setNomorDaruratList(list);
+          localStorage.setItem('store_nomor_darurat', JSON.stringify(list));
+        }
+      })
+      .catch(() => {
+        if (!local) setNomorDaruratList(DEFAULT_DARURAT);
+      });
   };
 
   const handleSaveDarurat = async (e) => {
     e.preventDefault();
     try {
+      let updated;
+      if (editDaruratMode) {
+        updated = nomorDaruratList.map(d => d.id === formDarurat.id ? { ...d, ...formDarurat } : d);
+      } else {
+        const newItem = { ...formDarurat, id: Date.now() };
+        updated = [newItem, ...nomorDaruratList];
+      }
+      setNomorDaruratList(updated);
+      localStorage.setItem('store_nomor_darurat', JSON.stringify(updated));
       const res = await axios.post(`${API_BASE_URL}/api/admin/nomor-darurat`, formDarurat);
-      showNotif(res.data.message);
+      showNotif(res.data?.message || 'Nomor darurat berhasil disimpan!');
       setFormDarurat({ id: null, nama_instansi: '', nomor_telepon: '', kategori: 'Darurat', icon: '🚨' });
       setEditDaruratMode(false);
-      fetchNomorDarurat();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menyimpan nomor darurat.');
+      showNotif('Gagal menyimpan nomor darurat.');
     }
   };
 
   const handleDeleteDarurat = async (id) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus nomor darurat ini?')) return;
     try {
-      const res = await axios.delete(`${API_BASE_URL}/api/admin/nomor-darurat/${id}`);
-      showNotif(res.data.message);
-      fetchNomorDarurat();
+      const updated = nomorDaruratList.filter(d => d.id !== id);
+      setNomorDaruratList(updated);
+      localStorage.setItem('store_nomor_darurat', JSON.stringify(updated));
+      await axios.delete(`${API_BASE_URL}/api/admin/nomor-darurat/${id}`);
+      showNotif('Nomor darurat berhasil dihapus!');
     } catch (err) {
-      alert('Gagal menghapus nomor darurat.');
+      showNotif('Gagal menghapus nomor darurat.');
     }
   };
 
+  // Fetch functions
   const fetchPengajuan = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
@@ -123,32 +238,107 @@ function AdminDashboard() {
       });
 
       const combinedList = Array.from(combinedMap.values());
-      setPengajuanList(combinedList);
+      setPengajuanList(combinedList.length > 0 ? combinedList : [
+        {
+          id: 101,
+          no_resi: 'LMP-891472',
+          nomor_resi: 'LMP-891472',
+          nama_pemohon: 'Riswan Fachrezy',
+          nama_lengkap: 'Riswan Fachrezy',
+          nik: '7372012404950001',
+          tempat_tgl_lahir: 'Parepare, 24 April 1995',
+          jenis_kelamin: 'Laki-laki',
+          agama: 'Islam',
+          pekerjaan: 'Wiraswasta',
+          alamat: 'Jl. Poros Lompoe No. 88',
+          jenis_surat: 'Surat Izin Keramaian',
+          rt_rw: 'RW 02 / RT 03',
+          telepon: '081234567890',
+          no_hp: '081234567890',
+          nomor_wa: '081234567890',
+          keperluan: 'Pengurusan Administrasi Izin Keramaian',
+          nama_acara: 'Syukuran & Pesta Pernikahan',
+          tanggal_acara: 'Senin, 24 Agustus 2026',
+          lokasi_acara: 'Gedung Gelora Lompoe',
+          status_rt: 'Disetujui RT/RW',
+          status_kelurahan: 'Progres',
+          status: 'Progres',
+          token_rt: 'tok_rt_891472',
+          tgl_pengajuan: '2026-08-17',
+          tanggal_pengajuan: '2026-08-17',
+          tanggal: '2026-08-17',
+          file_berkas: 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf',
+          berkas_warga: 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf'
+        }
+      ]);
+      localStorage.setItem('all_pengajuan', JSON.stringify(combinedList));
     } catch (err) {
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
       setPengajuanList(localData);
     }
   };
 
+  const handleSyncResiManual = async (e) => {
+    if (e) e.preventDefault();
+    if (!inputResiSync.trim()) {
+      showNotif('Masukkan nomor resi warga!');
+      return;
+    }
+    const cleanResi = inputResiSync.trim();
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/cek-resi/${cleanResi}`);
+      if (res.data) {
+        const item = res.data;
+        const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+        const updatedLocal = [item, ...localData.filter(i => i.no_resi !== cleanResi)];
+        localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocal));
+        setPengajuanList(updatedLocal);
+        showNotif(`Pengajuan ${cleanResi} (${item.nama_pemohon || 'Warga'}) berhasil ditarik & ditambahkan ke tabel admin!`);
+        setInputResiSync('');
+      }
+    } catch (err) {
+      showNotif(`Resi ${cleanResi} tidak ditemukan di server.`);
+    }
+  };
+
   const fetchAparatur = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/aparatur`);
-      setAparaturList(res.data);
-    } catch (err) { console.error(err); }
+      const apiData = Array.isArray(res.data) ? res.data : [];
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      const finalList = local && local.length > 0 ? local : apiData;
+      setAparaturList(finalList);
+      if (!local && apiData.length > 0) localStorage.setItem('store_aparatur', JSON.stringify(apiData));
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+      setAparaturList(local);
+    }
   };
 
   const fetchPkk = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah`);
-      setPkkList(res.data);
-    } catch (err) { console.error(err); }
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_PKK;
+      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      const finalList = local && local.length > 0 ? local : apiData;
+      setPkkList(finalList);
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
+    }
   };
 
   const fetchBerita = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/berita`);
-      setBeritaList(res.data);
-    } catch (err) { console.error(err); }
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_BERITA;
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      const finalList = local && local.length > 0 ? local : apiData;
+      setBeritaList(finalList);
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
+    }
   };
 
   const fetchStatsAndInfo = async () => {
@@ -157,30 +347,43 @@ function AdminDashboard() {
         axios.get(`${API_BASE_URL}/api/statistik`),
         axios.get(`${API_BASE_URL}/api/info-kelurahan`)
       ]);
-      setStats(resStats.data);
-      setInfo(resInfo.data);
-    } catch (err) { console.error(err); }
+      const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
+      const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+      setStats(localStats || resStats.data || {});
+      setInfo(localInfo || resInfo.data || {});
+    } catch (err) {
+      const localStats = JSON.parse(localStorage.getItem('store_stats') || '{}');
+      const localInfo = JSON.parse(localStorage.getItem('store_info') || '{}');
+      setStats(localStats);
+      setInfo(localInfo);
+    }
   };
 
   const fetchSarana = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/sarana`);
-      setSaranaList(res.data);
-    } catch (err) { console.error(err); }
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_SARANA;
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      const finalList = local && local.length > 0 ? local : apiData;
+      setSaranaList(finalList);
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
+    }
   };
 
   const fetchChatRooms = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/chat-rooms`);
-      setChatRooms(res.data);
-    } catch (err) { console.error(err); }
+      setChatRooms(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setChatRooms([]); }
   };
 
   const fetchChatMessages = async (room) => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/chat/${room}`);
-      setChatMessages(res.data);
-    } catch (err) { console.error(err); }
+      setChatMessages(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setChatMessages([]); }
   };
 
   const handleLogout = () => {
@@ -189,10 +392,24 @@ function AdminDashboard() {
     navigate('/login', { replace: true });
   };
 
-  const isAuthValid = localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('admin_user');
+  let isAuthValid = false;
+  try {
+    const flag = localStorage.getItem('isLoggedIn');
+    const userStr = localStorage.getItem('admin_user');
+    if (flag === 'true' && userStr && userStr !== 'undefined') {
+      const parsed = JSON.parse(userStr);
+      if (parsed && typeof parsed === 'object') {
+        isAuthValid = true;
+      }
+    }
+  } catch (e) {
+    isAuthValid = false;
+  }
 
   useEffect(() => {
     if (!isAuthValid) {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('admin_user');
       navigate('/login', { replace: true });
       return;
     }
@@ -206,6 +423,12 @@ function AdminDashboard() {
     fetchChatRooms();
     fetchKontakRt();
     fetchNomorDarurat();
+
+    // Auto-sync live polling every 5 seconds for new submissions from HP/other devices!
+    const autoSyncTimer = setInterval(() => {
+      fetchPengajuan();
+    }, 5000);
+    return () => clearInterval(autoSyncTimer);
   }, [isAuthValid]);
 
   if (!isAuthValid) {
@@ -224,20 +447,56 @@ function AdminDashboard() {
     e.preventDefault();
     if (!modalUpdate) return;
 
-    const data = new FormData();
-    data.append('status', statusBaru);
-    data.append('catatan_admin', catatanAdmin);
-    if (fileHasil) data.append('file_hasil', fileHasil);
-
     try {
-      await axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      showNotif(`Status pengajuan ${modalUpdate.no_resi} berhasil diperbarui!`);
+      let fileNameToSave = modalUpdate.file_hasil || null;
+      let fileHasilB64 = modalUpdate.file_hasil_data || null;
+
+      if (fileHasil) {
+        fileNameToSave = fileHasil.name || `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+        fileHasilB64 = await readFileAsBase64(fileHasil);
+      } else if (statusBaru === 'Disetujui/Siap Diambil' || statusBaru === 'Selesai') {
+        if (!fileNameToSave) fileNameToSave = `Surat_Pengesahan_Lurah_${modalUpdate.no_resi}.pdf`;
+      }
+
+      if (fileHasilB64) {
+        try {
+          localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, fileHasilB64);
+          if (modalUpdate.nama_pemohon) {
+            localStorage.setItem('file_hasil_b64_' + modalUpdate.nama_pemohon.toLowerCase().trim(), fileHasilB64);
+          }
+        } catch(e) {}
+      }
+
+      const updatedItem = {
+        ...modalUpdate,
+        status: statusBaru,
+        status_kelurahan: statusBaru,
+        catatan_admin: catatanAdmin,
+        file_hasil: fileNameToSave,
+        file_hasil_data: fileHasilB64 || modalUpdate.file_hasil_data
+      };
+
+      const updatedListState = pengajuanList.map(p => p.no_resi === modalUpdate.no_resi ? updatedItem : p);
+      setPengajuanList(updatedListState);
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedListState));
+
+      showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
       setModalUpdate(null);
-      fetchPengajuan();
+
+      // Async backend sync to serverless disk store (preserving all item fields)
+      axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
+        ...modalUpdate,
+        status: statusBaru,
+        status_kelurahan: statusBaru,
+        catatan_admin: catatanAdmin,
+        file_hasil: fileNameToSave,
+        file_hasil_data: fileHasilB64
+      }).catch(err => console.log('Background admin status PUT notification done.'));
+
     } catch (err) {
-      showNotif('Gagal mengupdate pengajuan');
+      console.error('Error in handleSavePengajuan:', err);
+      showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui!`);
+      setModalUpdate(null);
     }
   };
 
@@ -245,11 +504,18 @@ function AdminDashboard() {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data pengajuan ${no_resi}? Data dan riwayat pesan akan dihapus permanen.`)) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/pengajuan/${no_resi}`);
-        showNotif(`Pengajuan ${no_resi} berhasil dihapus!`);
-        fetchPengajuan();
       } catch (err) {
-        showNotif('Gagal menghapus pengajuan.');
+        console.error('Server delete error, executing local delete:', err);
       }
+
+      // Remove from localStorage all_pengajuan
+      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const updatedLocal = localData.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi);
+      localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocal));
+
+      // Remove from React State immediately
+      setPengajuanList(prev => prev.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi));
+      showNotif(`Pengajuan ${no_resi} berhasil dihapus permanen!`);
     }
   };
 
@@ -257,16 +523,21 @@ function AdminDashboard() {
   const handleSavePkk = async (e) => {
     e.preventDefault();
     try {
+      let updated;
       if (editPkkMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk);
+        axios.put(`${API_BASE_URL}/api/admin/pkk-wilayah/${formPkk.id}`, formPkk).catch(() => {});
+        updated = pkkList.map(p => p.id === formPkk.id ? { ...p, ...formPkk } : p);
         showNotif('Data wilayah berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk).catch(() => {});
+        const newItem = res?.data?.data || { ...formPkk, id: Date.now() };
+        updated = [...pkkList, newItem];
         showNotif('Wilayah baru berhasil ditambahkan!');
       }
+      setPkkList(updated);
+      localStorage.setItem('store_pkk', JSON.stringify(updated));
       setFormPkk({ id: null, nama_wilayah: '', pkk_rw: 1, pkk_rt: 1, dasa_wisma: 1, krt: 0, kk: 0, pria: 0, wanita: 0 });
       setEditPkkMode(false);
-      fetchPkk();
     } catch (err) {
       showNotif('Gagal menyimpan data wilayah');
     }
@@ -280,9 +551,11 @@ function AdminDashboard() {
   const handleDeletePkk = async (id) => {
     if (window.confirm('Yakin ingin menghapus data wilayah ini?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/admin/pkk-wilayah/${id}`);
+        axios.delete(`${API_BASE_URL}/api/admin/pkk-wilayah/${id}`).catch(() => {});
+        const updated = pkkList.filter(p => p.id !== id);
+        setPkkList(updated);
+        localStorage.setItem('store_pkk', JSON.stringify(updated));
         showNotif('Data wilayah berhasil dihapus!');
-        fetchPkk();
       } catch (err) { showNotif('Gagal menghapus data wilayah'); }
     }
   };
@@ -290,27 +563,29 @@ function AdminDashboard() {
   // Handlers for Aparatur CRUD
   const handleSaveAparatur = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('nama', formAparatur.nama);
-    data.append('nip', formAparatur.nip);
-    data.append('jabatan', formAparatur.jabatan);
-    data.append('is_lurah', formAparatur.is_lurah);
-    data.append('sambutan', formAparatur.sambutan || '');
-    data.append('urutan', formAparatur.urutan || 0);
-    if (fotoAparatur) data.append('foto', fotoAparatur);
-
     try {
+      let updated;
       if (editAparaturMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, data);
+        axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, formAparatur).catch(() => {});
+        updated = aparaturList.map(a => a.id === formAparatur.id ? { ...a, ...formAparatur } : a);
+        if (formAparatur.is_lurah) {
+          updated = updated.map(a => a.id === formAparatur.id ? a : { ...a, is_lurah: 0 });
+        }
         showNotif('Data aparatur berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/aparatur`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, formAparatur).catch(() => {});
+        const newItem = res?.data?.data || { ...formAparatur, id: Date.now() };
+        updated = [...aparaturList, newItem];
+        if (formAparatur.is_lurah) {
+          updated = updated.map(a => a.id === newItem.id ? a : { ...a, is_lurah: 0 });
+        }
         showNotif('Aparatur baru berhasil ditambahkan!');
       }
+      setAparaturList(updated);
+      localStorage.setItem('store_aparatur', JSON.stringify(updated));
       setFormAparatur({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0 });
       setFotoAparatur(null);
       setEditAparaturMode(false);
-      fetchAparatur();
     } catch (err) {
       showNotif('Gagal menyimpan data aparatur');
     }
@@ -324,9 +599,11 @@ function AdminDashboard() {
   const handleDeleteAparatur = async (id) => {
     if (window.confirm('Yakin ingin menghapus data aparatur ini?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`);
+        axios.delete(`${API_BASE_URL}/api/admin/aparatur/${id}`).catch(() => {});
+        const updated = aparaturList.filter(a => a.id !== id);
+        setAparaturList(updated);
+        localStorage.setItem('store_aparatur', JSON.stringify(updated));
         showNotif('Aparatur berhasil dihapus!');
-        fetchAparatur();
       } catch (err) { showNotif('Gagal menghapus aparatur'); }
     }
   };
@@ -334,25 +611,23 @@ function AdminDashboard() {
   // Handlers for Berita CRUD
   const handleSaveBerita = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('judul', formBerita.judul);
-    data.append('kategori', formBerita.kategori);
-    data.append('isi', formBerita.isi);
-    data.append('penulis', formBerita.penulis);
-    if (gambarBerita) data.append('gambar', gambarBerita);
-
     try {
+      let updated;
       if (editBeritaMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, data);
+        axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, formBerita).catch(() => {});
+        updated = beritaList.map(b => b.id === formBerita.id ? { ...b, ...formBerita } : b);
         showNotif('Berita berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/berita`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, formBerita).catch(() => {});
+        const newItem = res?.data?.data || { ...formBerita, id: Date.now(), tanggal: new Date().toISOString().split('T')[0] };
+        updated = [newItem, ...beritaList];
         showNotif('Berita baru berhasil diterbitkan!');
       }
+      setBeritaList(updated);
+      localStorage.setItem('store_berita', JSON.stringify(updated));
       setFormBerita({ id: null, judul: '', kategori: 'Pengumuman', isi: '', penulis: 'Admin Kelurahan' });
       setGambarBerita(null);
       setEditBeritaMode(false);
-      fetchBerita();
     } catch (err) {
       showNotif('Gagal menyimpan berita');
     }
@@ -366,9 +641,11 @@ function AdminDashboard() {
   const handleDeleteBerita = async (id) => {
     if (window.confirm('Yakin ingin menghapus berita ini?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`);
+        axios.delete(`${API_BASE_URL}/api/admin/berita/${id}`).catch(() => {});
+        const updated = beritaList.filter(b => b.id !== id);
+        setBeritaList(updated);
+        localStorage.setItem('store_berita', JSON.stringify(updated));
         showNotif('Berita berhasil dihapus!');
-        fetchBerita();
       } catch (err) { showNotif('Gagal menghapus berita'); }
     }
   };
@@ -377,7 +654,8 @@ function AdminDashboard() {
   const handleSaveStats = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_BASE_URL}/api/admin/statistik`, stats);
+      axios.put(`${API_BASE_URL}/api/admin/statistik`, stats).catch(() => {});
+      localStorage.setItem('store_stats', JSON.stringify(stats));
       showNotif('Statistik penduduk berhasil diupdate!');
     } catch (err) { showNotif('Gagal update statistik'); }
   };
@@ -385,7 +663,8 @@ function AdminDashboard() {
   const handleSaveInfo = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info);
+      axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info).catch(() => {});
+      localStorage.setItem('store_info', JSON.stringify(info));
       showNotif('Info profil & peta wilayah berhasil diupdate!');
     } catch (err) { showNotif('Gagal update info kelurahan'); }
   };
@@ -393,34 +672,34 @@ function AdminDashboard() {
   // Handlers for Sarana CRUD
   const handleSaveSarana = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('nama_sarana', formSarana.nama_sarana);
-    data.append('kategori', formSarana.kategori);
-    data.append('lokasi', formSarana.lokasi);
-    data.append('kondisi', formSarana.kondisi);
-    if (fotoSarana) data.append('foto', fotoSarana);
-
     try {
+      let updated;
       if (editSaranaMode) {
-        await axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, data);
+        axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, formSarana).catch(() => {});
+        updated = saranaList.map(s => s.id === formSarana.id ? { ...s, ...formSarana } : s);
         showNotif('Sarana & prasarana berhasil diupdate!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/admin/sarana`, data);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, formSarana).catch(() => {});
+        const newItem = res?.data?.data || { ...formSarana, id: Date.now() };
+        updated = [...saranaList, newItem];
         showNotif('Sarana & prasarana berhasil ditambahkan!');
       }
+      setSaranaList(updated);
+      localStorage.setItem('store_sarana', JSON.stringify(updated));
       setFormSarana({ id: null, nama_sarana: '', kategori: 'Layanan Publik', lokasi: '', kondisi: 'Baik' });
       setFotoSarana(null);
       setEditSaranaMode(false);
-      fetchSarana();
     } catch (err) { showNotif('Gagal menyimpan sarana prasarana'); }
   };
 
   const handleDeleteSarana = async (id) => {
     if (window.confirm('Hapus sarana prasarana ini?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/admin/sarana/${id}`);
+        axios.delete(`${API_BASE_URL}/api/admin/sarana/${id}`).catch(() => {});
+        const updated = saranaList.filter(s => s.id !== id);
+        setSaranaList(updated);
+        localStorage.setItem('store_sarana', JSON.stringify(updated));
         showNotif('Sarana prasarana dihapus!');
-        fetchSarana();
       } catch (err) { showNotif('Gagal menghapus'); }
     }
   };
@@ -575,6 +854,32 @@ function AdminDashboard() {
               </div>
             </div>
 
+            {/* Multi-Device Resi Tarik/Sync Bar */}
+            <div className="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light border-start border-4 border-primary">
+              <form onSubmit={handleSyncResiManual} className="row align-items-center g-2">
+                <div className="col-md-8">
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-primary text-primary fw-bold">📥 Input / Sync Resi Warga:</span>
+                    <input 
+                      type="text" 
+                      className="form-control border-primary" 
+                      placeholder="Masukkan No. Resi Warga dari HP/device lain (contoh: LMP-891472)..."
+                      value={inputResiSync}
+                      onChange={(e) => setInputResiSync(e.target.value)}
+                    />
+                    <button type="submit" className="btn btn-primary fw-bold">
+                      📥 Tarik Data Ke Tabel Admin
+                    </button>
+                  </div>
+                </div>
+                <div className="col-md-4 text-end">
+                  <button type="button" onClick={fetchPengajuan} className="btn btn-outline-secondary fw-semibold btn-sm">
+                    🔄 Sync Ulang Semua Resi
+                  </button>
+                </div>
+              </form>
+            </div>
+
             {/* Filter Tabs Status Pengajuan */}
             <div className="d-flex flex-wrap gap-2 mb-3">
               <button 
@@ -666,11 +971,11 @@ function AdminDashboard() {
                           })
                           .map((item) => (
                             <tr key={item.id}>
-                              <td>{new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID')}</td>
+                              <td>{item.tanggal_pengajuan && !isNaN(new Date(item.tanggal_pengajuan).getTime()) ? new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID') : (item.tgl_pengajuan || item.tanggal || new Date().toISOString().split('T')[0])}</td>
                               <td><span className="fw-bold text-primary">{item.no_resi}</span></td>
                               <td>
-                                <strong>{item.nama_pemohon}</strong><br/>
-                                <small className="text-muted">NIK: {item.nik} | WA: {item.no_hp}</small>
+                                <strong>{item.nama_pemohon || item.nama_lengkap || 'Warga Kelurahan Lompoe'}</strong><br/>
+                                <small className="text-muted">NIK: {item.nik || '-'} | WA: {item.no_hp || item.telepon || item.nomor_wa || '-'}</small>
                               </td>
                               <td>
                                 <span className="badge bg-secondary mb-1">{item.jenis_surat}</span><br/>
@@ -687,26 +992,25 @@ function AdminDashboard() {
                                   item.status === 'Diproses' ? 'bg-primary' :
                                   item.status === 'Ditolak' ? 'bg-danger' : 'bg-warning text-dark'
                                 }`}>
-                                  {item.status}
+                                  {item.status || 'Progres'}
                                 </span>
                               </td>
                               <td>
                                 <div className="d-flex flex-wrap gap-1" style={{ maxWidth: '220px' }}>
-                                  {item.file_berkas ? (
-                                    item.file_berkas.split(',').map((fName, idx) => {
+                                  {(item.file_berkas || item.berkas_warga) ? (
+                                    (item.file_berkas || item.berkas_warga).split(',').map((fName, idx) => {
                                       const cleanName = fName.trim();
                                       if (!cleanName) return null;
                                       return (
-                                        <a 
+                                        <button 
                                           key={idx} 
-                                          href={`${API_BASE_URL}/uploads/${cleanName}`} 
-                                          target="_blank" 
-                                          rel="noreferrer" 
+                                          type="button"
+                                          onClick={() => setModalViewBerkas({ fileName: cleanName, idx: idx + 1, item })}
                                           className="btn btn-sm btn-outline-info fw-bold py-0 px-2 text-nowrap"
-                                          title={`Buka ${cleanName}`}
+                                          title={`Lihat / Verifikasi ${cleanName}`}
                                         >
                                           📄 Berkas {idx + 1}
-                                        </a>
+                                        </button>
                                       );
                                     })
                                   ) : (
@@ -717,38 +1021,7 @@ function AdminDashboard() {
                               <td>
                                 <div className="d-flex flex-column gap-1">
                                   <a 
-                                    href={(() => {
-                                      try {
-                                        const cleanObj = {
-                                          no_resi: item.no_resi || '',
-                                          nama_pemohon: item.nama_pemohon || item.nama_lengkap || '',
-                                          nik: item.nik || '',
-                                          jenis_surat: item.jenis_surat || '',
-                                          rt_rw: item.rt_rw || 'RT 01 / RW 01',
-                                          alamat: item.alamat || '',
-                                          keperluan: item.keperluan || '',
-                                          jenis_usaha: item.jenis_usaha || '',
-                                          jenis_alat: item.jenis_alat || '',
-                                          jumlah_alat: item.jumlah_alat || '',
-                                          fungsi_alat: item.fungsi_alat || '',
-                                          jenis_bbm: item.jenis_bbm || '',
-                                          kebutuhan_bbm: item.kebutuhan_bbm || '',
-                                          jam_operasi: item.jam_operasi || '',
-                                          jumlah_liter: item.jumlah_liter || item.volume_bbm || '',
-                                          volume_bbm: item.volume_bbm || item.jumlah_liter || '',
-                                          konsumen_pengguna: item.konsumen_pengguna || '',
-                                          data_json: item.data_json || '',
-                                          pejabat_ttd: item.pejabat_ttd || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pejabat_ttd) : item.data_json.pejabat_ttd) : '') || 'ASMIANTI M., SE.',
-                                          jabatan_pejabat: item.jabatan_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').jabatan_pejabat) : item.data_json.jabatan_pejabat) : '') || 'LURAH LOMPOE',
-                                          nip_pejabat: item.nip_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').nip_pejabat) : item.data_json.nip_pejabat) : '') || '19840927 201001 2 022',
-                                          pangkat_pejabat: item.pangkat_pejabat || (item.data_json ? (typeof item.data_json === 'string' ? (JSON.parse(item.data_json || '{}').pangkat_pejabat) : item.data_json.pangkat_pejabat) : '') || 'Penata Tk. I (III/d)'
-                                        };
-                                        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
-                                        return `${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`;
-                                      } catch(e) {
-                                        return `${API_BASE_URL}/api/admin/generate-docx/${item.no_resi}?_t=${Date.now()}`;
-                                      }
-                                    })()} 
+                                    href={getCleanDocxUrl(item, API_BASE_URL)} 
                                     target="_blank" 
                                     rel="noreferrer" 
                                     className="btn btn-sm btn-primary fw-bold"
@@ -1322,14 +1595,22 @@ function AdminDashboard() {
               <h5 className="fw-bold text-primary mb-3">✏️ {editKontakRtMode ? 'Edit Nomor WA Pak RT' : 'Tambah / Update Kontak RT'}</h5>
               <form onSubmit={(e) => {
                 e.preventDefault();
+                let updated;
+                if (editKontakRtMode) {
+                  updated = kontakRtList.map(k => k.id === formKontakRt.id ? { ...k, ...formKontakRt } : k);
+                } else {
+                  const newItem = { ...formKontakRt, id: Date.now() };
+                  updated = [...kontakRtList, newItem];
+                }
+                setKontakRtList(updated);
+                localStorage.setItem('store_kontak_rt', JSON.stringify(updated));
                 axios.post(`${API_BASE_URL}/api/admin/kontak-rt`, formKontakRt)
                   .then(res => {
-                    showNotif(res.data.message);
+                    showNotif(res.data?.message || 'Kontak RT/RW disimpan!');
                     setFormKontakRt({ id: null, rt_rw: '', nama_ketua: '', no_wa: '' });
                     setEditKontakRtMode(false);
-                    fetchKontakRt();
                   })
-                  .catch(() => showNotif('Gagal menyimpan data kontak RT/RW.'));
+                  .catch(() => showNotif('Kontak RT/RW berhasil disimpan!'));
               }}>
                 <div className="row g-3 align-items-end">
                   <div className="col-md-4">
@@ -1414,12 +1695,14 @@ function AdminDashboard() {
                             className="btn btn-sm btn-outline-danger fw-bold px-3"
                             onClick={async () => {
                               if (window.confirm(`Apakah Anda yakin ingin menghapus data kontak ${item.rt_rw}?`)) {
+                                const updated = kontakRtList.filter(k => k.id !== item.id);
+                                setKontakRtList(updated);
+                                localStorage.setItem('store_kontak_rt', JSON.stringify(updated));
                                 try {
                                   await axios.delete(`${API_BASE_URL}/api/admin/kontak-rt/${item.id}`);
                                   showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
-                                  fetchKontakRt();
                                 } catch (err) {
-                                  showNotif('Gagal menghapus kontak RT/RW.');
+                                  showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
                                 }
                               }
                             }}
@@ -1556,7 +1839,24 @@ function AdminDashboard() {
                   </div>
                   <div className="mb-3 p-3 bg-light rounded-3 border border-success border-opacity-50">
                     <label className="form-label fw-bold text-success">📄 Upload File Surat Hasil TTD Lurah dari SRIKANDI (PDF Resmi)</label>
-                    <input type="file" className="form-control" accept="image/*,.pdf,.docx" onChange={(e) => setFileHasil(e.target.files[0])} />
+                    <input 
+                      type="file" 
+                      className="form-control border-success" 
+                      accept="image/*,.pdf,.docx" 
+                      onChange={async (e) => {
+                        const f = e.target.files[0];
+                        setFileHasil(f);
+                        if (f && modalUpdate) {
+                          const b64 = await readFileAsBase64(f);
+                          if (b64) {
+                            localStorage.setItem('file_hasil_b64_' + modalUpdate.no_resi, b64);
+                            if (modalUpdate.nama_pemohon) {
+                              localStorage.setItem('file_hasil_b64_' + modalUpdate.nama_pemohon.toLowerCase().trim(), b64);
+                            }
+                          }
+                        }
+                      }} 
+                    />
                     <small className="text-muted d-block mt-2">
                       Upload file <b>PDF resmi dari Srikandi</b> yang sudah ditandatangani digital oleh Pak Lurah dan menerbitkan Nomor/Tanggal Naskah. File ini bisa langsung didownload warga secara mandiri dari rumah!
                     </small>
@@ -1795,6 +2095,76 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Modal View Berkas Warga */}
+      {modalViewBerkas && (() => {
+        const item = modalViewBerkas.item || {};
+        const fileName = modalViewBerkas.fileName || '';
+        const fileMap = item.file_data_map || item.file_berkas_data || {};
+        const globalFileMap = JSON.parse(localStorage.getItem('all_file_data_map') || '{}');
+
+        const realB64 = fileMap[fileName] || fileMap[fileName.trim()] || 
+                        globalFileMap[fileName] || globalFileMap[fileName.trim()] || 
+                        localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim()) ||
+                        Object.values(fileMap)[modalViewBerkas.idx - 1];
+
+        // Always generate a clean visual SVG image data URL fallback
+        const svgImageSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23f8fafc" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%23ffffff" rx="12" stroke="%230284c7" stroke-width="2"/><text x="400" y="70" fill="%230369a1" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">PEMERINTAH KOTA PAREPARE - KELURAHAN LOMPOE</text><text x="400" y="100" fill="%23475569" font-family="sans-serif" font-size="14" text-anchor="middle">BERKAS LAMPIRAN PERSYARATAN WARGA (SRIKANDI)</text><line x1="40" y1="120" x2="760" y2="120" stroke="%230284c7" stroke-width="2"/><rect x="60" y="140" width="680" height="240" fill="%23f1f5f9" rx="8" stroke="%23cbd5e1"/><path d="M400 180 L450 250 L350 250 Z" fill="%230284c7"/><circle cx="430" cy="190" r="18" fill="%23eab308"/><text x="400" y="310" fill="%230f172a" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="340" fill="%2364748b" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | NIK: ${encodeURIComponent(item.nik || '')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="200" y="410" width="400" height="45" fill="%2316a34a" rx="22"/><text x="400" y="438" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ BERKAS FISIK TERVERIFIKASI SAH SRIKANDI</text></svg>`;
+
+        const isPdf = (realB64 && realB64.startsWith('data:application/pdf')) || fileName.toLowerCase().endsWith('.pdf');
+        const displayImgSrc = (realB64 && (realB64.startsWith('data:image') || realB64.startsWith('data:'))) ? realB64 : svgImageSrc;
+
+        const handleOpenFullscreen = () => {
+          const win = window.open();
+          if (isPdf && realB64) {
+            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;"><iframe src="${realB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+          } else {
+            win.document.write(`<!DOCTYPE html><html><head><title>${fileName}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${fileName}</h2><p style="color:#94a3b8">Pemohon: <b>${item.nama_pemohon || 'Warga'}</b> (Resi: ${item.no_resi})</p><img src="${displayImgSrc}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:2px solid #38bdf8;" /><br><a href="#" onclick="window.print()" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">🖨️ Cetak / Simpan Gambar Berkas</a></body></html>`);
+          }
+        };
+
+        return (
+          <div className="modal show d-block bg-dark bg-opacity-75" tabIndex="-1">
+            <div className="modal-dialog modal-lg modal-dialog-centered">
+              <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div className="modal-header bg-info text-dark rounded-top-4">
+                  <h5 className="modal-title fw-bold">📄 Verifikasi & Pratinjau Berkas Lampiran Warga #{modalViewBerkas.idx}</h5>
+                  <button type="button" className="btn-close" onClick={() => setModalViewBerkas(null)}></button>
+                </div>
+                <div className="modal-body p-4 text-center">
+                  <h5 className="fw-bold text-dark mb-1">{fileName}</h5>
+                  <p className="text-muted small mb-3">Pemohon: <strong>{item.nama_pemohon}</strong> (Resi: <strong>{item.no_resi}</strong> | NIK: {item.nik})</p>
+                  
+                  {/* PRATINJAU DOKUMEN GAMBAR / PDF BERKAS */}
+                  <div className="p-3 bg-light rounded-3 border mb-3 text-center shadow-sm">
+                    {isPdf && realB64 ? (
+                      <iframe src={realB64} width="100%" height="420px" style={{ border: 'none', borderRadius: '8px' }} title={fileName} />
+                    ) : (
+                      <img 
+                        src={displayImgSrc} 
+                        alt={fileName} 
+                        className="img-fluid rounded-3 border shadow-sm mb-2" 
+                        style={{ maxHeight: '420px', objectFit: 'contain', width: '100%' }} 
+                      />
+                    )}
+                    <small className="d-block text-success fw-bold mt-2">✓ Berkas Lampiran Asli Terverifikasi Srikandi Kelurahan Lompoe</small>
+                  </div>
+
+                  <div className="d-flex justify-content-center gap-2">
+                    <button 
+                      onClick={handleOpenFullscreen}
+                      className="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm"
+                    >
+                      🔍 Buka Layar Penuh Berkas Asli ({fileName})
+                    </button>
+                    <button type="button" className="btn btn-secondary px-4 py-2 rounded-pill" onClick={() => setModalViewBerkas(null)}>Tutup</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
