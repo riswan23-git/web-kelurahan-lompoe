@@ -33,6 +33,7 @@ function Berita() {
         const response = await axios.get(`${API_BASE_URL}/api/berita`).catch(() => null);
         if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
           setBeritaList(response.data);
+          localStorage.setItem('store_berita', JSON.stringify(response.data));
         }
       } catch (err) {
         console.error('Error fetching berita:', err);

@@ -25,15 +25,31 @@ function Profil() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+        const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+        const localPkk = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+
+        if (Array.isArray(localAparatur) && localAparatur.length > 0) setAparaturList(localAparatur);
+        if (localInfo) setInfo(localInfo);
+        if (Array.isArray(localPkk) && localPkk.length > 0) setPkkWilayah(localPkk);
+
         const [resAparatur, resInfo, resPkk] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/aparatur`).catch(() => ({ data: [] })),
-          axios.get(`${API_BASE_URL}/api/info-kelurahan`).catch(() => ({ data: {} })),
-          axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => ({ data: [] }))
+          axios.get(`${API_BASE_URL}/api/aparatur`).catch(() => null),
+          axios.get(`${API_BASE_URL}/api/info-kelurahan`).catch(() => null),
+          axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => null)
         ]);
-        setAparaturList(resAparatur.data);
-        setInfo(resInfo.data);
-        if (Array.isArray(resPkk.data) && resPkk.data.length > 0) {
+
+        if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
+          setAparaturList(resAparatur.data);
+          localStorage.setItem('store_aparatur', JSON.stringify(resAparatur.data));
+        }
+        if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
+          setInfo(resInfo.data);
+          localStorage.setItem('store_info', JSON.stringify(resInfo.data));
+        }
+        if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) {
           setPkkWilayah(resPkk.data);
+          localStorage.setItem('store_pkk', JSON.stringify(resPkk.data));
         }
       } catch (err) {
         console.error('Error fetching profil:', err);

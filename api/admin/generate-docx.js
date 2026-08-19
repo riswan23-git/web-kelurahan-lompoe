@@ -134,18 +134,19 @@ module.exports = (req, res) => {
 
         const [rtVal, rwVal] = safeStr(item.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
-        const tempatTglLahirVal = safeStr(item.tempat_tgl_lahir || item.tgl_lahir, 'Parepare, 24 April 1995');
-        const jenisKelaminVal = safeStr(item.jenis_kelamin, 'Laki-laki');
-        const agamaVal = safeStr(item.agama, 'Islam');
-        const pekerjaanVal = safeStr(item.pekerjaan, 'Wiraswasta');
-        const alamatVal = safeStr(item.alamat, 'Jl. Poros Lompoe');
-
         const getNonEmpty = (...vals) => {
             for (let v of vals) {
-                if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+                if (v !== undefined && v !== null && String(v).trim() !== '' && String(v).trim() !== '-') return String(v).trim();
             }
             return null;
         };
+
+        const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], item.tgl_lahir) || 'Parepare, 24 April 1995';
+        const rawJk = getNonEmpty(item.jenis_kelamin, extraJson.jenis_kelamin, extraJson['jenis kelamin'], extraJson['Jenis Kelamin'], extraJson['jenis_kelamin'], extraJson.jk, item.jk);
+        const jenisKelaminVal = rawJk ? rawJk : 'Laki-laki';
+        const agamaVal = getNonEmpty(item.agama, extraJson.agama, extraJson['agama']) || 'Islam';
+        const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan']) || 'Wiraswasta';
+        const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat']) || 'Jl. Poros Lompoe';
 
         const pejabatNama = getNonEmpty(extraJson.pejabat_ttd, item.pejabat_ttd, extraJson['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
         const pejabatJabatan = getNonEmpty(extraJson.jabatan_pejabat, item.jabatan_pejabat, extraJson['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';

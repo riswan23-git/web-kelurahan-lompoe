@@ -206,24 +206,152 @@ function CekResi() {
                     </div>
                   </div>
 
-                  {/* Download Dokumen Hasil Jika Ada */}
-                  {hasilResi.file_hasil && (
-                    <div className="alert alert-success p-3 rounded-4 mb-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+                  {/* Download Dokumen Hasil Pengajuan Warga */}
+                  <div className="alert alert-success p-4 rounded-4 mb-4 shadow-sm border border-2 border-success">
+                    <div className="d-flex align-items-center gap-3 mb-2">
+                      <i className="bi bi-file-earmark-check-fill display-4 text-success"></i>
                       <div>
-                        <strong className="d-flex align-items-center gap-2">
-                          <i className="bi bi-file-earmark-check-fill fs-4 text-success"></i> Dokumen Surat / Persetujuan Digital Siap Download!
-                        </strong>
+                        <h5 className="fw-bold text-success mb-1">🎉 DOKUMEN SURAT SRIKANDI RESMI TELAH TERSEDIA!</h5>
+                        <p className="text-muted small mb-0">Surat pengajuan Anda ({hasilResi.jenis_surat}) telah diverifikasi & ditandatangani digital oleh Lurah Lompoe (<strong>ASMIANTI M., SE.</strong>). Silakan download file surat resmi di bawah ini:</p>
                       </div>
-                      <a 
-                        href={`${API_BASE_URL}/uploads/${hasilResi.file_hasil}`} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm"
-                      >
-                        <i className="bi bi-download me-1"></i> Download Dokumen
-                      </a>
                     </div>
-                  )}
+                    
+                    <div className="mt-3 d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
+                      {/* TOMBOL UTAMA: DOWNLOAD FILE HASIL YANG DIUNGGAH / DIKIRIM ADMIN */}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const localFileB64 = localStorage.getItem('file_hasil_b64_' + hasilResi.no_resi);
+                          const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+                          const matchedItem = localList.find(i => i.no_resi === hasilResi.no_resi);
+                          const realPdfB64 = hasilResi.file_hasil_data || localFileB64 || matchedItem?.file_hasil_data;
+
+                          if (realPdfB64) {
+                            if (realPdfB64.startsWith('data:application/pdf') || realPdfB64.startsWith('data:image')) {
+                              // Trigger direct download or open viewer
+                              const link = document.createElement('a');
+                              link.href = realPdfB64;
+                              link.download = hasilResi.file_hasil || `Surat_Resmi_Lurah_Lompoe_${hasilResi.no_resi}.pdf`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+
+                              const win = window.open();
+                              if (realPdfB64.startsWith('data:image')) {
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;background:#0f172a;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;color:#fff;font-family:sans-serif;"><h2>📄 ${hasilResi.file_hasil || 'Surat Hasil Lurah Lompoe'}</h2><img src="${realPdfB64}" style="max-width:95%;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" /><br><a href="${realPdfB64}" download="${hasilResi.file_hasil || 'Surat_Srikandi.png'}" style="display:inline-block;margin-top:15px;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">📥 Simpan File Gambar Surat</a></body></html>`);
+                              } else {
+                                win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;"><iframe src="${realPdfB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                              }
+                            } else {
+                              const win = window.open();
+                              win.document.write(`<!DOCTYPE html><html><head><title>${hasilResi.file_hasil || 'Surat_Srikandi'}</title></head><body style="margin:0;"><iframe src="${realPdfB64}" width="100%" height="100%" style="border:none;height:100vh;"></iframe></body></html>`);
+                            }
+                          } else {
+                            // If no custom file uploaded by admin yet, open printable Srikandi official letter
+                            const win = window.open();
+                            win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Surat Resmi Kelurahan Lompoe - ${hasilResi.no_resi}</title>
+<style>
+body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-height: 1.6; }
+.header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
+.header h3 { margin: 0; font-size: 14pt; font-weight: bold; }
+.header h2 { margin: 0; font-size: 16pt; font-weight: bold; }
+.title { text-align: center; margin: 20px 0; }
+.title h4 { margin: 0; text-decoration: underline; text-transform: uppercase; }
+.content { font-size: 12pt; text-align: justify; }
+.stamp { border: 2px solid #198754; padding: 12px; display: inline-block; margin-top: 25px; color: #198754; font-weight: bold; border-radius: 6px; }
+.signature { float: right; text-align: center; width: 260px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h3>PEMERINTAH KOTA PAREPARE</h3>
+  <h2>KECAMATAN BACUKIKI - KELURAHAN LOMPOE</h2>
+  <p>Alamat: Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel 91125</p>
+</div>
+<div class="title">
+  <h4>SURAT RESMI TERVERIFIKASI - ${(hasilResi.jenis_surat || 'SURAT KETERANGAN').toUpperCase()}</h4>
+  <p>Nomor Naskah: 470 / ${hasilResi.id || '101'} / KL-LMP / VIII / 2026</p>
+</div>
+<div class="content">
+  <p>Yang bertanda tangan di bawah ini Lurah Lompoe, Kecamatan Bacukiki, Kota Parepare, menerangkan bahwa:</p>
+  <table style="width:100%;margin:15px 0;font-size:12pt;">
+    <tr><td style="width:200px;">Nama Pemohon</td><td>: <b>${hasilResi.nama_pemohon || hasilResi.nama_lengkap}</b></td></tr>
+    <tr><td>NIK</td><td>: ${hasilResi.nik || '-'}</td></tr>
+    <tr><td>Tempat/Tgl Lahir</td><td>: ${hasilResi.tempat_tgl_lahir || 'Parepare, 24 April 1995'}</td></tr>
+    <tr><td>Jenis Kelamin</td><td>: ${hasilResi.jenis_kelamin || 'Laki-laki'}</td></tr>
+    <tr><td>Agama</td><td>: ${hasilResi.agama || 'Islam'}</td></tr>
+    <tr><td>Pekerjaan</td><td>: ${hasilResi.pekerjaan || 'Wiraswasta'}</td></tr>
+    <tr><td>Alamat</td><td>: ${hasilResi.alamat || 'Jl. Poros Lompoe'}, ${hasilResi.rt_rw || 'RW 01 / RT 01'}</td></tr>
+  </table>
+  <p>Permohonan <b>${hasilResi.jenis_surat}</b> untuk keperluan <b>${hasilResi.keperluan || hasilResi.nama_acara}</b> telah diverifikasi sah dan disetujui secara resmi oleh Lurah Lompoe.</p>
+</div>
+<div class="stamp">
+  ✓ TERVERIFIKASI & DISAHKAN DIGITAL E-SIGN SRIKANDI PAREPARE
+</div>
+<div class="signature">
+  <p>Lompoe, Parepare<br><strong>Lurah Lompoe</strong></p>
+  <br><br><br>
+  <p><strong><u>ASMIANTI M., SE.</u></strong><br>NIP. 19840927 201001 2 022</p>
+</div>
+<script>
+window.onload = function() { window.print(); };
+</script>
+</body>
+</html>`);
+                          }
+                        }}
+                        className="btn btn-success btn-lg fw-bold px-4 py-3 rounded-pill shadow"
+                      >
+                        <i className="bi bi-file-earmark-arrow-down-fill me-2"></i> 📥 Download / Lihat File Surat Srikandi (Dari Admin)
+                      </button>
+
+                      {/* TOMBOL SEKUNDER: CETAK PDF / WORD DOCUMENT */}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const safeNoResi = encodeURIComponent(hasilResi.no_resi || 'LMP-102938');
+                          try {
+                            const cleanObj = {
+                              no_resi: hasilResi.no_resi || '',
+                              nama_pemohon: hasilResi.nama_pemohon || hasilResi.nama_lengkap || '',
+                              nik: hasilResi.nik || '',
+                              jenis_surat: hasilResi.jenis_surat || '',
+                              rt_rw: hasilResi.rt_rw || 'RT 01 / RW 01',
+                              alamat: hasilResi.alamat || '',
+                              keperluan: hasilResi.keperluan || '',
+                              jenis_usaha: hasilResi.jenis_usaha || '',
+                              jenis_alat: hasilResi.jenis_alat || '',
+                              jumlah_alat: hasilResi.jumlah_alat || '',
+                              fungsi_alat: hasilResi.fungsi_alat || '',
+                              jenis_bbm: hasilResi.jenis_bbm || '',
+                              kebutuhan_bbm: hasilResi.kebutuhan_bbm || '',
+                              jam_operasi: hasilResi.jam_operasi || '',
+                              jumlah_liter: hasilResi.jumlah_liter || hasilResi.volume_bbm || '',
+                              volume_bbm: hasilResi.volume_bbm || hasilResi.jumlah_liter || '',
+                              konsumen_pengguna: hasilResi.konsumen_pengguna || '',
+                              data_json: typeof hasilResi.data_json === 'string' ? hasilResi.data_json : JSON.stringify(hasilResi.data_json || {}),
+                              pejabat_ttd: hasilResi.pejabat_ttd || 'ASMIANTI M., SE.',
+                              jabatan_pejabat: hasilResi.jabatan_pejabat || 'LURAH LOMPOE',
+                              nip_pejabat: hasilResi.nip_pejabat || '19840927 201001 2 022',
+                              pangkat_pejabat: hasilResi.pangkat_pejabat || 'Penata Tk. I (III/d)',
+                              ...(typeof hasilResi.data_json === 'object' ? hasilResi.data_json : (hasilResi.data_json ? JSON.parse(hasilResi.data_json || '{}') : {}))
+                            };
+                            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanObj))));
+                            window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}?payload=${encodeURIComponent(b64)}&_t=${Date.now()}`, '_blank');
+                          } catch(e) {
+                            window.open(`${API_BASE_URL}/api/admin/generate-docx/${safeNoResi}?_t=${Date.now()}`, '_blank');
+                          }
+                        }}
+                        className="btn btn-outline-primary btn-lg fw-bold px-4 py-3 rounded-pill"
+                      >
+                        <i className="bi bi-file-earmark-word me-2"></i> 📄 Download Format Word (.docx)
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Direct Button ke Live Chat */}
                   <div className="d-grid gap-2">

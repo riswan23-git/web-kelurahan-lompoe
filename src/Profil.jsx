@@ -39,9 +39,18 @@ function Profil() {
           axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => null)
         ]);
 
-        if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) setAparaturList(resAparatur.data);
-        if (resInfo?.data) setInfo(resInfo.data);
-        if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) setPkkWilayah(resPkk.data);
+        if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
+          setAparaturList(resAparatur.data);
+          localStorage.setItem('store_aparatur', JSON.stringify(resAparatur.data));
+        }
+        if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
+          setInfo(resInfo.data);
+          localStorage.setItem('store_info', JSON.stringify(resInfo.data));
+        }
+        if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) {
+          setPkkWilayah(resPkk.data);
+          localStorage.setItem('store_pkk', JSON.stringify(resPkk.data));
+        }
       } catch (err) {
         console.error('Error fetching profil:', err);
       } finally {

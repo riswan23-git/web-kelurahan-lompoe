@@ -771,18 +771,19 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
 
         const [rtVal, rwVal] = safeStr(row.rt_rw || 'RT 01 / RW 01').split('/').map(s => s.replace(/[^0-9]/g, '').trim() || '01');
 
-        const tempatTglLahirVal = safeStr(row.tempat_tgl_lahir || row.tgl_lahir, 'Parepare, 24 April 1995');
-        const jenisKelaminVal = safeStr(row.jenis_kelamin, 'Laki-laki');
-        const agamaVal = safeStr(row.agama, 'Islam');
-        const pekerjaanVal = safeStr(row.pekerjaan, 'Wiraswasta');
-        const alamatVal = safeStr(row.alamat, 'Jl. Poros Lompoe');
-
         const getNonEmpty = (...vals) => {
             for (let v of vals) {
-                if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+                if (v !== undefined && v !== null && String(v).trim() !== '' && String(v).trim() !== '-') return String(v).trim();
             }
             return null;
         };
+
+        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], row.tgl_lahir) || 'Parepare, 24 April 1995';
+        const rawJk = getNonEmpty(row.jenis_kelamin, extraData.jenis_kelamin, extraData['jenis kelamin'], extraData['Jenis Kelamin'], extraData['jenis_kelamin'], extraData.jk, row.jk);
+        const jenisKelaminVal = rawJk ? rawJk : 'Laki-laki';
+        const agamaVal = getNonEmpty(row.agama, extraData.agama, extraData['agama']) || 'Islam';
+        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan']) || 'Wiraswasta';
+        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat']) || 'Jl. Poros Lompoe';
 
         const pejabatNama = getNonEmpty(extraData.pejabat_ttd, row.pejabat_ttd, extraData['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
         const pejabatJabatan = getNonEmpty(extraData.jabatan_pejabat, row.jabatan_pejabat, extraData['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';

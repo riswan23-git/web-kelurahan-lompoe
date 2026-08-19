@@ -24,6 +24,7 @@ function Sarana() {
         const response = await axios.get(`${API_BASE_URL}/api/sarana`).catch(() => null);
         if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
           setSaranaList(response.data);
+          localStorage.setItem('store_sarana', JSON.stringify(response.data));
         }
       } catch (err) {
         console.error('Error fetching sarana:', err);
