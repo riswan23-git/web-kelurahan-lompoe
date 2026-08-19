@@ -316,9 +316,14 @@ window.onload = function() { window.print(); };
                           const safeNoResi = encodeURIComponent(hasilResi.no_resi || 'LMP-102938');
                           try {
                             const cleanObj = {
+                              ...hasilResi,
                               no_resi: hasilResi.no_resi || '',
                               nama_pemohon: hasilResi.nama_pemohon || hasilResi.nama_lengkap || '',
                               nik: hasilResi.nik || '',
+                              tempat_tgl_lahir: hasilResi.tempat_tgl_lahir || hasilResi.tgl_lahir || '',
+                              jenis_kelamin: hasilResi.jenis_kelamin || hasilResi.jk || '',
+                              agama: hasilResi.agama || '',
+                              pekerjaan: hasilResi.pekerjaan || '',
                               jenis_surat: hasilResi.jenis_surat || '',
                               rt_rw: hasilResi.rt_rw || 'RT 01 / RW 01',
                               alamat: hasilResi.alamat || '',
