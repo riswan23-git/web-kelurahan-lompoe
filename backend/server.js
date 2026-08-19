@@ -778,14 +778,18 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             return null;
         };
 
-        const namaPemohonVal = getNonEmpty(row.nama_pemohon, row.nama_lengkap, extraData.nama_pemohon, extraData.nama_lengkap, extraData['nama_pemohon'], extraData['nama pemohon']) || 'Warga Kelurahan Lompoe';
-        const nikVal = getNonEmpty(row.nik, extraData.nik, extraData['nik'], extraData['NIK']) || '7372011205950001';
-        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, row.tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], extraData['Tempat/Tgl Lahir'], extraData['Tempat/Tgl lahir'], extraData['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
+        const namaPemohonVal = getNonEmpty(row.nama_pemohon, row.nama_lengkap, extraData.nama_pemohon, extraData.nama_lengkap, extraData['nama_pemohon'], extraData['nama pemohon']) || '';
+        const nikVal = getNonEmpty(row.nik, extraData.nik, extraData['nik'], extraData['NIK']) || '';
+        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, row.tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], extraData['Tempat/Tgl Lahir'], extraData['Tempat/Tgl lahir'], extraData['tempat / tgl lahir']) || '';
         const rawJk = getNonEmpty(row.jenis_kelamin, extraData.jenis_kelamin, extraData['jenis kelamin'], extraData['Jenis Kelamin'], extraData['jenis_kelamin'], extraData['Jenis kelamin'], extraData.jk, row.jk);
         const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
         const agamaVal = getNonEmpty(row.agama, extraData.agama, extraData['agama'], extraData['Agama'], extraData['AGAMA']) || 'Islam';
-        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan'], extraData['Pekerjaan'], extraData['PEKERJAAN']) || 'Wiraswasta';
-        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat'], extraData['Alamat'], extraData['ALAMAT']) || 'Jl. Poros Lompoe';
+        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan'], extraData['Pekerjaan'], extraData['PEKERJAAN']) || '';
+        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat'], extraData['Alamat'], extraData['ALAMAT']) || '';
+
+        const namaMeninggalVal = getNonEmpty(extraData.nama_meninggal, row.nama_meninggal, extraData['Nama Warga yang Meninggal'], extraData['nama_warga_yang_meninggal']) || namaPemohonVal;
+        const nikMeninggalVal = getNonEmpty(extraData.nik_meninggal, row.nik_meninggal, extraData['nik_meninggal']) || nikVal;
+        const ttlMeninggalVal = getNonEmpty(extraData.tgl_lahir_meninggal, row.tgl_lahir_meninggal, extraData['tgl_lahir_meninggal']) || tempatTglLahirVal;
 
         const pejabatNama = getNonEmpty(extraData.pejabat_ttd, row.pejabat_ttd, extraData['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
         const pejabatJabatan = getNonEmpty(extraData.jabatan_pejabat, row.jabatan_pejabat, extraData['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
@@ -865,7 +869,8 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'tgl_lahir_anak': tglLahirAnakVal,
             'Sekolah/Kampus': sekolahKampusVal,
             'sekolah_kampus_anak': sekolahKampusVal,
-            'Nama Warga yang Meninggal': safeStr(extraData.nama_meninggal || row.nama_meninggal, namaPemohonVal),
+            'Nama Warga yang Meninggal': namaMeninggalVal,
+            'nama_meninggal': namaMeninggalVal,
             'Kewarganegaraan': safeStr(extraData.kewarganegaraan || row.kewarganegaraan, 'WNI'),
             'Tanggal Meninggal': safeStr(extraData.tgl_meninggal || row.tgl_meninggal, '10 Agustus 2026'),
             'Tempat Meninggal': safeStr(extraData.tempat_meninggal || row.tempat_meninggal, 'Rumah Duka'),

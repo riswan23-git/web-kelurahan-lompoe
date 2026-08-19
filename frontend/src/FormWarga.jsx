@@ -983,6 +983,58 @@ function FormWarga() {
                         </div>
                       )}
 
+                      {/* 6. SURAT KETERANGAN KEMATIAN */}
+                      {formData.jenis_surat === 'Surat Keterangan Kematian' && (
+                        <div>
+                          <h6 className="fw-bold text-danger mb-3">☪️ Data Almarhum / Almarhumah (Warga yang Meninggal):</h6>
+                          <div className="row g-3 mb-3">
+                            <div className="col-md-6">
+                              <label className="form-label fw-semibold">Nama Almarhum / Almarhumah *</label>
+                              <input type="text" name="nama_meninggal" className="form-control" placeholder="Contoh: H. ABDUL RAHMAN" value={extraData.nama_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                            <div className="col-md-6">
+                              <label className="form-label fw-semibold">NIK Almarhum / Almarhumah *</label>
+                              <input type="text" name="nik_meninggal" className="form-control" placeholder="737201xxxxxxxxxx" maxLength="16" value={extraData.nik_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                          </div>
+                          <div className="row g-3 mb-3">
+                            <div className="col-md-4">
+                              <label className="form-label fw-semibold">Tempat / Tgl Lahir Almarhum *</label>
+                              <input type="text" name="tgl_lahir_meninggal" className="form-control" placeholder="Parepare, 12 Mei 1955" value={extraData.tgl_lahir_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                            <div className="col-md-4">
+                              <label className="form-label fw-semibold">Tanggal Meninggal Dunia *</label>
+                              <input type="text" name="tgl_meninggal" className="form-control" placeholder="Senin, 10 Agustus 2026" value={extraData.tgl_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                            <div className="col-md-4">
+                              <label className="form-label fw-semibold">Tempat Meninggal Dunia *</label>
+                              <input type="text" name="tempat_meninggal" className="form-control" placeholder="Rumah Duka / RSUD Andi Makkasau" value={extraData.tempat_meninggal || ''} onChange={handleExtraChange} required />
+                            </div>
+                          </div>
+                          <div className="p-3 bg-white rounded-3 border mb-2">
+                            <h6 className="fw-bold text-primary mb-3">👨‍💼 Pejabat Penandatangan Resmi (Terkonfirmasi Srikandi):</h6>
+                            <div className="row g-3">
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold small">Pejabat yang Bertanda Tangan *</label>
+                                <input type="text" name="pejabat_ttd" className="form-control" value={extraData.pejabat_ttd || 'ASMIANTI M., SE.'} onChange={handleExtraChange} required />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold small">Jabatan Pejabat *</label>
+                                <input type="text" name="jabatan_pejabat" className="form-control" value={extraData.jabatan_pejabat || 'LURAH LOMPOE'} onChange={handleExtraChange} required />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold small">NIP Pejabat *</label>
+                                <input type="text" name="nip_pejabat" className="form-control" value={extraData.nip_pejabat || '19840927 201001 2 022'} onChange={handleExtraChange} required />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold small">Pangkat Pejabat *</label>
+                                <input type="text" name="pangkat_pejabat" className="form-control" value={extraData.pangkat_pejabat || 'Penata Tk. I (III/d)'} onChange={handleExtraChange} required />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* 7. SURAT KETERANGAN LAYAK DIBANTU */}
                       {formData.jenis_surat === 'Surat Keterangan Layak Dibantu' && (
                         <div>

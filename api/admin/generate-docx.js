@@ -141,14 +141,18 @@ module.exports = (req, res) => {
             return null;
         };
 
-        const namaPemohonVal = getNonEmpty(item.nama_pemohon, item.nama_lengkap, extraJson.nama_pemohon, extraJson.nama_lengkap, extraJson['nama_pemohon'], extraJson['nama pemohon']) || 'Warga Kelurahan Lompoe';
-        const nikVal = getNonEmpty(item.nik, extraJson.nik, extraJson['nik'], extraJson['NIK']) || '7372011205950001';
-        const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, item.tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], extraJson['Tempat/Tgl Lahir'], extraJson['Tempat/Tgl lahir'], extraJson['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
+        const namaPemohonVal = getNonEmpty(item.nama_pemohon, item.nama_lengkap, extraJson.nama_pemohon, extraJson.nama_lengkap, extraJson['nama_pemohon'], extraJson['nama pemohon']) || '';
+        const nikVal = getNonEmpty(item.nik, extraJson.nik, extraJson['nik'], extraJson['NIK']) || '';
+        const tempatTglLahirVal = getNonEmpty(item.tempat_tgl_lahir, item.tgl_lahir, extraJson.tempat_tgl_lahir, extraJson['tempat_tgl_lahir'], extraJson['tempat/tgl lahir'], extraJson['tempat/tanggal lahir'], extraJson['Tempat/Tgl Lahir'], extraJson['Tempat/Tgl lahir'], extraJson['tempat / tgl lahir']) || '';
         const rawJk = getNonEmpty(item.jenis_kelamin, extraJson.jenis_kelamin, extraJson['jenis kelamin'], extraJson['Jenis Kelamin'], extraJson['jenis_kelamin'], extraJson['Jenis kelamin'], extraJson.jk, item.jk);
         const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
         const agamaVal = getNonEmpty(item.agama, extraJson.agama, extraJson['agama'], extraJson['Agama'], extraJson['AGAMA']) || 'Islam';
-        const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan'], extraJson['Pekerjaan'], extraJson['PEKERJAAN']) || 'Wiraswasta';
-        const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat'], extraJson['Alamat'], extraJson['ALAMAT']) || 'Jl. Poros Lompoe';
+        const pekerjaanVal = getNonEmpty(item.pekerjaan, extraJson.pekerjaan, extraJson['pekerjaan'], extraJson['Pekerjaan'], extraJson['PEKERJAAN']) || '';
+        const alamatVal = getNonEmpty(item.alamat, extraJson.alamat, extraJson['alamat'], extraJson['Alamat'], extraJson['ALAMAT']) || '';
+
+        const namaMeninggalVal = getNonEmpty(extraJson.nama_meninggal, item.nama_meninggal, extraJson['Nama Warga yang Meninggal'], extraJson['nama_warga_yang_meninggal']) || namaPemohonVal;
+        const nikMeninggalVal = getNonEmpty(extraJson.nik_meninggal, item.nik_meninggal, extraJson['nik_meninggal']) || nikVal;
+        const ttlMeninggalVal = getNonEmpty(extraJson.tgl_lahir_meninggal, item.tgl_lahir_meninggal, extraJson['tgl_lahir_meninggal']) || tempatTglLahirVal;
 
         const pejabatNama = getNonEmpty(extraJson.pejabat_ttd, item.pejabat_ttd, extraJson['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
         const pejabatJabatan = getNonEmpty(extraJson.jabatan_pejabat, item.jabatan_pejabat, extraJson['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
@@ -200,6 +204,8 @@ module.exports = (req, res) => {
         const tglLahirAnakVal = safeStr(extraJson.tgl_lahir_anak || item.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
         const sekolahKampusVal = safeStr(extraJson.sekolah_kampus_anak || extraJson.sekolah_kampus || item.sekolah_kampus_anak || item.sekolah_kampus, 'Universitas Negeri Parepare');
 
+        const isKematianSurat = String(item.jenis_surat || '').toLowerCase().includes('kematian');
+
         const payload = {
             'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
             'nomor naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
@@ -235,7 +241,8 @@ module.exports = (req, res) => {
             'tgl_lahir_anak': tglLahirAnakVal,
             'Sekolah/Kampus': sekolahKampusVal,
             'sekolah_kampus_anak': sekolahKampusVal,
-            'Nama Warga yang Meninggal': safeStr(extraJson.nama_meninggal || item.nama_meninggal, namaPemohonVal),
+            'Nama Warga yang Meninggal': namaMeninggalVal,
+            'nama_meninggal': namaMeninggalVal,
             'Kewarganegaraan': safeStr(extraJson.kewarganegaraan || item.kewarganegaraan, 'WNI'),
             'Tanggal Meninggal': safeStr(extraJson.tgl_meninggal || item.tgl_meninggal, '10 Agustus 2026'),
             'Tempat Meninggal': safeStr(extraJson.tempat_meninggal || item.tempat_meninggal, 'Rumah Duka'),
