@@ -796,17 +796,39 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
         const naskahNo = row.nomor_naskah || extraData.nomor_naskah || row.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
         const todayLongStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        // Specific values for Surat Keterangan Penghasilan Orang Tua
-        const rawPenghasilan = safeStr(extraData.penghasilan_orang_tua || row.penghasilan_orang_tua || extraData.jumlah_penghasilan_angka || row.jumlah_penghasilan_angka, '1.500.000');
-        const formattedPenghasilan = rawPenghasilan.toLowerCase().includes('rp') ? rawPenghasilan : `Rp ${rawPenghasilan}`;
+        const rawPenghasilanAngka = getNonEmpty(
+            extraData['Jumlah Penghasilan dalam Angka'],
+            extraData.jumlah_penghasilan_angka,
+            row.jumlah_penghasilan_angka,
+            extraData.penghasilan_orang_tua,
+            row.penghasilan_orang_tua,
+            extraData.penghasilan
+        ) || '2.500.000';
+        const formattedPenghasilanAngka = rawPenghasilanAngka.toLowerCase().includes('rp') ? rawPenghasilanAngka : `Rp ${rawPenghasilanAngka}`;
+
+        const rawPenghasilanHuruf = getNonEmpty(
+            extraData['Jumlah Penghasilan dalam Huruf'],
+            extraData.jumlah_penghasilan_huruf,
+            row.jumlah_penghasilan_huruf
+        ) || 'Dua Juta Lima Ratus Ribu Rupiah';
+
+        const tempatTinggalVal = getNonEmpty(
+            extraData['Tempat Tinggal Saat Ini'],
+            extraData.tempat_tinggal_saat_ini,
+            row.tempat_tinggal_saat_ini,
+            extraData.tempat_tinggal,
+            row.tempat_tinggal,
+            alamatVal
+        ) || alamatVal;
+
+        const rtTinggalVal = safeStr(extraData['RT Tempat Tinggal Saat Ini'] || extraData.rt_tempat_tinggal_saat_ini || row.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
+        const rwTinggalVal = safeStr(extraData['RW Tempat Tinggal Saat Ini'] || extraData.rw_tempat_tinggal_saat_ini || row.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
+
         const jumlahTanggunganVal = safeStr(extraData.jumlah_tanggungan || row.jumlah_tanggungan, '3');
         const namaAnakVal = safeStr(extraData.nama_anak || row.nama_anak, 'Adil Junior');
-        const nikAnakVal = safeStr(extraData.nik_anak || row.nik_anak, row.nik || '7378020667865');
+        const nikAnakVal = safeStr(extraData.nik_anak || row.nik_anak, nikVal);
         const tglLahirAnakVal = safeStr(extraData.tgl_lahir_anak || row.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
         const sekolahKampusVal = safeStr(extraData.sekolah_kampus_anak || extraData.sekolah_kampus || row.sekolah_kampus_anak || row.sekolah_kampus, 'Universitas Negeri Parepare');
-        const tempatTinggalVal = safeStr(extraData.tempat_tinggal || row.tempat_tinggal || row.alamat, 'Jl. Poros Lompoe');
-        const rtTinggalVal = safeStr(extraData.rt_tempat_tinggal_saat_ini || row.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
-        const rwTinggalVal = safeStr(extraData.rw_tempat_tinggal_saat_ini || row.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
 
         const payload = {
             'nomor_naskah': naskahNo,
@@ -816,10 +838,23 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'ttd_pengirim': pejabatNama,
             'kp_raw': getKonsumenPenggunaRuns(extraData.konsumen_pengguna),
 
-            // SURAT KETERANGAN PENGHASILAN ORANG TUA SPECIFIC TAGS
-            'Penghasilan Rata-rata per bulan': formattedPenghasilan,
-            'Penghasilan Rata-rata per Bulan': formattedPenghasilan,
-            'penghasilan_orang_tua': formattedPenghasilan,
+            // PENGHASILAN SPECIFIC TAGS (EXACT TEMPLATE MATCH)
+            'Jumlah Penghasilan dalam Angka': formattedPenghasilanAngka,
+            'Jumlah Penghasilan dalam Huruf': rawPenghasilanHuruf,
+            'jumlah_penghasilan_angka': formattedPenghasilanAngka,
+            'jumlah_penghasilan_huruf': rawPenghasilanHuruf,
+            'Penghasilan Rata-rata per bulan': formattedPenghasilanAngka,
+            'Penghasilan Rata-rata per Bulan': formattedPenghasilanAngka,
+            'penghasilan_orang_tua': formattedPenghasilanAngka,
+
+            // TEMPAT TINGGAL SAAT INI (EXACT TEMPLATE MATCH)
+            'Tempat Tinggal Saat Ini': tempatTinggalVal,
+            'tempat_tinggal_saat_ini': tempatTinggalVal,
+            'RT Tempat Tinggal Saat Ini': rtTinggalVal,
+            'RW Tempat Tinggal Saat Ini': rwTinggalVal,
+            'Status Tempat Tinggal Saat Ini': safeStr(extraData.status_tempat_tinggal || row.status_tempat_tinggal, 'Menumpang / Kontrak'),
+
+            // OTHER SURAT SPECIFIC TAGS
             'Jumlah Anak yg Jadi Tanggungan': jumlahTanggunganVal,
             'jumlah_tanggungan': jumlahTanggunganVal,
             'Nama Anak': namaAnakVal,
@@ -830,10 +865,40 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'tgl_lahir_anak': tglLahirAnakVal,
             'Sekolah/Kampus': sekolahKampusVal,
             'sekolah_kampus_anak': sekolahKampusVal,
-            'Tempat Tinggal Saat Ini': tempatTinggalVal,
-            'RT Tempat Tinggal Saat Ini': rtTinggalVal,
-            'RW Tempat Tinggal Saat Ini': rwTinggalVal,
+            'Nama Warga yang Meninggal': safeStr(extraData.nama_meninggal || row.nama_meninggal, namaPemohonVal),
+            'Kewarganegaraan': safeStr(extraData.kewarganegaraan || row.kewarganegaraan, 'WNI'),
+            'Tanggal Meninggal': safeStr(extraData.tgl_meninggal || row.tgl_meninggal, '10 Agustus 2026'),
+            'Tempat Meninggal': safeStr(extraData.tempat_meninggal || row.tempat_meninggal, 'Rumah Duka'),
+            'Bantuan yang Dimohonkan': safeStr(extraData.bantuan_dimohonkan || row.bantuan_dimohonkan, 'Bantuan Program Keluarga Harapan (PKH)'),
+            'Dokumen 1': safeStr(extraData.dokumen1_nama || row.dokumen1_nama, 'Kartu Tanda Penduduk (KTP)'),
+            'Nomor Dokumen 1': safeStr(extraData.dokumen1_nomor || row.dokumen1_nomor, nikVal),
+            'Nama yang Tercantum di Dokumen 1': safeStr(extraData.dokumen1_nama_tercantum || row.dokumen1_nama_tercantum, namaPemohonVal),
+            'Tempat/Tanggal Lahir di Dokumen 1': safeStr(extraData.dokumen1_ttl || row.dokumen1_ttl, tempatTglLahirVal),
+            'Dokumen 2': safeStr(extraData.dokumen2_nama || row.dokumen2_nama, 'Ijazah / Akta Kelahiran'),
+            'Nomor Dokumen 2': safeStr(extraData.dokumen2_nomor || row.dokumen2_nomor, '-'),
+            'Nama yang Tercantum di Dokumen 2': safeStr(extraData.dokumen2_nama_tercantum || row.dokumen2_nama_tercantum, namaPemohonVal),
+            'Tempat/Tanggal Lahir di Dokumen 2': safeStr(extraData.dokumen2_ttl || row.dokumen2_ttl, tempatTglLahirVal),
+            'Lokasi Meninggal': safeStr(extraData.tempat_meninggal || row.tempat_meninggal, 'Rumah Duka'),
+            'Hari/Tanggal Meninggal': safeStr(extraData.tgl_meninggal || row.tgl_meninggal, 'Senin, 10 Agustus 2026'),
+            'Hari/Tanggal Penguburan': safeStr(extraData.tgl_penguburan || row.tgl_penguburan, 'Selasa, 11 Agustus 2026'),
+            'Waktu Penguburan': safeStr(extraData.waktu_penguburan || row.waktu_penguburan, '14.00 WITA'),
+            'Lokasi/Alamat Penguburan': safeStr(extraData.lokasi_penguburan || row.lokasi_penguburan, 'TPU Lompoe'),
+            'Status Pekerjaan Saat Ini': safeStr(extraData.status_pekerjaan_saat_ini || row.status_pekerjaan_saat_ini, pekerjaanVal),
+            'STATUS PERKAWINAN UNTUK LAKI-LAKI': safeStr(extraData.status_perkawinan_laki || row.status_perkawinan_laki, 'Jejaka'),
+            'STATUS PERKAWINAN UNTUK PEREMPUAN': safeStr(extraData.status_perkawinan_perempuan || row.status_perkawinan_perempuan, 'Perawan'),
+            'NAMA ISTRI/SUAMI TERDAHULU': safeStr(extraData.nama_pasangan_terdahulu || row.nama_pasangan_terdahulu, '-'),
+            'NAMA AYAH': safeStr(extraData.nama_ayah || row.nama_ayah, '-'),
+            'NIK AYAH': safeStr(extraData.nik_ayah || row.nik_ayah, '-'),
+            'TEMPAT/TGL LAHIR AYAH': safeStr(extraData.ttl_ayah || row.ttl_ayah, '-'),
+            'PEKERJAAN AYAH': safeStr(extraData.pekerjaan_ayah || row.pekerjaan_ayah, '-'),
+            'ALAMAT AYAH': safeStr(extraData.alamat_ayah || row.alamat_ayah, '-'),
+            'NAMA IBU': safeStr(extraData.nama_ibu || row.nama_ibu, '-'),
+            'NIK IBU': safeStr(extraData.nik_ibu || row.nik_ibu, '-'),
+            'TEMPAT/TGL LAHIR IBU': safeStr(extraData.ttl_ibu || row.ttl_ibu, '-'),
+            'PEKERJAAN IBU': safeStr(extraData.pekerjaan_ibu || row.pekerjaan_ibu, '-'),
+            'ALAMAT IBU': safeStr(extraData.alamat_ibu || row.alamat_ibu, '-'),
 
+            // GENERAL USER IDENTITIES
             'NAMA PEMOHON': safeUpper(namaPemohonVal),
             'Nama Pemohon': namaPemohonVal,
             'nama pemohon': namaPemohonVal,
@@ -850,10 +915,6 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'nik': nikVal,
             'nik_pemohon': nikVal,
             'NIK Pemohon': nikVal,
-            'No. KTP': nikVal,
-            'No KTP': nikVal,
-            'Nomor KTP': nikVal,
-            'no_ktp': nikVal,
 
             'TEMPAT/TGL LAHIR': tempatTglLahirVal,
             'Tempat/Tgl Lahir': tempatTglLahirVal,
@@ -862,22 +923,13 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'tempat/tanggal lahir': tempatTglLahirVal,
             'Tempat / Tgl Lahir': tempatTglLahirVal,
             'Tempat, Tanggal Lahir': tempatTglLahirVal,
-            'Tempat, Tgl Lahir': tempatTglLahirVal,
             'tempat_tgl_lahir': tempatTglLahirVal,
-            'tempat_tanggal_lahir': tempatTglLahirVal,
-            'tgl_lahir': tempatTglLahirVal,
-            'TTL': tempatTglLahirVal,
-            'Ttl': tempatTglLahirVal,
-            'ttl': tempatTglLahirVal,
 
             'JENIS KELAMIN': safeUpper(jenisKelaminVal),
             'Jenis Kelamin': jenisKelaminVal,
             'jenis kelamin': jenisKelaminVal,
             'Jenis kelamin': jenisKelaminVal,
             'jenis_kelamin': jenisKelaminVal,
-            'JK': jenisKelaminVal,
-            'Jk': jenisKelaminVal,
-            'jk': jenisKelaminVal,
 
             'AGAMA': safeUpper(agamaVal),
             'Agama': agamaVal,
@@ -890,44 +942,38 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             'ALAMAT': alamatVal,
             'Alamat': alamatVal,
             'alamat': alamatVal,
-            'alamat_ktp': alamatVal,
             'Alamat KTP': alamatVal,
             'Alamat Ktp': alamatVal,
             'ALAMAT KTP': safeUpper(alamatVal),
-            'Alamat Tempat Tinggal': alamatVal,
-            'alamat_tempat_tinggal': alamatVal,
-            'Alamat Lengkap': alamatVal,
-            'alamat_lengkap': alamatVal,
-
-            // Event tags (Surat Izin Keramaian)
-            'acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
-            'Acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
-            'nama_acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
-
-            'penggunaan izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
-            'Penggunaan Izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
-            'penggunaan_izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik, 'Musik Elekton / Sound System'),
-
-            'hari/tanggal acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
-            'Hari/Tanggal Acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
-            'tanggal_acara': safeStr(extraData.tanggal_acara || row.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
-
-            'waktu acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
-            'Waktu Acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
-            'waktu_acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
-
-            'tempat acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
-            'Tempat Acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
-            'lokasi_acara': safeStr(extraData.lokasi_acara || row.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara, 'Gedung Gelora Lompoe'),
-
-            'RT tempat acara': rtVal || '01',
-            'RW tempat acara': rwVal || '01',
 
             'RT': rtVal || '01',
             'RW': rwVal || '01',
             'Kelurahan': 'Lompoe',
             'Kecamatan': 'Bacukiki',
+            'Kota/Kabupaten': 'PAREPARE',
             'Kota/Kab': 'Parepare',
+            'KOTA': 'PAREPARE',
+            'KECAMATAN': 'BACUKIKI',
+            'KELURAHAN': 'LOMPOE',
+
+            // KERAMAIAN TAGS
+            'acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'Acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'nama_acara': safeStr(extraData.nama_acara || row.nama_acara || extraData.acara || extraData.keperluan || row.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'penggunaan izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik || row.penggunaan_izin, 'Musik Elekton / Sound System'),
+            'Penggunaan Izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik || row.penggunaan_izin, 'Musik Elekton / Sound System'),
+            'penggunaan_izin': safeStr(extraData.penggunaan_izin || extraData['penggunaan izin'] || extraData.hiburan || extraData.alat_musik || row.penggunaan_izin, 'Musik Elekton / Sound System'),
+            'hari/tanggal acara': safeStr(row.tanggal_acara || extraData.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'Hari/Tanggal Acara': safeStr(row.tanggal_acara || extraData.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'tanggal_acara': safeStr(row.tanggal_acara || extraData.tanggal_acara || extraData['hari/tanggal acara'] || extraData.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
+            'waktu acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+            'Waktu Acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+            'waktu_acara': safeStr(extraData.waktu_acara || row.waktu_acara || extraData['waktu acara'] || extraData.waktu, '09.00 WITA s/d Selesai'),
+            'tempat acara': safeStr(row.lokasi_acara || extraData.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+            'Tempat Acara': safeStr(row.lokasi_acara || extraData.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+            'lokasi_acara': safeStr(row.lokasi_acara || extraData.lokasi_acara || extraData['tempat acara'] || extraData.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
+            'RT tempat acara': rtVal || '01',
+            'RW tempat acara': rwVal || '01',
             ...extraData,
 
             'Pejabat yang Bertanda Tangan': pejabatNama,
@@ -947,7 +993,7 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             linebreaks: true,
             nullGetter: function(tag) {
                 const tagName = (tag && (tag.value || tag.name)) ? String(tag.value || tag.name).trim() : '';
-                if (!tagName) return '-';
+                if (!tagName) return '';
                 if (tagName === 'pejabat_ttd' || tagName === 'Pejabat yang Bertanda Tangan') return pejabatNama;
                 if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
                 if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
@@ -955,9 +1001,11 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
                 if (tagName === 'ttd_pengirim') return pejabatNama;
                 if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return naskahNo;
                 if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+                if (tagName.includes('Penghasilan') || tagName.includes('penghasilan')) return formattedPenghasilanAngka;
+                if (tagName.includes('Tinggal') || tagName.includes('tinggal')) return tempatTinggalVal;
                 if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
                 const val = row[tagName] || extraData[tagName] || row[tagName.toLowerCase()] || extraData[tagName.toLowerCase()];
-                return (val !== undefined && val !== null && val !== '') ? val : '-';
+                return (val !== undefined && val !== null && val !== '') ? val : '';
             }
         });
 

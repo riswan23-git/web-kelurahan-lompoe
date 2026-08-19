@@ -166,17 +166,39 @@ module.exports = (req, res) => {
         const konsumenPenggunaVal = safeStr(item.konsumen_pengguna || extraJson.konsumen_pengguna || item.keperluan, 'Usaha Mikro / Pertanian');
         const todayLongStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        // Specific values for Surat Keterangan Penghasilan Orang Tua
-        const rawPenghasilan = safeStr(extraJson.penghasilan_orang_tua || item.penghasilan_orang_tua || extraJson.jumlah_penghasilan_angka || item.jumlah_penghasilan_angka, '1.500.000');
-        const formattedPenghasilan = rawPenghasilan.toLowerCase().includes('rp') ? rawPenghasilan : `Rp ${rawPenghasilan}`;
+        const rawPenghasilanAngka = getNonEmpty(
+            extraJson['Jumlah Penghasilan dalam Angka'],
+            extraJson.jumlah_penghasilan_angka,
+            item.jumlah_penghasilan_angka,
+            extraJson.penghasilan_orang_tua,
+            item.penghasilan_orang_tua,
+            extraJson.penghasilan
+        ) || '2.500.000';
+        const formattedPenghasilanAngka = rawPenghasilanAngka.toLowerCase().includes('rp') ? rawPenghasilanAngka : `Rp ${rawPenghasilanAngka}`;
+
+        const rawPenghasilanHuruf = getNonEmpty(
+            extraJson['Jumlah Penghasilan dalam Huruf'],
+            extraJson.jumlah_penghasilan_huruf,
+            item.jumlah_penghasilan_huruf
+        ) || 'Dua Juta Lima Ratus Ribu Rupiah';
+
+        const tempatTinggalVal = getNonEmpty(
+            extraJson['Tempat Tinggal Saat Ini'],
+            extraJson.tempat_tinggal_saat_ini,
+            item.tempat_tinggal_saat_ini,
+            extraJson.tempat_tinggal,
+            item.tempat_tinggal,
+            alamatVal
+        ) || alamatVal;
+
+        const rtTinggalVal = safeStr(extraJson['RT Tempat Tinggal Saat Ini'] || extraJson.rt_tempat_tinggal_saat_ini || item.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
+        const rwTinggalVal = safeStr(extraJson['RW Tempat Tinggal Saat Ini'] || extraJson.rw_tempat_tinggal_saat_ini || item.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
+
         const jumlahTanggunganVal = safeStr(extraJson.jumlah_tanggungan || item.jumlah_tanggungan, '3');
         const namaAnakVal = safeStr(extraJson.nama_anak || item.nama_anak, 'Adil Junior');
-        const nikAnakVal = safeStr(extraJson.nik_anak || item.nik_anak, item.nik || '7378020667865');
+        const nikAnakVal = safeStr(extraJson.nik_anak || item.nik_anak, nikVal);
         const tglLahirAnakVal = safeStr(extraJson.tgl_lahir_anak || item.tgl_lahir_anak, 'Parepare, 12 Maret 2008');
         const sekolahKampusVal = safeStr(extraJson.sekolah_kampus_anak || extraJson.sekolah_kampus || item.sekolah_kampus_anak || item.sekolah_kampus, 'Universitas Negeri Parepare');
-        const tempatTinggalVal = safeStr(extraJson.tempat_tinggal || item.tempat_tinggal || item.alamat, 'Jl. Poros Lompoe');
-        const rtTinggalVal = safeStr(extraJson.rt_tempat_tinggal_saat_ini || item.rt_tempat_tinggal_saat_ini || rtVal, rtVal || '01');
-        const rwTinggalVal = safeStr(extraJson.rw_tempat_tinggal_saat_ini || item.rw_tempat_tinggal_saat_ini || rwVal, rwVal || '01');
 
         const payload = {
             'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
@@ -186,10 +208,23 @@ module.exports = (req, res) => {
             'ttd_pengirim': pejabatNama,
             'kp_raw': getKonsumenPenggunaRuns(item.keperluan || konsumenPenggunaVal),
 
-            // SURAT KETERANGAN PENGHASILAN ORANG TUA SPECIFIC TAGS
-            'Penghasilan Rata-rata per bulan': formattedPenghasilan,
-            'Penghasilan Rata-rata per Bulan': formattedPenghasilan,
-            'penghasilan_orang_tua': formattedPenghasilan,
+            // PENGHASILAN SPECIFIC TAGS (EXACT TEMPLATE MATCH)
+            'Jumlah Penghasilan dalam Angka': formattedPenghasilanAngka,
+            'Jumlah Penghasilan dalam Huruf': rawPenghasilanHuruf,
+            'jumlah_penghasilan_angka': formattedPenghasilanAngka,
+            'jumlah_penghasilan_huruf': rawPenghasilanHuruf,
+            'Penghasilan Rata-rata per bulan': formattedPenghasilanAngka,
+            'Penghasilan Rata-rata per Bulan': formattedPenghasilanAngka,
+            'penghasilan_orang_tua': formattedPenghasilanAngka,
+
+            // TEMPAT TINGGAL SAAT INI (EXACT TEMPLATE MATCH)
+            'Tempat Tinggal Saat Ini': tempatTinggalVal,
+            'tempat_tinggal_saat_ini': tempatTinggalVal,
+            'RT Tempat Tinggal Saat Ini': rtTinggalVal,
+            'RW Tempat Tinggal Saat Ini': rwTinggalVal,
+            'Status Tempat Tinggal Saat Ini': safeStr(extraJson.status_tempat_tinggal || item.status_tempat_tinggal, 'Menumpang / Kontrak'),
+
+            // OTHER SURAT SPECIFIC TAGS
             'Jumlah Anak yg Jadi Tanggungan': jumlahTanggunganVal,
             'jumlah_tanggungan': jumlahTanggunganVal,
             'Nama Anak': namaAnakVal,
@@ -200,57 +235,72 @@ module.exports = (req, res) => {
             'tgl_lahir_anak': tglLahirAnakVal,
             'Sekolah/Kampus': sekolahKampusVal,
             'sekolah_kampus_anak': sekolahKampusVal,
-            'Tempat Tinggal Saat Ini': tempatTinggalVal,
-            'RT Tempat Tinggal Saat Ini': rtTinggalVal,
-            'RW Tempat Tinggal Saat Ini': rwTinggalVal,
+            'Nama Warga yang Meninggal': safeStr(extraJson.nama_meninggal || item.nama_meninggal, namaPemohonVal),
+            'Kewarganegaraan': safeStr(extraJson.kewarganegaraan || item.kewarganegaraan, 'WNI'),
+            'Tanggal Meninggal': safeStr(extraJson.tgl_meninggal || item.tgl_meninggal, '10 Agustus 2026'),
+            'Tempat Meninggal': safeStr(extraJson.tempat_meninggal || item.tempat_meninggal, 'Rumah Duka'),
+            'Bantuan yang Dimohonkan': safeStr(extraJson.bantuan_dimohonkan || item.bantuan_dimohonkan, 'Bantuan Program Keluarga Harapan (PKH)'),
+            'Dokumen 1': safeStr(extraJson.dokumen1_nama || item.dokumen1_nama, 'Kartu Tanda Penduduk (KTP)'),
+            'Nomor Dokumen 1': safeStr(extraJson.dokumen1_nomor || item.dokumen1_nomor, nikVal),
+            'Nama yang Tercantum di Dokumen 1': safeStr(extraJson.dokumen1_nama_tercantum || item.dokumen1_nama_tercantum, namaPemohonVal),
+            'Tempat/Tanggal Lahir di Dokumen 1': safeStr(extraJson.dokumen1_ttl || item.dokumen1_ttl, tempatTglLahirVal),
+            'Dokumen 2': safeStr(extraJson.dokumen2_nama || item.dokumen2_nama, 'Ijazah / Akta Kelahiran'),
+            'Nomor Dokumen 2': safeStr(extraJson.dokumen2_nomor || item.dokumen2_nomor, '-'),
+            'Nama yang Tercantum di Dokumen 2': safeStr(extraJson.dokumen2_nama_tercantum || item.dokumen2_nama_tercantum, namaPemohonVal),
+            'Tempat/Tanggal Lahir di Dokumen 2': safeStr(extraJson.dokumen2_ttl || item.dokumen2_ttl, tempatTglLahirVal),
+            'Lokasi Meninggal': safeStr(extraJson.tempat_meninggal || item.tempat_meninggal, 'Rumah Duka'),
+            'Hari/Tanggal Meninggal': safeStr(extraJson.tgl_meninggal || item.tgl_meninggal, 'Senin, 10 Agustus 2026'),
+            'Hari/Tanggal Penguburan': safeStr(extraJson.tgl_penguburan || item.tgl_penguburan, 'Selasa, 11 Agustus 2026'),
+            'Waktu Penguburan': safeStr(extraJson.waktu_penguburan || item.waktu_penguburan, '14.00 WITA'),
+            'Lokasi/Alamat Penguburan': safeStr(extraJson.lokasi_penguburan || item.lokasi_penguburan, 'TPU Lompoe'),
+            'Status Pekerjaan Saat Ini': safeStr(extraJson.status_pekerjaan_saat_ini || item.status_pekerjaan_saat_ini, pekerjaanVal),
+            'STATUS PERKAWINAN UNTUK LAKI-LAKI': safeStr(extraJson.status_perkawinan_laki || item.status_perkawinan_laki, 'Jejaka'),
+            'STATUS PERKAWINAN UNTUK PEREMPUAN': safeStr(extraJson.status_perkawinan_perempuan || item.status_perkawinan_perempuan, 'Perawan'),
+            'NAMA ISTRI/SUAMI TERDAHULU': safeStr(extraJson.nama_pasangan_terdahulu || item.nama_pasangan_terdahulu, '-'),
+            'NAMA AYAH': safeStr(extraJson.nama_ayah || item.nama_ayah, '-'),
+            'NIK AYAH': safeStr(extraJson.nik_ayah || item.nik_ayah, '-'),
+            'TEMPAT/TGL LAHIR AYAH': safeStr(extraJson.ttl_ayah || item.ttl_ayah, '-'),
+            'PEKERJAAN AYAH': safeStr(extraJson.pekerjaan_ayah || item.pekerjaan_ayah, '-'),
+            'ALAMAT AYAH': safeStr(extraJson.alamat_ayah || item.alamat_ayah, '-'),
+            'NAMA IBU': safeStr(extraJson.nama_ibu || item.nama_ibu, '-'),
+            'NIK IBU': safeStr(extraJson.nik_ibu || item.nik_ibu, '-'),
+            'TEMPAT/TGL LAHIR IBU': safeStr(extraJson.ttl_ibu || item.ttl_ibu, '-'),
+            'PEKERJAAN IBU': safeStr(extraJson.pekerjaan_ibu || item.pekerjaan_ibu, '-'),
+            'ALAMAT IBU': safeStr(extraJson.alamat_ibu || item.alamat_ibu, '-'),
 
             // BBM SPECIFIC TAGS
             'jenis_usaha': jenisUsahaVal,
             'Jenis Usaha': jenisUsahaVal,
             'Jenis Usaha/Kegiatan': jenisUsahaVal,
             'jenis_kegiatan': jenisUsahaVal,
-
             'jenis_alat': jenisAlatVal,
             'Jenis Alat': jenisAlatVal,
-
             'jumlah_alat': jumlahAlatVal,
             'Jumlah Alat': jumlahAlatVal,
-
             'fungsi_alat': fungsiAlatVal,
             'Fungsi Alat': fungsiAlatVal,
-
             'jenis_bbm': jenisBbmVal,
             'Jenis BBM': jenisBbmVal,
             'BBM Jenis Tertentu': jenisBbmVal,
-
             'kebutuhan_bbm': kebutuhanBbmVal,
             'Kebutuhan BBM': kebutuhanBbmVal,
             'Kebutuhan BBM Jenis Tertentu': kebutuhanBbmVal,
-
             'jam_operasi': jamOperasiVal,
             'Jam Operasi': jamOperasiVal,
             'Jam atau hari Operasi': jamOperasiVal,
-
             'Liter': jumlahLiterVal,
             'jumlah_liter': jumlahLiterVal,
             'konsumen_bbm': jumlahLiterVal,
             'Konsumen BBM Jenis Tertentu Liter Per (Jam/Hari/Minggu/Bulan)': jumlahLiterVal,
-
             'jumlah': jumlahLiterVal,
             'Jumlah': jumlahLiterVal,
-
             'sejumlah': jumlahLiterVal,
             'Sejumlah': jumlahLiterVal,
             'volume_bbm': jumlahLiterVal,
-
             'konsumen_pengguna': konsumenPenggunaVal,
             'Konsumen Pengguna': konsumenPenggunaVal,
 
-            'KELURAHAN': 'LOMPOE',
-            'KECAMATAN': 'BACUKIKI',
-            'KOTA': 'PAREPARE',
-            'Kota/Kabupaten': 'PAREPARE',
-
+            // GENERAL USER IDENTITIES
             'NAMA PEMOHON': safeUpper(namaPemohonVal),
             'Nama Pemohon': namaPemohonVal,
             'nama pemohon': namaPemohonVal,
@@ -261,7 +311,6 @@ module.exports = (req, res) => {
             'Nama': namaPemohonVal,
             'NAMA': safeUpper(namaPemohonVal),
             'nama': namaPemohonVal,
-
             'NIK': nikVal,
             'Nik': nikVal,
             'nik': nikVal,
@@ -271,7 +320,6 @@ module.exports = (req, res) => {
             'No KTP': nikVal,
             'Nomor KTP': nikVal,
             'no_ktp': nikVal,
-
             'TEMPAT/TGL LAHIR': tempatTglLahirVal,
             'Tempat/Tgl Lahir': tempatTglLahirVal,
             'tempat/tgl lahir': tempatTglLahirVal,
@@ -286,7 +334,6 @@ module.exports = (req, res) => {
             'TTL': tempatTglLahirVal,
             'Ttl': tempatTglLahirVal,
             'ttl': tempatTglLahirVal,
-
             'JENIS KELAMIN': safeUpper(jenisKelaminVal),
             'Jenis Kelamin': jenisKelaminVal,
             'jenis kelamin': jenisKelaminVal,
@@ -295,15 +342,12 @@ module.exports = (req, res) => {
             'JK': jenisKelaminVal,
             'Jk': jenisKelaminVal,
             'jk': jenisKelaminVal,
-
             'AGAMA': safeUpper(agamaVal),
             'Agama': agamaVal,
             'agama': agamaVal,
-
             'PEKERJAAN': safeUpper(pekerjaanVal),
             'Pekerjaan': pekerjaanVal,
             'pekerjaan': pekerjaanVal,
-
             'ALAMAT': alamatVal,
             'Alamat': alamatVal,
             'alamat': alamatVal,
@@ -315,32 +359,32 @@ module.exports = (req, res) => {
             'alamat_tempat_tinggal': alamatVal,
             'Alamat Lengkap': alamatVal,
             'alamat_lengkap': alamatVal,
-
             'RT': rtVal || '01',
             'RW': rwVal || '01',
             'Kelurahan': 'Lompoe',
             'Kecamatan': 'Bacukiki',
             'Kota/Kab': 'Parepare',
-            'acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
-            'Acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
-            'nama_acara': safeStr(item.nama_acara || extraJson.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'Kota/Kabupaten': 'PAREPARE',
+            'KOTA': 'PAREPARE',
+            'KECAMATAN': 'BACUKIKI',
+            'KELURAHAN': 'LOMPOE',
 
-            'penggunaan izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
-            'Penggunaan Izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
-            'penggunaan_izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik, 'Musik Elekton / Sound System'),
-
+            // KERAMAIAN TAGS
+            'acara': safeStr(extraJson.nama_acara || item.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'Acara': safeStr(extraJson.nama_acara || item.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'nama_acara': safeStr(extraJson.nama_acara || item.nama_acara || extraJson.acara || item.keperluan || extraJson.keperluan, 'Syukuran & Pesta Pernikahan'),
+            'penggunaan izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik || item.penggunaan_izin, 'Musik Elekton / Sound System'),
+            'Penggunaan Izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik || item.penggunaan_izin, 'Musik Elekton / Sound System'),
+            'penggunaan_izin': safeStr(extraJson.penggunaan_izin || extraJson['penggunaan izin'] || extraJson.hiburan || extraJson.alat_musik || item.penggunaan_izin, 'Musik Elekton / Sound System'),
             'hari/tanggal acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
             'Hari/Tanggal Acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
             'tanggal_acara': safeStr(item.tanggal_acara || extraJson.tanggal_acara || extraJson['hari/tanggal acara'] || extraJson.hari_tanggal_acara, 'Senin, 24 Agustus 2026'),
-
             'waktu acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
             'Waktu Acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
             'waktu_acara': safeStr(extraJson.waktu_acara || extraJson['waktu acara'] || extraJson.waktu, '09.00 WITA s/d Selesai'),
-
             'tempat acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
             'Tempat Acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
             'lokasi_acara': safeStr(item.lokasi_acara || extraJson.lokasi_acara || extraJson['tempat acara'] || extraJson.tempat_acara || alamatVal, 'Gedung Gelora Lompoe'),
-
             'RT tempat acara': rtVal || '01',
             'RW tempat acara': rwVal || '01',
             ...extraJson,
@@ -352,8 +396,7 @@ module.exports = (req, res) => {
             'pejabat_ttd': pejabatNama,
             'jabatan_pejabat': pejabatJabatan,
             'nip_pejabat': pejabatNip,
-            'pangkat_pejabat': pejabatPangkat,
-            'ttd_pengirim': pejabatNama
+            'pangkat_pejabat': pejabatPangkat
         };
 
         const doc = new Docxtemplater(zip, {
@@ -362,7 +405,7 @@ module.exports = (req, res) => {
             linebreaks: true,
             nullGetter: function(tag) {
                 const tagName = (tag && (tag.value || tag.name)) ? String(tag.value || tag.name).trim() : '';
-                if (!tagName) return '-';
+                if (!tagName) return '';
                 if (tagName === 'pejabat_ttd' || tagName === 'Pejabat yang Bertanda Tangan') return pejabatNama;
                 if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
                 if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
@@ -371,8 +414,7 @@ module.exports = (req, res) => {
                 if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
                 if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
                 if (payload && payload[tagName] !== undefined && payload[tagName] !== null && payload[tagName] !== '') return payload[tagName];
-                const val = item[tagName] || extraJson[tagName] || item[tagName.toLowerCase()] || extraJson[tagName.toLowerCase()];
-                return (val !== undefined && val !== null && val !== '') ? val : '-';
+                return '';
             }
         });
 
