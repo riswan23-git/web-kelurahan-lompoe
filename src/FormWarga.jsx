@@ -62,7 +62,7 @@ function FormWarga() {
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0 && !local) setListKontakRt(res.data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const [formData, setFormData] = useState({
     nik: '',
@@ -302,7 +302,7 @@ function FormWarga() {
         Object.assign(globalFileMap, fileDataMap);
         localStorage.setItem('all_file_data_map', JSON.stringify(globalFileMap));
       }
-    } catch(e) {}
+    } catch (e) { }
 
     // INSTANTLY SHOW SUCCESS SCREEN TO USER (0.01s)!
     setPesanSukses('Pengajuan Anda berhasil dikirim!');
@@ -325,8 +325,8 @@ function FormWarga() {
 
   const urlVerifikasiRT = window.location.origin + '/#/verifikasi-rt?token=' + tokenRtHasil;
   const pesanWaRT = `Halo Pak RT/RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital via link: ${urlVerifikasiRT}`;
-  
-  const waTargetUrl = cleanWaNum 
+
+  const waTargetUrl = cleanWaNum
     ? `https://wa.me/${cleanWaNum}?text=${encodeURIComponent(pesanWaRT)}`
     : `https://wa.me/?text=${encodeURIComponent(pesanWaRT)}`;
 
@@ -371,18 +371,18 @@ function FormWarga() {
                     <p className="small text-muted mb-3">
                       {cleanWaNum ? `Nomor WhatsApp Pak RT (${formData.rt_rw}) sudah terdaftar otomatis!` : 'Pak RT/RW Anda dapat menyetujui surat ini secara digital dari HP mereka.'}
                     </p>
-                    
+
                     <div className="d-flex flex-wrap gap-2 align-items-center">
-                      <a 
+                      <a
                         href={waTargetUrl}
-                        target="_blank" 
+                        target="_blank"
                         rel="noreferrer"
                         className="btn btn-success fw-bold px-3 py-2 rounded-3"
                       >
                         💬 Kirim Link Verifikasi ke Pak RT via WhatsApp
                       </a>
-                      <Link 
-                        to={`/verifikasi-rt?token=${tokenRtHasil}`} 
+                      <Link
+                        to={`/verifikasi-rt?token=${tokenRtHasil}`}
                         target="_blank"
                         className="btn btn-outline-dark fw-bold px-3 py-2 rounded-3"
                       >
@@ -393,7 +393,7 @@ function FormWarga() {
                 )}
 
                 <div className="d-flex flex-wrap justify-content-center gap-3">
-                  <a 
+                  <a
                     href={`https://wa.me/?text=${encodeURIComponent(`Halo Admin Kelurahan Lompoe, saya ${formData.nama_pemohon || 'Warga'} telah mengajukan ${formData.jenis_surat} dengan Resi: ${noResiHasil}. Mohon bantuan prosesnya. Terimakasih! Link resi: ${window.location.origin}/cek-resi?resi=${noResiHasil}`)}`}
                     target="_blank"
                     rel="noreferrer"
@@ -435,8 +435,8 @@ function FormWarga() {
                     {/* JENIS SURAT SELECTOR */}
                     <div className="mb-4 bg-primary bg-opacity-10 p-4 rounded-4 border border-primary">
                       <label className="form-label fw-bold text-primary fs-5 mb-2">📌 Pilih Jenis Surat / Layanan yang Diajukan *</label>
-                      <select 
-                        name="jenis_surat" 
+                      <select
+                        name="jenis_surat"
                         className="form-select form-select-lg fw-bold text-primary shadow-sm"
                         value={formData.jenis_surat}
                         onChange={handleChange}
@@ -465,25 +465,25 @@ function FormWarga() {
                     <div className="row g-3 mb-3">
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">Nama Lengkap Pemohon (Huruf Kapital) *</label>
-                        <input 
-                          type="text" 
-                          name="nama_pemohon" 
-                          className="form-control form-control-lg text-uppercase" 
-                          placeholder="AHMAD RISWAN" 
-                          required 
+                        <input
+                          type="text"
+                          name="nama_pemohon"
+                          className="form-control form-control-lg text-uppercase"
+                          placeholder="AHMAD RISWAN"
+                          required
                           value={formData.nama_pemohon}
                           onChange={handleChange}
                         />
                       </div>
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">NIK (Nomor Induk Kependudukan) *</label>
-                        <input 
-                          type="text" 
-                          name="nik" 
-                          className="form-control form-control-lg" 
-                          placeholder="737201xxxxxxxxxx" 
+                        <input
+                          type="text"
+                          name="nik"
+                          className="form-control form-control-lg"
+                          placeholder="737201xxxxxxxxxx"
                           maxLength="16"
-                          required 
+                          required
                           value={formData.nik}
                           onChange={handleChange}
                         />
@@ -493,12 +493,12 @@ function FormWarga() {
                     <div className="row g-3 mb-3">
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">Tempat / Tanggal Lahir *</label>
-                        <input 
-                          type="text" 
-                          name="tempat_tgl_lahir" 
-                          className="form-control" 
-                          placeholder="Contoh: Parepare, 24 April 1985" 
-                          required 
+                        <input
+                          type="text"
+                          name="tempat_tgl_lahir"
+                          className="form-control"
+                          placeholder="Contoh: Parepare, 24 April 1985"
+                          required
                           value={formData.tempat_tgl_lahir}
                           onChange={handleChange}
                         />
@@ -526,24 +526,24 @@ function FormWarga() {
                     <div className="row g-3 mb-3">
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">Pekerjaan *</label>
-                        <input 
-                          type="text" 
-                          name="pekerjaan" 
-                          className="form-control" 
-                          placeholder="Wiraswasta / PNS / Karyawan Swasta" 
-                          required 
+                        <input
+                          type="text"
+                          name="pekerjaan"
+                          className="form-control"
+                          placeholder="Wiraswasta / PNS / Karyawan Swasta"
+                          required
                           value={formData.pekerjaan}
                           onChange={handleChange}
                         />
                       </div>
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">Nomor WhatsApp / HP Kontak *</label>
-                        <input 
-                          type="text" 
-                          name="no_hp" 
-                          className="form-control" 
-                          placeholder="08123456789" 
-                          required 
+                        <input
+                          type="text"
+                          name="no_hp"
+                          className="form-control"
+                          placeholder="08123456789"
+                          required
                           value={formData.no_hp}
                           onChange={handleChange}
                         />
@@ -553,24 +553,24 @@ function FormWarga() {
                     <div className="row g-3 mb-4">
                       <div className="col-md-8">
                         <label className="form-label fw-semibold">Alamat Tempat Tinggal KTP *</label>
-                        <input 
-                          type="text" 
-                          name="alamat" 
-                          className="form-control" 
-                          placeholder="Jl. Poros Lompoe No. 12" 
-                          required 
+                        <input
+                          type="text"
+                          name="alamat"
+                          className="form-control"
+                          placeholder="Jl. Poros Lompoe No. 12"
+                          required
                           value={formData.alamat}
                           onChange={handleChange}
                         />
                       </div>
                       <div className="col-md-4">
                         <label className="form-label fw-semibold">Wilayah RT / RW *</label>
-                        <input 
-                          type="text" 
-                          name="rt_rw" 
-                          className="form-control" 
-                          placeholder="RT 02 / RW 03 (Wekke'e)" 
-                          required 
+                        <input
+                          type="text"
+                          name="rt_rw"
+                          className="form-control"
+                          placeholder="RT 02 / RW 03 (Wekke'e)"
+                          required
                           value={formData.rt_rw}
                           onChange={handleChange}
                         />
@@ -580,7 +580,7 @@ function FormWarga() {
                     {/* ========================================================= */}
                     {/* BAGIAN II: ISIAN DINAMIS SPESIFIK PER JENIS SURAT          */}
                     {/* ========================================================= */}
-                    
+
                     <div className="p-4 bg-light rounded-4 border mb-4 shadow-sm">
                       <h5 className="fw-bold text-dark mb-3">
                         📝 II. Isian Khusus untuk {formData.jenis_surat}
@@ -1692,21 +1692,21 @@ function FormWarga() {
                     </div>
 
                     <h5 className="fw-bold text-primary mb-3 border-bottom pb-2">🤝 III. Mekanisme Persetujuan RT / RW</h5>
-                    
+
                     <div className="mb-4">
                       <label className="form-label fw-semibold">Bagaimana Anda Mengurus Persetujuan RT / RW? *</label>
                       <div className="row g-3">
                         <div className="col-md-6">
-                          <div 
+                          <div
                             className={`p-3 rounded-3 border cursor-pointer ${formData.opsi_persetujuan_rt === 'digital' ? 'bg-primary-subtle border-primary' : 'bg-light'}`}
                             onClick={() => setFormData({ ...formData, opsi_persetujuan_rt: 'digital' })}
                             style={{ cursor: 'pointer' }}
                           >
                             <div className="form-check">
-                              <input 
-                                className="form-check-input" 
-                                type="radio" 
-                                name="opsi_persetujuan_rt" 
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                name="opsi_persetujuan_rt"
                                 value="digital"
                                 checked={formData.opsi_persetujuan_rt === 'digital'}
                                 onChange={handleChange}
@@ -1722,16 +1722,16 @@ function FormWarga() {
                         </div>
 
                         <div className="col-md-6">
-                          <div 
+                          <div
                             className={`p-3 rounded-3 border cursor-pointer ${formData.opsi_persetujuan_rt === 'upload' ? 'bg-primary-subtle border-primary' : 'bg-light'}`}
                             onClick={() => setFormData({ ...formData, opsi_persetujuan_rt: 'upload' })}
                             style={{ cursor: 'pointer' }}
                           >
                             <div className="form-check">
-                              <input 
-                                className="form-check-input" 
-                                type="radio" 
-                                name="opsi_persetujuan_rt" 
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                name="opsi_persetujuan_rt"
                                 value="upload"
                                 checked={formData.opsi_persetujuan_rt === 'upload'}
                                 onChange={handleChange}
@@ -1764,8 +1764,8 @@ function FormWarga() {
                         <p className="small text-muted mb-3">
                           Upload 1 file yang didukung: PDF, drawing, atau Image. Maks 10 MB. {filePengantar && <span className="text-success fw-bold">✓ (1 file terpilih: {filePengantar.name})</span>}
                         </p>
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           className="form-control form-control-lg"
                           accept="image/*,.pdf"
                           onChange={async (e) => {
@@ -1793,8 +1793,8 @@ function FormWarga() {
                         <p className="small text-muted mb-3">
                           Upload maksimum 5 file yang didukung: PDF, drawing, atau Image. Maks 10 MB per file. {filesLain.length > 0 && <span className="text-success fw-bold">✓ ({filesLain.length} file terpilih)</span>}
                         </p>
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           className="form-control form-control-lg border-primary"
                           accept="image/*,.pdf"
                           multiple
@@ -1820,8 +1820,8 @@ function FormWarga() {
                         <p className="small text-muted mb-3">
                           Upload 1 file yang didukung: PDF, drawing, atau Image. Maks 10 MB. {filePbb && <span className="text-success fw-bold">✓ (1 file terpilih: {filePbb.name})</span>}
                         </p>
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           className="form-control form-control-lg"
                           accept="image/*,.pdf"
                           onChange={async (e) => {
@@ -1841,8 +1841,8 @@ function FormWarga() {
                     </div>
 
                     <div className="d-grid gap-2">
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="btn btn-primary btn-lg fw-bold py-3 shadow-sm rounded-3"
                         disabled={loading}
                       >

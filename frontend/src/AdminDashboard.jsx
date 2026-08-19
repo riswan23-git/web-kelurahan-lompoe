@@ -223,13 +223,24 @@ function AdminDashboard() {
   // Fetch functions
   const fetchPengajuan = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
-      const serverData = Array.isArray(res.data) ? res.data : [];
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/pengajuan`).catch(() => null),
+        axios.get('https://crudcrud.com/api/2b04437260f041bbae94b6f3ea97418a/pengajuan').catch(() => null)
+      ]);
+      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
+      const cloudData = resCloud?.data && Array.isArray(resCloud.data) ? resCloud.data : [];
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
 
       const combinedMap = new Map();
       localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
       serverData.forEach(item => {
+        if (item && item.no_resi) {
+          const existing = combinedMap.get(item.no_resi) || {};
+          const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
+          combinedMap.set(item.no_resi, { ...existing, ...item, file_data_map: mergedFileMap });
+        }
+      });
+      cloudData.forEach(item => {
         if (item && item.no_resi) {
           const existing = combinedMap.get(item.no_resi) || {};
           const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
