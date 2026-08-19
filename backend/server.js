@@ -778,12 +778,14 @@ app.get('/api/admin/generate-docx/:no_resi', async (req, res) => {
             return null;
         };
 
-        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], row.tgl_lahir) || 'Parepare, 24 April 1995';
-        const rawJk = getNonEmpty(row.jenis_kelamin, extraData.jenis_kelamin, extraData['jenis kelamin'], extraData['Jenis Kelamin'], extraData['jenis_kelamin'], extraData.jk, row.jk);
-        const jenisKelaminVal = rawJk ? rawJk : 'Laki-laki';
-        const agamaVal = getNonEmpty(row.agama, extraData.agama, extraData['agama']) || 'Islam';
-        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan']) || 'Wiraswasta';
-        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat']) || 'Jl. Poros Lompoe';
+        const namaPemohonVal = getNonEmpty(row.nama_pemohon, row.nama_lengkap, extraData.nama_pemohon, extraData.nama_lengkap, extraData['nama_pemohon'], extraData['nama pemohon']) || 'Warga Kelurahan Lompoe';
+        const nikVal = getNonEmpty(row.nik, extraData.nik, extraData['nik'], extraData['NIK']) || '7372011205950001';
+        const tempatTglLahirVal = getNonEmpty(row.tempat_tgl_lahir, row.tgl_lahir, extraData.tempat_tgl_lahir, extraData['tempat_tgl_lahir'], extraData['tempat/tgl lahir'], extraData['tempat/tanggal lahir'], extraData['Tempat/Tgl Lahir'], extraData['Tempat/Tgl lahir'], extraData['tempat / tgl lahir']) || 'Parepare, 12 Mei 1995';
+        const rawJk = getNonEmpty(row.jenis_kelamin, extraData.jenis_kelamin, extraData['jenis kelamin'], extraData['Jenis Kelamin'], extraData['jenis_kelamin'], extraData['Jenis kelamin'], extraData.jk, row.jk);
+        const jenisKelaminVal = rawJk ? rawJk : 'Perempuan';
+        const agamaVal = getNonEmpty(row.agama, extraData.agama, extraData['agama'], extraData['Agama'], extraData['AGAMA']) || 'Islam';
+        const pekerjaanVal = getNonEmpty(row.pekerjaan, extraData.pekerjaan, extraData['pekerjaan'], extraData['Pekerjaan'], extraData['PEKERJAAN']) || 'Wiraswasta';
+        const alamatVal = getNonEmpty(row.alamat, extraData.alamat, extraData['alamat'], extraData['Alamat'], extraData['ALAMAT']) || 'Jl. Poros Lompoe';
 
         const pejabatNama = getNonEmpty(extraData.pejabat_ttd, row.pejabat_ttd, extraData['Pejabat yang Bertanda Tangan']) || 'ASMIANTI M., SE.';
         const pejabatJabatan = getNonEmpty(extraData.jabatan_pejabat, row.jabatan_pejabat, extraData['Jabatan Pejabat yang Bertanda Tangan']) || 'LURAH LOMPOE';
