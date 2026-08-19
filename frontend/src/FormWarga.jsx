@@ -82,74 +82,76 @@ function FormWarga() {
   // State Isian Spesifik per Jenis Surat
   const [extraData, setExtraData] = useState({
     // Keramaian
-    nama_acara: 'Pesta Pernikahan & Resepsi Musik',
-    tanggal_acara: 'Sabtu, 15 Agustus 2026',
-    waktu_acara: '09.00 - 22.00 WITA',
-    lokasi_acara: 'Halaman Gedung Gelora Mandiri Lompoe',
+    nama_acara: '',
+    tanggal_acara: '',
+    waktu_acara: '',
+    lokasi_acara: '',
 
     // Belum Rumah / Menikah / Bertempat Tinggal
-    tempat_tinggal_saat_ini: 'Jl. Poros Lompoe No. 45',
-    status_tempat_tinggal: 'Menumpang / Kontrak',
-    lama_tinggal: '5 Tahun',
+    tempat_tinggal_saat_ini: '',
+    status_tempat_tinggal: 'kontrakan',
+    lama_tinggal: '',
 
     // Berpenghasilan
-    jumlah_penghasilan_angka: '2.500.000',
-    jumlah_penghasilan_huruf: 'Dua Juta Lima Ratus Ribu Rupiah',
-    sumber_penghasilan: 'Hasil Usaha Dagang / Wiraswasta',
+    jumlah_penghasilan_angka: '',
+    jumlah_penghasilan_huruf: '',
+    sumber_penghasilan: '',
 
     // Kematian
     nama_meninggal: '',
     nik_meninggal: '',
     tgl_lahir_meninggal: '',
+    jk_meninggal: 'Laki-laki',
     agama_meninggal: 'Islam',
+    kewarganegaraan: 'WNI',
     tgl_meninggal: '',
-    tempat_meninggal: 'Rumah Duka / RSUD Andi Makkasau',
+    tempat_meninggal: '',
 
     // Layak Dibantu
-    bantuan_dimohonkan: 'Bantuan Program Keluarga Harapan (PKH) / Sembako',
-    kondisi_ekonomi: 'Keluarga Kurang Mampu',
+    bantuan_dimohonkan: '',
+    kondisi_ekonomi: '',
 
     // Orang Sama
-    dokumen1_nama: 'Kartu Tanda Penduduk (KTP)',
-    dokumen1_nomor: '737201xxxxxxxxxx',
+    dokumen1_nama: '',
+    dokumen1_nomor: '',
     dokumen1_nama_tercantum: '',
-    dokumen2_nama: 'Ijazah / Akta Kelahiran',
-    dokumen2_nomor: 'IJZ-2024-XXXXX',
+    dokumen2_nama: '',
+    dokumen2_nomor: '',
     dokumen2_nama_tercantum: '',
 
     // Penghasilan Orang Tua
-    penghasilan_orang_tua: '1.500.000',
-    jumlah_tanggungan: '3 Orang',
+    penghasilan_orang_tua: '',
+    jumlah_tanggungan: '',
     nama_anak: '',
     nik_anak: '',
     tgl_lahir_anak: '',
-    sekolah_kampus_anak: 'Universitas Negeri Parepare',
+    sekolah_kampus_anak: '',
 
     // Penguburan
     nama_almarhum: '',
     tgl_penguburan: '',
-    waktu_penguburan: '14.00 WITA',
-    lokasi_pemakaman: 'TPU Wekke\'e Lompoe',
+    waktu_penguburan: '',
+    lokasi_pemakaman: '',
 
     // Status Pekerjaan
-    pekerjaan_lama: 'Belum / Tidak Bekerja',
-    pekerjaan_baru: 'Wiraswasta / Karyawan Swasta',
-    alasan_perubahan: 'Telah mendapatkan pekerjaan resmi',
+    pekerjaan_lama: '',
+    pekerjaan_baru: '',
+    alasan_perubahan: '',
 
     // Rekomendasi BBM
     konsumen_pengguna: 'Usaha Mikro',
-    jenis_usaha: 'Usaha Kuliner / Warung Makan',
-    jenis_alat: 'Mesin Pompa Air Pertanian / Traktor / Genset',
-    jumlah_alat: '1 Unit',
-    fungsi_alat: 'Operasional Usaha / Penyiraman',
+    jenis_usaha: '',
+    jenis_alat: '',
+    jumlah_alat: '',
+    fungsi_alat: '',
     jenis_bbm: 'Solar (BBM Bersubsidi)',
-    kebutuhan_bbm: '2 Liter / Hari',
-    jam_operasi: '8 Jam / Hari',
-    jumlah_liter: '60 Liter / Bulan',
+    kebutuhan_bbm: '',
+    jam_operasi: '',
+    jumlah_liter: '',
 
     // Blangko Nikah N1
     status_perkawinan: 'Jejaka',
-    nama_pasangan_terdahulu: '-',
+    nama_pasangan_terdahulu: '',
     nama_ayah: '',
     nik_ayah: '',
     tgl_lahir_ayah: '',
@@ -265,10 +267,10 @@ function FormWarga() {
       alamat: formData.alamat || finalExtraData.alamat || '',
       rt_rw: formData.rt_rw || 'RW 01 / RT 01',
       jenis_surat: formData.jenis_surat || 'Surat Keterangan Usaha (SKU)',
-      keperluan: formData.keperluan || finalExtraData.keperluan || finalExtraData.nama_acara || 'Pengurusan Administrasi',
-      nama_acara: finalExtraData.nama_acara || formData.keperluan || 'Kegiatan Kemasyarakatan',
-      tanggal_acara: finalExtraData.tanggal_acara || 'Senin, 24 Agustus 2026',
-      lokasi_acara: finalExtraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon',
+      keperluan: formData.keperluan || finalExtraData.keperluan || 'Pengurusan Administrasi',
+      nama_acara: formData.jenis_surat === 'Surat Izin Keramaian' ? (finalExtraData.nama_acara || formData.keperluan || 'Pesta Pernikahan & Resepsi Musik') : (formData.keperluan || formData.jenis_surat),
+      tanggal_acara: formData.jenis_surat === 'Surat Izin Keramaian' ? (finalExtraData.tanggal_acara || 'Senin, 24 Agustus 2026') : '',
+      lokasi_acara: formData.jenis_surat === 'Surat Izin Keramaian' ? (finalExtraData.lokasi_acara || formData.alamat || 'Kediaman Pemohon') : (formData.alamat || ''),
       file_berkas: fileNames.join(', '),
       data_json: JSON.stringify(finalExtraData)
     };

@@ -165,22 +165,128 @@ function VerifikasiRT() {
                     </div>
                   </div>
 
-                  {/* KEPERLUAN / DETAIL KERAMAIAN */}
-                  <div className="bg-white p-4 rounded-4 border border-info mb-4">
-                    <h5 className="fw-bold text-primary mb-3">🎉 Detail Acara / Permohonan Izin</h5>
-                    <div className="mb-2">
-                      <small className="text-muted d-block">Nama / Jenis Acara:</small>
-                      <span className="fw-bold text-dark">{data?.nama_acara || data?.keperluan}</span>
-                    </div>
-                    <div className="mb-2">
-                      <small className="text-muted d-block">Waktu & Tanggal Pelaksanaan:</small>
-                      <span className="fw-semibold text-dark">{data?.tanggal_acara || '-'}</span>
-                    </div>
-                    <div>
-                      <small className="text-muted d-block">Lokasi Acara:</small>
-                      <span className="fw-semibold text-dark">{data?.lokasi_acara || '-'}</span>
-                    </div>
-                  </div>
+                  {/* KEPERLUAN / DETAIL SPESIFIK SURAT */}
+                  {(() => {
+                    let extraJson = {};
+                    try {
+                      if (data?.data_json) extraJson = typeof data.data_json === 'string' ? JSON.parse(data.data_json) : data.data_json;
+                    } catch (e) {}
+
+                    const jenis = String(data?.jenis_surat || '');
+                    const isKeramaian = jenis.includes('Keramaian');
+                    const isKematian = jenis.includes('Kematian');
+                    const isBerpenghasilan = jenis.includes('Berpenghasilan');
+                    const isBelumRumah = jenis.includes('Rumah');
+
+                    return (
+                      <div className="bg-white p-4 rounded-4 border border-info mb-4">
+                        <h5 className="fw-bold text-primary mb-3">
+                          📑 Detail Spesifik Permohonan ({data?.jenis_surat || 'Surat Kelurahan'})
+                        </h5>
+
+                        {isKeramaian ? (
+                          <div className="row g-3">
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Nama / Jenis Acara:</small>
+                              <span className="fw-bold text-dark">{extraJson.nama_acara || data?.nama_acara || data?.keperluan || '-'}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Waktu & Tanggal Pelaksanaan:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tanggal_acara || data?.tanggal_acara || '-'} ({extraJson.waktu_acara || '-'})</span>
+                            </div>
+                            <div className="col-12">
+                              <small className="text-muted d-block">Lokasi Acara:</small>
+                              <span className="fw-semibold text-dark">{extraJson.lokasi_acara || data?.lokasi_acara || '-'}</span>
+                            </div>
+                            <div className="col-12">
+                              <small className="text-muted d-block">Penggunaan Izin / Hiburan:</small>
+                              <span className="fw-semibold text-dark">{extraJson.penggunaan_izin || 'Musik Elekton / Sound System'}</span>
+                            </div>
+                          </div>
+                        ) : isKematian ? (
+                          <div className="row g-3">
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Nama Almarhum / Almarhumah:</small>
+                              <span className="fw-bold text-danger fs-5">{extraJson.nama_meninggal || data?.nama_meninggal || data?.nama_pemohon}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">NIK Almarhum / Almarhumah:</small>
+                              <span className="fw-semibold text-dark">{extraJson.nik_meninggal || data?.nik || '-'}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Tempat / Tanggal Lahir Almarhum:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tgl_lahir_meninggal || data?.tempat_tgl_lahir || '-'}</span>
+                            </div>
+                            <div className="col-md-3">
+                              <small className="text-muted d-block">Jenis Kelamin Almarhum:</small>
+                              <span className="fw-semibold text-dark">{extraJson.jk_meninggal || data?.jenis_kelamin || 'Laki-laki'}</span>
+                            </div>
+                            <div className="col-md-3">
+                              <small className="text-muted d-block">Agama Almarhum:</small>
+                              <span className="fw-semibold text-dark">{extraJson.agama_meninggal || data?.agama || 'Islam'}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Hari & Tanggal Meninggal Dunia:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tgl_meninggal || 'Senin, 10 Agustus 2026'}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Tempat / Lokasi Meninggal Dunia:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tempat_meninggal || 'Rumah Duka'}</span>
+                            </div>
+                          </div>
+                        ) : isBerpenghasilan ? (
+                          <div className="row g-3">
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Estimasi Penghasilan per Bulan:</small>
+                              <span className="fw-bold text-success fs-5">Rp {extraJson.jumlah_penghasilan_angka || '2.500.000'} ({extraJson.jumlah_penghasilan_huruf || 'Dua Juta Lima Ratus Ribu Rupiah'})</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Sumber / Pekerjaan Penghasilan:</small>
+                              <span className="fw-semibold text-dark">{extraJson.sumber_penghasilan || data?.pekerjaan || 'Wiraswasta'}</span>
+                            </div>
+                            <div className="col-12">
+                              <small className="text-muted d-block">Alamat Domisili Tempat Tinggal Saat Ini:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tempat_tinggal_saat_ini || data?.alamat || '-'}</span>
+                            </div>
+                          </div>
+                        ) : isBelumRumah ? (
+                          <div className="row g-3">
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Status Tempat Tinggal Saat Ini:</small>
+                              <span className="fw-bold text-dark">{extraJson.status_tempat_tinggal || 'Kontrakan / Menumpang'}</span>
+                            </div>
+                            <div className="col-md-6">
+                              <small className="text-muted d-block">Lama Tinggal:</small>
+                              <span className="fw-semibold text-dark">{extraJson.lama_tinggal || '5 Tahun'}</span>
+                            </div>
+                            <div className="col-12">
+                              <small className="text-muted d-block">Alamat Tempat Tinggal Saat Ini:</small>
+                              <span className="fw-semibold text-dark">{extraJson.tempat_tinggal_saat_ini || data?.alamat || '-'}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="row g-3">
+                            <div className="col-12">
+                              <small className="text-muted d-block">Keperluan / Alasan Pembuatan Surat:</small>
+                              <span className="fw-bold text-dark fs-6">{data?.keperluan || extraJson.keperluan || 'Pengurusan Administrasi Kependudukan'}</span>
+                            </div>
+                            {extraJson.tempat_tinggal_saat_ini && (
+                              <div className="col-12">
+                                <small className="text-muted d-block">Alamat Tempat Tinggal Saat Ini:</small>
+                                <span className="fw-semibold text-dark">{extraJson.tempat_tinggal_saat_ini}</span>
+                              </div>
+                            )}
+                            {extraJson.bantuan_dimohonkan && (
+                              <div className="col-12">
+                                <small className="text-muted d-block">Bantuan yang Dimohonkan:</small>
+                                <span className="fw-semibold text-dark">{extraJson.bantuan_dimohonkan}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* STATUS PERSETUJUAN RT SAAT INI */}
                   <div className="p-3 bg-light rounded-3 mb-4 text-center border">
