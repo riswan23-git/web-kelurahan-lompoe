@@ -82,9 +82,20 @@ module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const url = req.url || '';
-    const body = req.body || {};
-    const method = req.method || 'GET';
+    // 0. GLOBAL CMS CLOUD SYNC
+    if (url.includes('sync-cms')) {
+        if (body.aparatur && Array.isArray(body.aparatur)) store.aparatur = body.aparatur;
+        if (body.pkk && Array.isArray(body.pkk)) store.pkk = body.pkk;
+        if (body.berita && Array.isArray(body.berita)) store.berita = body.berita;
+        if (body.sarana && Array.isArray(body.sarana)) store.sarana = body.sarana;
+        if (body.nomor_darurat && Array.isArray(body.nomor_darurat)) store.nomor_darurat = body.nomor_darurat;
+        if (body.kontak_rt && Array.isArray(body.kontak_rt)) store.kontak_rt = body.kontak_rt;
+        if (body.statistik) store.statistik = body.statistik;
+        if (body.info) store.info = body.info;
+
+        saveCmsDiskStore();
+        return res.status(200).json({ success: true, message: 'Data CMS berhasil disinkronisasi ke cloud!', store });
+    }
 
     // 1. APARATUR & STRUKTUR
     if (url.includes('aparatur')) {

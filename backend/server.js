@@ -61,9 +61,12 @@ const FALLBACK_DATA = {
     ],
     aparatur: [
         { id: 1, nama: 'Asmianti M., SE.', nip: '19840927 201001 2 022', jabatan: 'Lurah Lompoe', foto: null, is_lurah: 1, sambutan: 'Selamat Datang di Website Resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare. Website ini hadir sebagai wujud transparansi publik dan kemudahan pelayanan administrasi bagi seluruh warga.', urutan: 1 },
-        { id: 2, nama: 'Muhammad Amir, S.STP', nip: '19850512 200801 1 002', jabatan: 'Sekretaris Kelurahan', foto: null, is_lurah: 0, sambutan: '', urutan: 2 },
-        { id: 3, nama: 'Siti Rahmah, S.E', nip: '19880920 201101 2 003', jabatan: 'Kasi Pelayanan Umum & Kesejahteraan', foto: null, is_lurah: 0, sambutan: '', urutan: 3 },
-        { id: 4, nama: 'Ahmad Fauzi, S.Kom', nip: '19920315 201502 1 004', jabatan: 'Staf Administrasi & IT', foto: null, is_lurah: 0, sambutan: '', urutan: 4 }
+        { id: 2, nama: 'Fahri Firman, S.Sos', nip: '198504242019031003', jabatan: 'Sekretaris Lurah', foto: null, is_lurah: 0, sambutan: '', urutan: 2 },
+        { id: 3, nama: 'Koptu Mariyanto', nip: '31330391980383', jabatan: 'Babinsa', foto: null, is_lurah: 0, sambutan: '', urutan: 3 },
+        { id: 4, nama: 'Bripka Harmansyah', nip: '87040660', jabatan: 'Bhabinkamtibmas', foto: null, is_lurah: 0, sambutan: '', urutan: 4 },
+        { id: 5, nama: 'Syahrir, SE', nip: '197906192005021004', jabatan: 'Kepala seksi pemerintahan ketentraman dan ketertiban', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
+        { id: 6, nama: 'Sitti Kamaria, SE', nip: '197301042006042008', jabatan: 'Kepala Seksi Kesejahteraan Masyarakat', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
+        { id: 7, nama: 'Salma, S.Ap', nip: '198594142914112881', jabatan: 'Kepala Seksi Pelayanan Umum & Pemas', foto: null, is_lurah: 0, sambutan: '', urutan: 5 }
     ],
     statistik: { id: 1, total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' },
     info_kelurahan: {
@@ -1263,9 +1266,22 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// ==========================================
-// API KHUSUS ADMIN (CMS & MANAGEMENT)
-// ==========================================
+app.post('/api/admin/sync-cms', async (req, res) => {
+    try {
+        const body = req.body || {};
+        if (body.aparatur && Array.isArray(body.aparatur)) FALLBACK_DATA.aparatur = body.aparatur;
+        if (body.pkk && Array.isArray(body.pkk)) FALLBACK_DATA.pkk_wilayah = body.pkk;
+        if (body.berita && Array.isArray(body.berita)) FALLBACK_DATA.berita = body.berita;
+        if (body.sarana && Array.isArray(body.sarana)) FALLBACK_DATA.sarana = body.sarana;
+        if (body.nomor_darurat && Array.isArray(body.nomor_darurat)) FALLBACK_DATA.nomor_darurat = body.nomor_darurat;
+        if (body.kontak_rt && Array.isArray(body.kontak_rt)) FALLBACK_DATA.kontak_rt = body.kontak_rt;
+        if (body.statistik) FALLBACK_DATA.statistik = body.statistik;
+        if (body.info) FALLBACK_DATA.info_kelurahan = body.info;
+        res.json({ success: true, message: 'Local backend CMS synced!' });
+    } catch(e) {
+        res.status(500).json({ message: 'Sync error' });
+    }
+});
 
 // Login Staf Admin (Bcrypt Support & Auto Upgrade)
 app.post('/api/login', async (req, res) => {

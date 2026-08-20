@@ -579,6 +579,10 @@ function AdminDashboard() {
     }
   };
 
+  const syncCmsCloud = (key, data) => {
+    axios.post(`${API_BASE_URL}/api/admin/sync-cms`, { [key]: data }).catch(() => {});
+  };
+
   // Handlers for Aparatur CRUD
   const handleSaveAparatur = async (e) => {
     e.preventDefault();
@@ -602,6 +606,7 @@ function AdminDashboard() {
       }
       setAparaturList(updated);
       localStorage.setItem('store_aparatur', JSON.stringify(updated));
+      syncCmsCloud('aparatur', updated);
       setFormAparatur({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0 });
       setFotoAparatur(null);
       setEditAparaturMode(false);
@@ -622,6 +627,7 @@ function AdminDashboard() {
         const updated = aparaturList.filter(a => a.id !== id);
         setAparaturList(updated);
         localStorage.setItem('store_aparatur', JSON.stringify(updated));
+        syncCmsCloud('aparatur', updated);
         showNotif('Aparatur berhasil dihapus!');
       } catch (err) { showNotif('Gagal menghapus aparatur'); }
     }

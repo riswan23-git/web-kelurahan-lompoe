@@ -60,8 +60,8 @@ function Profil() {
     fetchData();
   }, []);
 
-  const lurah = aparaturList.find(a => a.is_lurah === 1) || aparaturList[0];
-  const stafList = aparaturList.filter(a => a.is_lurah !== 1);
+  const lurah = aparaturList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || aparaturList[0];
+  const stafList = lurah ? aparaturList.filter(a => a.id !== lurah.id) : [];
 
   // Totals for PKK table
   const totalKRT = pkkWilayah.reduce((acc, curr) => acc + (curr.krt || 0), 0);
