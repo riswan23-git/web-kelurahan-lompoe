@@ -29,26 +29,24 @@ const https = require('https');
 function syncCmsRemoteStore() {
     return new Promise((resolve) => {
         try {
-            const req = https.get('https://crudcrud.com/api/2b04437260f041bbae94b6f3ea97418a/cms_data', {
+            const req = https.get('https://api.restful-api.dev/objects/ff8081819ff5b11001a01db7193358cf', {
                 headers: { 'User-Agent': 'Mozilla/5.0' }
             }, (res) => {
                 let body = '';
                 res.on('data', c => body += c);
                 res.on('end', () => {
                     try {
-                        const list = JSON.parse(body);
-                        if (Array.isArray(list) && list.length > 0) {
-                            const latest = list[list.length - 1];
-                            if (latest) {
-                                if (Array.isArray(latest.aparatur) && latest.aparatur.length > 0) store.aparatur = latest.aparatur;
-                                if (Array.isArray(latest.pkk) && latest.pkk.length > 0) store.pkk = latest.pkk;
-                                if (Array.isArray(latest.berita) && latest.berita.length > 0) store.berita = latest.berita;
-                                if (Array.isArray(latest.sarana) && latest.sarana.length > 0) store.sarana = latest.sarana;
-                                if (Array.isArray(latest.nomor_darurat) && latest.nomor_darurat.length > 0) store.nomor_darurat = latest.nomor_darurat;
-                                if (Array.isArray(latest.kontak_rt) && latest.kontak_rt.length > 0) store.kontak_rt = latest.kontak_rt;
-                                if (latest.statistik) store.statistik = latest.statistik;
-                                if (latest.info) store.info = latest.info;
-                            }
+                        const parsed = JSON.parse(body);
+                        const data = parsed?.data;
+                        if (data) {
+                            if (Array.isArray(data.aparatur)) store.aparatur = data.aparatur;
+                            if (Array.isArray(data.pkk)) store.pkk = data.pkk;
+                            if (Array.isArray(data.berita)) store.berita = data.berita;
+                            if (Array.isArray(data.sarana)) store.sarana = data.sarana;
+                            if (Array.isArray(data.nomor_darurat)) store.nomor_darurat = data.nomor_darurat;
+                            if (Array.isArray(data.kontak_rt)) store.kontak_rt = data.kontak_rt;
+                            if (data.statistik) store.statistik = data.statistik;
+                            if (data.info) store.info = data.info;
                         }
                     } catch(e) {}
                     resolve();

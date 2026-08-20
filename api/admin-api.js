@@ -41,9 +41,12 @@ function saveCmsDiskStore() {
         fs.writeFileSync(cmsTmpFilePath, JSON.stringify(payload), 'utf8');
 
         try {
-            const postData = JSON.stringify(payload);
-            const req = https.request('https://crudcrud.com/api/2b04437260f041bbae94b6f3ea97418a/cms_data', {
-                method: 'POST',
+            const postData = JSON.stringify({
+                name: 'Lompoe CMS Store',
+                data: payload
+            });
+            const req = https.request('https://api.restful-api.dev/objects/ff8081819ff5b11001a01db7193358cf', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Content-Length': Buffer.byteLength(postData),

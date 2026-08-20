@@ -29,7 +29,7 @@ function Profil() {
         const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
         const localPkk = JSON.parse(localStorage.getItem('store_pkk') || 'null');
 
-        if (Array.isArray(localAparatur) && localAparatur.length > 0) setAparaturList(localAparatur);
+        if (Array.isArray(localAparatur)) setAparaturList(localAparatur);
         if (localInfo) setInfo(localInfo);
         if (Array.isArray(localPkk) && localPkk.length > 0) setPkkWilayah(localPkk);
 
@@ -39,7 +39,7 @@ function Profil() {
           axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => null)
         ]);
 
-        if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
+        if (resAparatur?.data && Array.isArray(resAparatur.data)) {
           setAparaturList(resAparatur.data);
           localStorage.setItem('store_aparatur', JSON.stringify(resAparatur.data));
         }

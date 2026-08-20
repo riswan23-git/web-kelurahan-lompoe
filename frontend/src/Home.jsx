@@ -23,14 +23,15 @@ function Home() {
   useEffect(() => {
     // 1. Fetch Aparatur & Lurah
     const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
-    if (localAparatur && localAparatur.length > 0) {
+    if (localAparatur && Array.isArray(localAparatur)) {
       setLurah(localAparatur.find(a => a.is_lurah === 1) || localAparatur[0]);
     }
     axios.get(`${API_BASE_URL}/api/aparatur`)
       .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           const apiLurah = res.data.find(a => a.is_lurah === 1) || res.data[0];
-          if (!localAparatur) setLurah(apiLurah);
+          setLurah(apiLurah || null);
+          localStorage.setItem('store_aparatur', JSON.stringify(res.data));
         }
       })
       .catch(err => console.error('Aparatur fetch error:', err));
@@ -39,30 +40,46 @@ function Home() {
     const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
     if (localStats) setStats(localStats);
     axios.get(`${API_BASE_URL}/api/statistik`)
-      .then(res => { if (res.data && Object.keys(res.data).length > 0 && !localStats) setStats(res.data); })
+      .then(res => {
+        if (res.data && Object.keys(res.data).length > 0) {
+          setStats(res.data);
+          localStorage.setItem('store_stats', JSON.stringify(res.data));
+        }
+      })
       .catch(err => console.error('Statistik fetch error:', err));
 
     // 3. Fetch Berita
     const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
-    if (localBerita) setBeritaList(localBerita);
+    if (localBerita && Array.isArray(localBerita)) setBeritaList(localBerita);
     axios.get(`${API_BASE_URL}/api/berita`)
-      .then(res => { if (Array.isArray(res.data) && res.data.length > 0 && !localBerita) setBeritaList(res.data); })
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setBeritaList(res.data);
+          localStorage.setItem('store_berita', JSON.stringify(res.data));
+        }
+      })
       .catch(err => console.error('Berita fetch error:', err));
 
     // 4. Fetch Sarana
     const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-    if (localSarana) setSaranaList(localSarana);
+    if (localSarana && Array.isArray(localSarana)) setSaranaList(localSarana);
     axios.get(`${API_BASE_URL}/api/sarana`)
-      .then(res => { if (Array.isArray(res.data) && res.data.length > 0 && !localSarana) setSaranaList(res.data); })
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setSaranaList(res.data);
+          localStorage.setItem('store_sarana', JSON.stringify(res.data));
+        }
+      })
       .catch(err => console.error('Sarana fetch error:', err));
 
     // 5. Fetch Nomor Darurat
     const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
-    if (localDarurat) setNomorDaruratList(localDarurat);
+    if (localDarurat && Array.isArray(localDarurat)) setNomorDaruratList(localDarurat);
     axios.get(`${API_BASE_URL}/api/nomor-darurat`)
       .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0 && !localDarurat) {
+        if (Array.isArray(res.data)) {
           setNomorDaruratList(res.data);
+          localStorage.setItem('store_nomor_darurat', JSON.stringify(res.data));
         }
       })
       .catch(err => console.error('Nomor Darurat fetch error:', err));

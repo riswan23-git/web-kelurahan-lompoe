@@ -25,13 +25,13 @@ function Berita() {
 
   useEffect(() => {
     const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
-    if (Array.isArray(localBerita) && localBerita.length > 0) {
+    if (Array.isArray(localBerita)) {
       setBeritaList(localBerita);
     }
     const fetchBerita = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/berita`).catch(() => null);
-        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+        if (response?.data && Array.isArray(response.data)) {
           setBeritaList(response.data);
           localStorage.setItem('store_berita', JSON.stringify(response.data));
         }

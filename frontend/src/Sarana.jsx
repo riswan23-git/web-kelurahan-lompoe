@@ -16,13 +16,13 @@ function Sarana() {
 
   useEffect(() => {
     const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-    if (Array.isArray(localSarana) && localSarana.length > 0) {
+    if (Array.isArray(localSarana)) {
       setSaranaList(localSarana);
     }
     const fetchSarana = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/sarana`).catch(() => null);
-        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+        if (response?.data && Array.isArray(response.data)) {
           setSaranaList(response.data);
           localStorage.setItem('store_sarana', JSON.stringify(response.data));
         }
