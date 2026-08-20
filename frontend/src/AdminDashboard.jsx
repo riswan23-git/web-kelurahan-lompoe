@@ -322,12 +322,15 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/aparatur`);
-      const apiData = Array.isArray(res.data) ? res.data : [];
-      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
-      const finalList = local && local.length > 0 ? local : apiData;
-      setAparaturList(finalList);
-      if (!local && apiData.length > 0) localStorage.setItem('store_aparatur', JSON.stringify(apiData));
+      const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`);
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
+      if (apiData.length > 0) {
+        setAparaturList(apiData);
+        localStorage.setItem('store_aparatur', JSON.stringify(apiData));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        if (local.length > 0) setAparaturList(local);
+      }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
       setAparaturList(local);
@@ -336,11 +339,15 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_PKK;
-      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
-      const finalList = local && local.length > 0 ? local : apiData;
-      setPkkList(finalList);
+      const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`);
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
+      if (apiData.length > 0) {
+        setPkkList(apiData);
+        localStorage.setItem('store_pkk', JSON.stringify(apiData));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
+      }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -349,11 +356,15 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/berita`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_BERITA;
-      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
-      const finalList = local && local.length > 0 ? local : apiData;
-      setBeritaList(finalList);
+      const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`);
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
+      if (apiData.length > 0) {
+        setBeritaList(apiData);
+        localStorage.setItem('store_berita', JSON.stringify(apiData));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+        setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
+      }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
@@ -363,13 +374,17 @@ function AdminDashboard() {
   const fetchStatsAndInfo = async () => {
     try {
       const [resStats, resInfo] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/statistik`),
-        axios.get(`${API_BASE_URL}/api/info-kelurahan`)
+        axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`),
+        axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
       ]);
-      const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
-      const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
-      setStats(localStats || resStats.data || {});
-      setInfo(localInfo || resInfo.data || {});
+      if (resStats?.data && Object.keys(resStats.data).length > 0) {
+        setStats(resStats.data);
+        localStorage.setItem('store_stats', JSON.stringify(resStats.data));
+      }
+      if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
+        setInfo(resInfo.data);
+        localStorage.setItem('store_info', JSON.stringify(resInfo.data));
+      }
     } catch (err) {
       const localStats = JSON.parse(localStorage.getItem('store_stats') || '{}');
       const localInfo = JSON.parse(localStorage.getItem('store_info') || '{}');
@@ -380,11 +395,15 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/sarana`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_SARANA;
-      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-      const finalList = local && local.length > 0 ? local : apiData;
-      setSaranaList(finalList);
+      const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`);
+      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
+      if (apiData.length > 0) {
+        setSaranaList(apiData);
+        localStorage.setItem('store_sarana', JSON.stringify(apiData));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
+      }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
