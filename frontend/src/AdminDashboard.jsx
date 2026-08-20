@@ -322,32 +322,58 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
-      if (apiData.length > 0) {
-        setAparaturList(apiData);
-        localStorage.setItem('store_aparatur', JSON.stringify(apiData));
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      let finalList = [];
+      if (local && Array.isArray(local) && local.length > 0) {
+        finalList = local;
+        if (apiData.length > 0) {
+          const localIds = new Set(local.map(i => String(i.id)));
+          apiData.forEach(item => {
+            if (!localIds.has(String(item.id))) {
+              finalList.push(item);
+            }
+          });
+        }
       } else {
-        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-        if (local.length > 0) setAparaturList(local);
+        finalList = apiData;
+      }
+
+      if (finalList.length > 0) {
+        setAparaturList(finalList);
+        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
+        syncCmsCloud('aparatur', finalList);
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-      setAparaturList(local);
+      if (local.length > 0) setAparaturList(local);
     }
   };
 
   const fetchPkk = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
-      if (apiData.length > 0) {
-        setPkkList(apiData);
-        localStorage.setItem('store_pkk', JSON.stringify(apiData));
+      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      let finalList = [];
+      if (local && Array.isArray(local) && local.length > 0) {
+        finalList = local;
+        if (apiData.length > 0) {
+          const localIds = new Set(local.map(i => String(i.id)));
+          apiData.forEach(item => {
+            if (!localIds.has(String(item.id))) finalList.push(item);
+          });
+        }
       } else {
-        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
-        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
+        finalList = apiData.length > 0 ? apiData : DEFAULT_PKK;
       }
+
+      setPkkList(finalList);
+      localStorage.setItem('store_pkk', JSON.stringify(finalList));
+      syncCmsCloud('pkk', finalList);
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -356,15 +382,26 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
-      if (apiData.length > 0) {
-        setBeritaList(apiData);
-        localStorage.setItem('store_berita', JSON.stringify(apiData));
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      let finalList = [];
+      if (local && Array.isArray(local) && local.length > 0) {
+        finalList = local;
+        if (apiData.length > 0) {
+          const localIds = new Set(local.map(i => String(i.id)));
+          apiData.forEach(item => {
+            if (!localIds.has(String(item.id))) finalList.push(item);
+          });
+        }
       } else {
-        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
-        setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
+        finalList = apiData.length > 0 ? apiData : DEFAULT_BERITA;
       }
+
+      setBeritaList(finalList);
+      localStorage.setItem('store_berita', JSON.stringify(finalList));
+      syncCmsCloud('berita', finalList);
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
@@ -374,8 +411,8 @@ function AdminDashboard() {
   const fetchStatsAndInfo = async () => {
     try {
       const [resStats, resInfo] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`),
-        axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
+        axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null)
       ]);
       if (resStats?.data && Object.keys(resStats.data).length > 0) {
         setStats(resStats.data);
@@ -395,15 +432,26 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`);
-      const apiData = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
-      if (apiData.length > 0) {
-        setSaranaList(apiData);
-        localStorage.setItem('store_sarana', JSON.stringify(apiData));
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      let finalList = [];
+      if (local && Array.isArray(local) && local.length > 0) {
+        finalList = local;
+        if (apiData.length > 0) {
+          const localIds = new Set(local.map(i => String(i.id)));
+          apiData.forEach(item => {
+            if (!localIds.has(String(item.id))) finalList.push(item);
+          });
+        }
       } else {
-        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
+        finalList = apiData.length > 0 ? apiData : DEFAULT_SARANA;
       }
+
+      setSaranaList(finalList);
+      localStorage.setItem('store_sarana', JSON.stringify(finalList));
+      syncCmsCloud('sarana', finalList);
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
