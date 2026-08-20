@@ -7,7 +7,8 @@ const globalStore = global.__LOMPOE_STORE__ || {
         { id: 4, nama: 'Bripka Harmansyah', nip: '87040660', jabatan: 'Bhabinkamtibmas', foto: null, is_lurah: 0, sambutan: '', urutan: 4 },
         { id: 5, nama: 'Syahrir, SE', nip: '197906192005021004', jabatan: 'Kepala seksi pemerintahan ketentraman dan ketertiban', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
         { id: 6, nama: 'Sitti Kamaria, SE', nip: '197301042006042008', jabatan: 'Kepala Seksi Kesejahteraan Masyarakat', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
-        { id: 7, nama: 'Salma, S.Ap', nip: '198594142914112881', jabatan: 'Kepala Seksi Pelayanan Umum & Pemas', foto: null, is_lurah: 0, sambutan: '', urutan: 5 }
+        { id: 7, nama: 'Salma, S.Ap', nip: '198594142914112881', jabatan: 'Kepala Seksi Pelayanan Umum & Pemas', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
+        { id: 8, nama: 'NANNIS', nip: '19820416 202521 2 026', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 6 }
     ],
     pkk: Array.from({ length: 10 }, (_, i) => ({
         id: i + 1,
