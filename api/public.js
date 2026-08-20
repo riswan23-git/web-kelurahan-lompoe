@@ -24,43 +24,8 @@ function syncCmsDiskStore() {
     } catch (e) {}
 }
 
-const https = require('https');
-
-function syncCmsRemoteStore() {
-    return new Promise((resolve) => {
-        try {
-            const req = https.get('https://api.restful-api.dev/objects/ff8081819ff5b11001a01db7193358cf', {
-                headers: { 'User-Agent': 'Mozilla/5.0' }
-            }, (res) => {
-                let body = '';
-                res.on('data', c => body += c);
-                res.on('end', () => {
-                    try {
-                        const parsed = JSON.parse(body);
-                        const data = parsed?.data;
-                        if (data) {
-                            if (Array.isArray(data.aparatur)) store.aparatur = data.aparatur;
-                            if (Array.isArray(data.pkk)) store.pkk = data.pkk;
-                            if (Array.isArray(data.berita)) store.berita = data.berita;
-                            if (Array.isArray(data.sarana)) store.sarana = data.sarana;
-                            if (Array.isArray(data.nomor_darurat)) store.nomor_darurat = data.nomor_darurat;
-                            if (Array.isArray(data.kontak_rt)) store.kontak_rt = data.kontak_rt;
-                            if (data.statistik) store.statistik = data.statistik;
-                            if (data.info) store.info = data.info;
-                        }
-                    } catch(e) {}
-                    resolve();
-                });
-            });
-            req.on('error', () => resolve());
-            req.setTimeout(2500, () => { req.destroy(); resolve(); });
-        } catch(e) { resolve(); }
-    });
-}
-
-module.exports = async (req, res) => {
+module.exports = (req, res) => {
     syncCmsDiskStore();
-    await syncCmsRemoteStore();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
