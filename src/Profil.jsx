@@ -34,9 +34,9 @@ function Profil() {
         if (Array.isArray(localPkk) && localPkk.length > 0) setPkkWilayah(localPkk);
 
         const [resAparatur, resInfo, resPkk] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/aparatur`).catch(() => null),
-          axios.get(`${API_BASE_URL}/api/info-kelurahan`).catch(() => null),
-          axios.get(`${API_BASE_URL}/api/pkk-wilayah`).catch(() => null)
+          axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
+          axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
+          axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null)
         ]);
 
         if (resAparatur?.data && Array.isArray(resAparatur.data)) {
