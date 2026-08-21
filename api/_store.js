@@ -1,18 +1,6 @@
 // Global shared memory store for Vercel Serverless Functions
 const globalStore = global.__LOMPOE_STORE__ || {
-    aparatur: [
-        { id: 1, nama: 'Asmianti M., SE.', nip: '19840927 201001 2 022', jabatan: 'Lurah Lompoe', foto: null, is_lurah: 1, sambutan: 'Selamat Datang di Website Resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare. Website ini hadir sebagai wujud transparansi publik dan kemudahan pelayanan administrasi bagi seluruh warga.', urutan: 1 },
-        { id: 2, nama: 'Fahri Firman, S.Sos', nip: '198504242019031003', jabatan: 'Sekretaris Lurah', foto: null, is_lurah: 0, sambutan: '', urutan: 2 },
-        { id: 3, nama: 'Koptu Mariyanto', nip: '31330391980383', jabatan: 'Babinsa', foto: null, is_lurah: 0, sambutan: '', urutan: 3 },
-        { id: 4, nama: 'Bripka Harmansyah', nip: '87040660', jabatan: 'Bhabinkamtibmas', foto: null, is_lurah: 0, sambutan: '', urutan: 4 },
-        { id: 5, nama: 'Syahrir, SE', nip: '197906192005021004', jabatan: 'Kepala seksi pemerintahan ketentraman dan ketertiban', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
-        { id: 6, nama: 'Sitti Kamaria, SE', nip: '197301042006042008', jabatan: 'Kepala Seksi Kesejahteraan Masyarakat', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
-        { id: 7, nama: 'Salma, S.Ap', nip: '198594142914112881', jabatan: 'Kepala Seksi Pelayanan Umum & Pemas', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
-        { id: 8, nama: 'NANNIS', nip: '19820416 202521 2 026', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 6 },
-        { id: 9, nama: 'ANDI HADI WIJAYA', nip: '20000714 202521 1 014', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 7 },
-        { id: 10, nama: 'HAMSAH', nip: '19710202 198911 1 001', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 8 },
-        { id: 11, nama: 'HASNIAH', nip: '19690303 202521 2 008', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 8 }
-    ],
+    aparatur: [],
     pkk: Array.from({ length: 10 }, (_, i) => ({
         id: i + 1,
         nama_wilayah: `RW 0${i + 1}`,
