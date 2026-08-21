@@ -79,7 +79,8 @@ function Profil() {
         ]);
 
         const serverAparatur = resAparatur?.data && Array.isArray(resAparatur.data) ? resAparatur.data : [];
-        const cloudAparatur = resCloud?.data?.aparatur || [];
+        const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+        const cloudAparatur = cloudStoreObj.aparatur || resCloud?.data?.aparatur || [];
         const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
 
         localStorage.removeItem('deleted_aparatur_ids');

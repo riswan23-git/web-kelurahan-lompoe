@@ -53,10 +53,11 @@ function Sarana() {
       try {
         const [response, resCloud] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null),
-          axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+          axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
         ]);
 
-        const cloudSarana = resCloud?.data?.sarana;
+        const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+        const cloudSarana = cloudStoreObj.sarana || resCloud?.data?.sarana;
         const serverSarana = response?.data && Array.isArray(response.data) ? response.data : [];
         const targetSarana = (Array.isArray(cloudSarana) && cloudSarana.length > 0) ? cloudSarana : serverSarana;
 

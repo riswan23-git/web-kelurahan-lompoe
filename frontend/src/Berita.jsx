@@ -67,7 +67,8 @@ function Berita() {
         ]);
 
         const serverBerita = response?.data && Array.isArray(response.data) ? response.data : [];
-        const cloudBerita = resCloud?.data?.berita || [];
+        const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+        const cloudBerita = cloudStoreObj.berita || resCloud?.data?.berita || [];
         const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
 
         const combinedMap = new Map();

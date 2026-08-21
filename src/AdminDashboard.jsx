@@ -334,7 +334,8 @@ function AdminDashboard() {
         axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
         axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
       ]);
-      const cloudData = resCloud?.data?.aparatur;
+      const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudData = cloudStoreObj.aparatur || resCloud?.data?.aparatur;
       const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
       const localData = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
 
@@ -343,13 +344,11 @@ function AdminDashboard() {
       else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
       else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
-      if (active.length > 0) {
-        setAparaturList(active);
-        localStorage.setItem('store_aparatur', JSON.stringify(active));
-      }
+      setAparaturList(active);
+      localStorage.setItem('store_aparatur', JSON.stringify(active));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-      if (local.length > 0) setAparaturList(local);
+      setAparaturList(local);
     }
   };
 

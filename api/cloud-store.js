@@ -62,11 +62,23 @@ module.exports = async (req, res) => {
     // Sync from Firebase DB on GET
     if (req.method === 'GET') {
         const fbData = await fetchFromFirebase();
-        if (fbData) {
+        if (fbData && typeof fbData === 'object') {
             currentStore = { ...currentStore, ...fbData };
             global.__LOMPOE_CLOUD_STORE__ = currentStore;
         }
-        return res.status(200).json({ success: true, data: currentStore });
+        return res.status(200).json({
+            success: true,
+            data: currentStore,
+            aparatur: currentStore.aparatur || [],
+            pkk: currentStore.pkk || [],
+            berita: currentStore.berita || [],
+            sarana: currentStore.sarana || [],
+            pengajuan: currentStore.pengajuan || [],
+            nomor_darurat: currentStore.nomor_darurat || [],
+            kontak_rt: currentStore.kontak_rt || [],
+            statistik: currentStore.statistik || {},
+            info: currentStore.info || {}
+        });
     }
 
     if (req.method === 'POST') {
@@ -88,7 +100,16 @@ module.exports = async (req, res) => {
         // Persist to Firebase Realtime DB
         await saveToFirebase(currentStore);
 
-        return res.status(200).json({ success: true, message: 'Cloud store updated successfully via Firebase!', data: currentStore });
+        return res.status(200).json({
+            success: true,
+            message: 'Cloud store updated successfully via Firebase!',
+            data: currentStore,
+            aparatur: currentStore.aparatur || [],
+            pkk: currentStore.pkk || [],
+            berita: currentStore.berita || [],
+            sarana: currentStore.sarana || [],
+            pengajuan: currentStore.pengajuan || []
+        });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
