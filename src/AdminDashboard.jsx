@@ -350,23 +350,13 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
-
-      const combinedMap = new Map();
-      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !combinedMap.has(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-      }
-      const finalList = Array.from(combinedMap.values());
-      if (finalList.length > 0) {
-        setAparaturList(finalList);
-        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        setAparaturList(res.data);
+        localStorage.setItem('store_aparatur', JSON.stringify(res.data));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        if (local.length > 0) setAparaturList(local);
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
@@ -376,23 +366,14 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_pkk') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
-
-      const combinedMap = new Map();
-      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !combinedMap.has(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        setPkkList(res.data);
+        localStorage.setItem('store_pkk', JSON.stringify(res.data));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
       }
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_PKK;
-      setPkkList(resList);
-      localStorage.setItem('store_pkk', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -401,23 +382,14 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_berita') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
-
-      const combinedMap = new Map();
-      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !combinedMap.has(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        setBeritaList(res.data);
+        localStorage.setItem('store_berita', JSON.stringify(res.data));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+        setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
       }
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_BERITA;
-      setBeritaList(resList);
-      localStorage.setItem('store_berita', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
@@ -448,23 +420,14 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_sarana') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
-
-      const combinedMap = new Map();
-      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !combinedMap.has(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        setSaranaList(res.data);
+        localStorage.setItem('store_sarana', JSON.stringify(res.data));
+      } else {
+        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
       }
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_SARANA;
-      setSaranaList(resList);
-      localStorage.setItem('store_sarana', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
@@ -673,15 +636,8 @@ function AdminDashboard() {
     axios.post(`${API_BASE_URL}/api/admin/sync-cms`, { [key]: data }).catch(() => {});
     if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/admin/sync-cms`, { [key]: data }).catch(() => {});
+      axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { [key]: data }).catch(() => {});
     }
-    // Real-time Cloud Store sync for multi-device (Laptop <-> HP)
-    axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621')
-      .then(res => {
-        const cloudData = res.data || {};
-        cloudData[key] = data;
-        delete cloudData._id;
-        axios.put('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621', cloudData).catch(() => {});
-      }).catch(() => {});
   };
 
   // Handlers for Aparatur CRUD
