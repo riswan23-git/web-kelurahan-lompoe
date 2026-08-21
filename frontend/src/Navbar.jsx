@@ -7,19 +7,50 @@ function Navbar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
-  const [info, setInfo] = useState({
-    telepon_kantor: '(0421) 12345',
-    teks_marquee: '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE • 🕒 JAM PELAYANAN KANTOR LOKET: SENIN - JUMAT 08.00 - 16.00 WITA • 📝 LAYANAN PENGAJUAN SURAT & PERSETUJUAN LURAH BISA DILAKUKAN ONLINE 24 JAM'
+  const [info, setInfo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('store_info') || '{}') || {
+        telepon_kantor: '(0421) 12345',
+        teks_marquee: '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE • 🕒 JAM PELAYANAN KANTOR LOKET: SENIN - JUMAT 08.00 - 16.00 WITA • 📝 LAYANAN PENGAJUAN SURAT & PERSETUJUAN LURAH BISA DILAKUKAN ONLINE 24 JAM'
+      };
+    } catch (e) {
+      return {
+        telepon_kantor: '(0421) 12345',
+        teks_marquee: '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE • 🕒 JAM PELAYANAN KANTOR LOKET: SENIN - JUMAT 08.00 - 16.00 WITA • 📝 LAYANAN PENGAJUAN SURAT & PERSETUJUAN LURAH BISA DILAKUKAN ONLINE 24 JAM'
+      };
+    }
   });
 
   useEffect(() => {
-    const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
-    if (localInfo) setInfo(localInfo);
-    axios.get(`${API_BASE_URL}/api/info-kelurahan`)
+    const reloadLocal = () => {
+      try {
+        const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+        if (localInfo && Object.keys(localInfo).length > 0) setInfo(localInfo);
+      } catch (e) {}
+    };
+    reloadLocal();
+
+    const handleStorage = () => reloadLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'info' && e.detail.data) setInfo(e.detail.data);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
+    axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
       .then(res => {
-        if (res.data && !localInfo) setInfo(res.data);
+        if (res.data && Object.keys(res.data).length > 0) {
+          setInfo(res.data);
+          localStorage.setItem('store_info', JSON.stringify(res.data));
+        }
       })
       .catch(() => {});
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
   }, []);
 
   const handleNavClick = () => {

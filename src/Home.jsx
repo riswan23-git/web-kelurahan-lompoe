@@ -1,89 +1,146 @@
 import { API_BASE_URL } from './apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-function Home() {
-  const [lurah, setLurah] = useState(null);
-  const [stats, setStats] = useState({ total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' });
-  const DEFAULT_DARURAT = [
-    { id: 1, nama_instansi: 'Call Center Parepare', nomor_telepon: '112', icon: '🚨' },
-    { id: 2, nama_instansi: 'Polsek Bacukiki', nomor_telepon: '(0421) 12345', icon: '🚓' },
-    { id: 3, nama_instansi: 'Pemadam Kebakaran', nomor_telepon: '113', icon: '🚒' },
-    { id: 4, nama_instansi: 'Puskesmas Bacukiki', nomor_telepon: '(0421) 21118', icon: '🏥' }
-  ];
+const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
+  if (!foto) return null;
+  if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
+    return foto;
+  }
+  return `${apiBaseUrl}/uploads/${foto}`;
+};
 
-  const [beritaList, setBeritaList] = useState([]);
-  const [saranaList, setSaranaList] = useState([]);
-  const [nomorDaruratList, setNomorDaruratList] = useState(DEFAULT_DARURAT);
+const DEFAULT_DARURAT = [
+  { id: 1, nama_instansi: 'Call Center Parepare', nomor_telepon: '112', icon: '🚨' },
+  { id: 2, nama_instansi: 'Polsek Bacukiki', nomor_telepon: '(0421) 12345', icon: '🚓' },
+  { id: 3, nama_instansi: 'Pemadam Kebakaran', nomor_telepon: '113', icon: '🚒' },
+  { id: 4, nama_instansi: 'Puskesmas Bacukiki', nomor_telepon: '(0421) 21118', icon: '🏥' }
+];
+
+function Home() {
+  const [lurah, setLurah] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      if (Array.isArray(local) && local.length > 0) {
+        return local.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || local[0];
+      }
+      return null;
+    } catch (e) { return null; }
+  });
+
+  const [stats, setStats] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('store_stats') || 'null') || { total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' };
+    } catch (e) { return { total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' }; }
+  });
+
+  const [beritaList, setBeritaList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : [];
+    } catch (e) { return []; }
+  });
+
+  const [saranaList, setSaranaList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : [];
+    } catch (e) { return []; }
+  });
+
+  const [nomorDaruratList, setNomorDaruratList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_DARURAT;
+    } catch (e) { return DEFAULT_DARURAT; }
+  });
+
   const [loading, setLoading] = useState(false);
 
+  const reloadFromLocal = useCallback(() => {
+    try {
+      const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      if (Array.isArray(localAparatur) && localAparatur.length > 0) {
+        setLurah(localAparatur.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || localAparatur[0]);
+      }
+      const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
+      if (localStats) setStats(localStats);
+      const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      if (Array.isArray(localBerita)) setBeritaList(localBerita);
+      const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      if (Array.isArray(localSarana)) setSaranaList(localSarana);
+      const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
+      if (Array.isArray(localDarurat) && localDarurat.length > 0) setNomorDaruratList(localDarurat);
+    } catch (e) {}
+  }, []);
+
   useEffect(() => {
-    // 1. Fetch Aparatur & Lurah
-    const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
-    if (localAparatur && Array.isArray(localAparatur)) {
-      setLurah(localAparatur.find(a => a.is_lurah === 1) || localAparatur[0]);
-    }
-    axios.get(`${API_BASE_URL}/api/aparatur`)
+    reloadFromLocal();
+
+    const handleStorage = () => reloadFromLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'aparatur' && Array.isArray(e.detail.data)) {
+        setLurah(e.detail.data.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || e.detail.data[0]);
+      }
+      if (e?.detail?.key === 'statistik' && e.detail.data) setStats(e.detail.data);
+      if (e?.detail?.key === 'berita' && Array.isArray(e.detail.data)) setBeritaList(e.detail.data);
+      if (e?.detail?.key === 'sarana' && Array.isArray(e.detail.data)) setSaranaList(e.detail.data);
+      if (e?.detail?.key === 'nomor_darurat' && Array.isArray(e.detail.data)) setNomorDaruratList(e.detail.data);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
+    // Fetch API in background
+    axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`)
       .then(res => {
-        if (Array.isArray(res.data)) {
-          const apiLurah = res.data.find(a => a.is_lurah === 1) || res.data[0];
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const apiLurah = res.data.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || res.data[0];
           setLurah(apiLurah || null);
           localStorage.setItem('store_aparatur', JSON.stringify(res.data));
         }
-      })
-      .catch(err => console.error('Aparatur fetch error:', err));
+      }).catch(() => {});
 
-    // 2. Fetch Statistik
-    const localStats = JSON.parse(localStorage.getItem('store_stats') || 'null');
-    if (localStats) setStats(localStats);
-    axios.get(`${API_BASE_URL}/api/statistik`)
+    axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`)
       .then(res => {
         if (res.data && Object.keys(res.data).length > 0) {
           setStats(res.data);
           localStorage.setItem('store_stats', JSON.stringify(res.data));
         }
-      })
-      .catch(err => console.error('Statistik fetch error:', err));
+      }).catch(() => {});
 
-    // 3. Fetch Berita
-    const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
-    if (localBerita && Array.isArray(localBerita)) setBeritaList(localBerita);
-    axios.get(`${API_BASE_URL}/api/berita`)
+    axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`)
       .then(res => {
-        if (Array.isArray(res.data)) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
           setBeritaList(res.data);
           localStorage.setItem('store_berita', JSON.stringify(res.data));
         }
-      })
-      .catch(err => console.error('Berita fetch error:', err));
+      }).catch(() => {});
 
-    // 4. Fetch Sarana
-    const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-    if (localSarana && Array.isArray(localSarana)) setSaranaList(localSarana);
-    axios.get(`${API_BASE_URL}/api/sarana`)
+    axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`)
       .then(res => {
-        if (Array.isArray(res.data)) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
           setSaranaList(res.data);
           localStorage.setItem('store_sarana', JSON.stringify(res.data));
         }
-      })
-      .catch(err => console.error('Sarana fetch error:', err));
+      }).catch(() => {});
 
-    // 5. Fetch Nomor Darurat
-    const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
-    if (localDarurat && Array.isArray(localDarurat)) setNomorDaruratList(localDarurat);
-    axios.get(`${API_BASE_URL}/api/nomor-darurat`)
+    axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`)
       .then(res => {
-        if (Array.isArray(res.data)) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
           setNomorDaruratList(res.data);
           localStorage.setItem('store_nomor_darurat', JSON.stringify(res.data));
         }
-      })
-      .catch(err => console.error('Nomor Darurat fetch error:', err));
-  }, []);
+      }).catch(() => {});
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
+  }, [reloadFromLocal]);
 
   const totalPenduduk = (stats.total_pria || 0) + (stats.total_wanita || 0);
 
@@ -189,9 +246,9 @@ function Home() {
                   <div className="row align-items-center g-4">
                     <div className="col-md-4 text-center">
                       <div className="position-relative d-inline-block">
-                        {lurah.foto ? (
+                        {getImageSrc(lurah.foto) ? (
                           <img
-                            src={`${API_BASE_URL}/uploads/${lurah.foto}`}
+                            src={getImageSrc(lurah.foto)}
                             alt={lurah.nama}
                             className="rounded-circle border border-4 border-primary shadow-sm"
                             style={{ width: '125px', height: '125px', objectFit: 'cover' }}
@@ -313,9 +370,9 @@ function Home() {
                 ) : (
                   beritaList.slice(0, 3).map((item) => (
                     <div key={item.id} className="d-flex flex-column flex-sm-row gap-3 mb-4 pb-3 border-bottom align-items-start hover-lift p-2 rounded-3">
-                      {item.gambar ? (
+                      {getImageSrc(item.gambar) ? (
                         <img
-                          src={`${API_BASE_URL}/uploads/${item.gambar}`}
+                          src={getImageSrc(item.gambar)}
                           alt={item.judul}
                           className="rounded-3 shadow-sm"
                           style={{ width: '130px', height: '90px', objectFit: 'cover' }}

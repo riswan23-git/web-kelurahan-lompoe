@@ -56,12 +56,23 @@ function extractId(url, body) {
     return target;
 }
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
     syncCmsDiskStore();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    const url = req.url || '';
+    const method = req.method || 'GET';
+    let body = {};
+    try {
+        if (req.body && typeof req.body === 'object') {
+            body = req.body;
+        } else if (req.body && typeof req.body === 'string') {
+            body = JSON.parse(req.body);
+        }
+    } catch (e) { body = {}; }
 
     // 0. GLOBAL CMS CLOUD SYNC
     if (url.includes('sync-cms')) {

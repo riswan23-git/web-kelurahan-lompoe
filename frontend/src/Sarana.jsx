@@ -1,8 +1,16 @@
 import { API_BASE_URL } from './apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
+
+const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
+  if (!foto) return null;
+  if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
+    return foto;
+  }
+  return `${apiBaseUrl}/uploads/${foto}`;
+};
 
 const DEFAULT_SARANA = [
   { id: 1, nama_sarana: 'Kantor Kelurahan Lompoe', kategori: 'Pemerintahan', lokasi: 'Jl. Poros Lompoe', deskripsi: 'Pusat pelayanan administrasi publik dan pelayanan masyarakat.', kondisi: 'Baik', foto: null },
@@ -10,30 +18,55 @@ const DEFAULT_SARANA = [
 ];
 
 function Sarana() {
-  const [saranaList, setSaranaList] = useState(DEFAULT_SARANA);
-  const [loading, setLoading] = useState(true);
+  const [saranaList, setSaranaList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_SARANA;
+    } catch (e) { return DEFAULT_SARANA; }
+  });
+  const [loading, setLoading] = useState(false);
   const [kategori, setKategori] = useState('Semua');
 
+  const reloadFromLocal = useCallback(() => {
+    try {
+      const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+      if (Array.isArray(localSarana) && localSarana.length > 0) {
+        setSaranaList(localSarana);
+      }
+    } catch (e) {}
+  }, []);
+
   useEffect(() => {
-    const localSarana = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-    if (Array.isArray(localSarana)) {
-      setSaranaList(localSarana);
-    }
+    reloadFromLocal();
+
+    const handleStorage = () => reloadFromLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'sarana' && Array.isArray(e.detail.data)) {
+        setSaranaList(e.detail.data);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
     const fetchSarana = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/sarana`).catch(() => null);
-        if (response?.data && Array.isArray(response.data)) {
+        const response = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
+        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
           setSaranaList(response.data);
           localStorage.setItem('store_sarana', JSON.stringify(response.data));
         }
       } catch (err) {
         console.error('Error fetching sarana:', err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchSarana();
-  }, []);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
+  }, [reloadFromLocal]);
 
   const filteredSarana = saranaList.filter(item => {
     return kategori === 'Semua' || item.kategori === kategori;
@@ -76,9 +109,9 @@ function Sarana() {
             {filteredSarana.map((item) => (
               <div key={item.id} className="col-md-6 col-lg-4">
                 <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                  {item.foto ? (
+                  {getImageSrc(item.foto) ? (
                     <img 
-                      src={`${API_BASE_URL}/uploads/${item.foto}`} 
+                      src={getImageSrc(item.foto)} 
                       alt={item.nama_sarana}
                       style={{ height: '180px', objectFit: 'cover' }}
                     />

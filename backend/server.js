@@ -10,7 +10,14 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve built frontend (dist) if exists
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+}
 
 // Pastikan folder uploads ada (Support Vercel Read-Only Filesystem)
 const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
@@ -110,32 +117,112 @@ const FALLBACK_DATA = {
     ]
 };
 
-// Helper Fallback Matcher
+// =============================================
+// JSON FILE DATABASE (Fallback ketika MySQL tidak tersedia)
+// =============================================
+const DB_JSON_PATH = path.join(__dirname, 'db_lompoe_data.json');
+
+function loadJsonDb() {
+    try {
+        if (fs.existsSync(DB_JSON_PATH)) {
+            const raw = fs.readFileSync(DB_JSON_PATH, 'utf8');
+            const data = JSON.parse(raw);
+            return {
+                aparatur: Array.isArray(data.aparatur) ? data.aparatur : FALLBACK_DATA.aparatur,
+                statistik: data.statistik || FALLBACK_DATA.statistik,
+                info_kelurahan: data.info_kelurahan || FALLBACK_DATA.info_kelurahan,
+                nomor_darurat: Array.isArray(data.nomor_darurat) ? data.nomor_darurat : FALLBACK_DATA.nomor_darurat,
+                pkk_wilayah: Array.isArray(data.pkk_wilayah) ? data.pkk_wilayah : FALLBACK_DATA.pkk_wilayah,
+                berita: Array.isArray(data.berita) ? data.berita : FALLBACK_DATA.berita,
+                sarana: Array.isArray(data.sarana) ? data.sarana : FALLBACK_DATA.sarana,
+                kontak_rt: Array.isArray(data.kontak_rt) ? data.kontak_rt : [],
+                pengajuan_surat: Array.isArray(data.pengajuan_surat) ? data.pengajuan_surat : [],
+                chat_messages: Array.isArray(data.chat_messages) ? data.chat_messages : [],
+                admin: Array.isArray(data.admin) ? data.admin : FALLBACK_DATA.admin
+            };
+        }
+    } catch (e) {
+        console.warn('JSON DB load error:', e.message);
+    }
+    return {
+        aparatur: [...FALLBACK_DATA.aparatur],
+        statistik: { ...FALLBACK_DATA.statistik },
+        info_kelurahan: { ...FALLBACK_DATA.info_kelurahan },
+        nomor_darurat: [...FALLBACK_DATA.nomor_darurat],
+        pkk_wilayah: [...FALLBACK_DATA.pkk_wilayah],
+        berita: [...FALLBACK_DATA.berita],
+        sarana: [...FALLBACK_DATA.sarana],
+        kontak_rt: [],
+        pengajuan_surat: [],
+        chat_messages: [],
+        admin: [...FALLBACK_DATA.admin]
+    };
+}
+
+let jsonDb = loadJsonDb();
+
+function saveJsonDb() {
+    try {
+        fs.writeFileSync(DB_JSON_PATH, JSON.stringify(jsonDb, null, 2), 'utf8');
+    } catch (e) {
+        console.warn('JSON DB save error:', e.message);
+    }
+}
+
+// Inisialisasi kontak_rt jika kosong
+if (!jsonDb.kontak_rt || jsonDb.kontak_rt.length === 0) {
+    const listRtRw = [
+        'RT 01 / RW 01', 'RT 02 / RW 01', 'RT 03 / RW 01',
+        "RT 01 / RW 02 (Wekke'e)", "RT 02 / RW 02 (Wekke'e)", "RT 03 / RW 02 (Wekke'e)",
+        "RT 01 / RW 03 (Wekke'e)", "RT 02 / RW 03 (Wekke'e)", "RT 03 / RW 03 (Wekke'e)", "RT 04 / RW 03 (Wekke'e)",
+        "RT 01 / RW 04 (Kp. Baru Labempa)", "RT 02 / RW 04 (Kp. Baru Labempa)", "RT 03 / RW 04 (Kp. Baru Labempa)",
+        "RT 01 / RW 05 (Timurama)", "RT 02 / RW 05 (Timurama)", "RT 03 / RW 05 (Timurama)", "RT 04 / RW 05 (Timurama)",
+        "RT 01 / RW 06 (Sipakario)", "RT 02 / RW 06 (Sipakario)", "RT 03 / RW 06 (Sipakario)"
+    ];
+    jsonDb.kontak_rt = listRtRw.map((rt, i) => ({ id: i + 1, rt_rw: rt, nama_ketua: '', no_wa: '' }));
+    saveJsonDb();
+}
+
+// Update FALLBACK_DATA supaya sinkron dengan JSON DB
+Object.assign(FALLBACK_DATA, jsonDb);
+
+// Helper Fallback Matcher - membaca dari jsonDb (persisten)
 function getFallbackResult(sql, params) {
     const lower = sql.toLowerCase();
-    if (lower.includes('from aparatur')) return FALLBACK_DATA.aparatur;
-    if (lower.includes('from statistik')) return [FALLBACK_DATA.statistik];
-    if (lower.includes('from info_kelurahan')) return [FALLBACK_DATA.info_kelurahan];
-    if (lower.includes('from nomor_darurat')) return FALLBACK_DATA.nomor_darurat;
-    if (lower.includes('from pkk_wilayah')) return FALLBACK_DATA.pkk_wilayah;
-    if (lower.includes('from berita')) return FALLBACK_DATA.berita;
-    if (lower.includes('from sarana')) return FALLBACK_DATA.sarana;
-    if (lower.includes('from admin')) {
-        if (lower.includes('where username')) {
-            const uname = params[0];
-            if (uname === 'admin') return FALLBACK_DATA.admin;
-        }
-        return FALLBACK_DATA.admin;
+    if (lower.includes('from aparatur')) return jsonDb ? jsonDb.aparatur : FALLBACK_DATA.aparatur;
+    if (lower.includes('from statistik')) return jsonDb ? [jsonDb.statistik] : [FALLBACK_DATA.statistik];
+    if (lower.includes('from info_kelurahan')) return jsonDb ? [jsonDb.info_kelurahan] : [FALLBACK_DATA.info_kelurahan];
+    if (lower.includes('from nomor_darurat')) return jsonDb ? jsonDb.nomor_darurat : FALLBACK_DATA.nomor_darurat;
+    if (lower.includes('from pkk_wilayah')) return jsonDb ? jsonDb.pkk_wilayah : FALLBACK_DATA.pkk_wilayah;
+    if (lower.includes('from berita')) return jsonDb ? jsonDb.berita : FALLBACK_DATA.berita;
+    if (lower.includes('from sarana_prasarana') || lower.includes('from sarana')) return jsonDb ? jsonDb.sarana : FALLBACK_DATA.sarana;
+    if (lower.includes('from kontak_rt')) return jsonDb ? jsonDb.kontak_rt : [];
+    if (lower.includes('from chat_messages')) {
+        if (params && params[0]) return (jsonDb?.chat_messages || []).filter(m => m.room_resi === params[0]);
+        return jsonDb?.chat_messages || [];
     }
-    return [];
+    if (lower.includes('from pengajuan_surat')) {
+        if (params && params[0] && lower.includes('where no_resi')) return (jsonDb?.pengajuan_surat || []).filter(p => p.no_resi === params[0]);
+        if (params && params[0] && lower.includes('where token_rt')) return (jsonDb?.pengajuan_surat || []).filter(p => p.token_rt === params[0]);
+        return jsonDb?.pengajuan_surat || [];
+    }
+    if (lower.includes('from admin')) {
+        if (lower.includes('where username') && params && params[0]) {
+            return (jsonDb?.admin || FALLBACK_DATA.admin).filter(a => a.username === params[0]);
+        }
+        return jsonDb?.admin || FALLBACK_DATA.admin;
+    }
+    // Untuk operasi INSERT/UPDATE/DELETE yang gagal ke MySQL, kembalikan hasil sukses palsu
+    return { affectedRows: 1, insertId: Date.now() };
 }
 
 // Lazy Connection Pool
 let pool = null;
+let mysqlAvailable = null; // null=belum dicek, true=tersedia, false=tidak
+
 function getPool() {
-    if (process.env.VERCEL && !process.env.DB_HOST) {
-        return null; // Skip DB connection on Vercel if DB_HOST not provided
-    }
+    if (process.env.VERCEL && !process.env.DB_HOST) return null;
+    if (mysqlAvailable === false) return null;
     if (!pool) {
         try {
             pool = mysql.createPool({
@@ -153,12 +240,13 @@ function getPool() {
             });
         } catch (e) {
             pool = null;
+            mysqlAvailable = false;
         }
     }
     return pool;
 }
 
-// Utility DB Query Promise Helper dengan Safe Fallback
+// Utility DB Query - sekarang menggunakan JSON file sebagai fallback persisten
 const dbQuery = (sql, params = []) => {
     return new Promise((resolve) => {
         try {
@@ -168,8 +256,13 @@ const dbQuery = (sql, params = []) => {
             }
             p.query(sql, params, (err, results) => {
                 if (err) {
+                    if (mysqlAvailable !== false) {
+                        mysqlAvailable = false;
+                        console.warn('⚠️  MySQL tidak tersedia, menggunakan JSON file database.');
+                    }
                     return resolve(getFallbackResult(sql, params));
                 }
+                mysqlAvailable = true;
                 resolve(results);
             });
         } catch (e) {
@@ -177,6 +270,7 @@ const dbQuery = (sql, params = []) => {
         }
     });
 };
+
 
 // Helper untuk Tambah Kolom Otomatis jika Belum Ada
 async function safeAddColumn(tableName, columnName, columnDefinition) {
@@ -527,16 +621,29 @@ const TEMPLATE_MAP = {
 // 1b. Data Kontak RT/RW (Auto WA Target / Hybrid Fallback)
 app.get('/api/kontak-rt', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.kontak_rt);
         const results = await dbQuery('SELECT * FROM kontak_rt ORDER BY id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.kontak_rt);
         res.json(results);
     } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data kontak RT/RW.' });
+        res.json(jsonDb.kontak_rt || []);
     }
 });
 
 app.post('/api/admin/kontak-rt', async (req, res) => {
     try {
         const { id, rt_rw, nama_ketua, no_wa } = req.body;
+        if (mysqlAvailable === false) {
+            // Gunakan jsonDb
+            if (id) {
+                const item = jsonDb.kontak_rt.find(k => k.id == id);
+                if (item) { item.nama_ketua = nama_ketua || ''; item.no_wa = no_wa || ''; }
+            } else if (rt_rw) {
+                jsonDb.kontak_rt.push({ id: Date.now(), rt_rw, nama_ketua: nama_ketua || '', no_wa: no_wa || '' });
+            }
+            saveJsonDb();
+            return res.json({ message: 'Data kontak RT/RW berhasil diperbarui!' });
+        }
         if (id) {
             await dbQuery('UPDATE kontak_rt SET nama_ketua = ?, no_wa = ? WHERE id = ?', [nama_ketua || '', no_wa || '', id]);
         } else if (rt_rw) {
@@ -548,22 +655,46 @@ app.post('/api/admin/kontak-rt', async (req, res) => {
     }
 });
 
+app.put('/api/admin/kontak-rt/:id', async (req, res) => {
+    try {
+        const { nama_ketua, no_wa } = req.body;
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.kontak_rt.find(k => k.id == id);
+            if (item) { item.nama_ketua = nama_ketua || ''; item.no_wa = no_wa || ''; saveJsonDb(); }
+            return res.json({ message: 'Kontak RT/RW berhasil diupdate!' });
+        }
+        await dbQuery('UPDATE kontak_rt SET nama_ketua = ?, no_wa = ? WHERE id = ?', [nama_ketua || '', no_wa || '', id]);
+        res.json({ message: 'Kontak RT/RW berhasil diupdate!' });
+    } catch (err) {
+        res.status(500).json({ message: 'Gagal update kontak RT/RW.' });
+    }
+});
+
 app.delete('/api/admin/kontak-rt/:id', async (req, res) => {
     try {
-        await dbQuery('DELETE FROM kontak_rt WHERE id = ?', [req.params.id]);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            jsonDb.kontak_rt = jsonDb.kontak_rt.filter(k => k.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Kontak RT/RW berhasil dihapus!' });
+        }
+        await dbQuery('DELETE FROM kontak_rt WHERE id = ?', [id]);
         res.json({ message: 'Kontak RT/RW berhasil dihapus!' });
     } catch (err) {
         res.status(500).json({ message: 'Gagal menghapus kontak RT/RW.' });
     }
 });
 
-// 1. Data PKK Per Wilayah RW (Papan Resmi 2024)
+// 1. Data PKK Per Wilayah RW
 app.get('/api/pkk-wilayah', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.pkk_wilayah);
         const results = await dbQuery('SELECT * FROM pkk_wilayah ORDER BY id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.pkk_wilayah);
         res.json(results);
     } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data PKK wilayah.' });
+        res.json(jsonDb.pkk_wilayah || []);
     }
 });
 
@@ -1185,61 +1316,87 @@ app.get('/api/cek-resi/:no_resi', async (req, res) => {
 // 4. Get Profil & Aparatur / Lurah
 app.get('/api/aparatur', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.aparatur);
         const results = await dbQuery('SELECT * FROM aparatur ORDER BY urutan ASC, id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.aparatur);
         res.json(results);
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data aparatur.' });
-    }
+    } catch (err) { res.json(jsonDb.aparatur || []); }
+});
+
+// 4.1 Get PKK Wilayah / Data Wilayah RW
+app.get('/api/pkk-wilayah', async (req, res) => {
+    try {
+        if (mysqlAvailable === false) return res.json(jsonDb.pkk_wilayah);
+        const results = await dbQuery('SELECT * FROM pkk_wilayah ORDER BY id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.pkk_wilayah);
+        res.json(results);
+    } catch (err) { res.json(jsonDb.pkk_wilayah || []); }
+});
+
+// 4.2 Get Kontak RT/RW
+app.get('/api/kontak-rt', async (req, res) => {
+    try {
+        if (mysqlAvailable === false) return res.json(jsonDb.kontak_rt);
+        const results = await dbQuery('SELECT * FROM kontak_rt ORDER BY id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.kontak_rt);
+        res.json(results);
+    } catch (err) { res.json(jsonDb.kontak_rt || []); }
 });
 
 // 5. Get Data Statistik Penduduk
 app.get('/api/statistik', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.statistik);
         const results = await dbQuery('SELECT * FROM statistik LIMIT 1');
-        res.json(results[0] || { total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil statistik.' });
-    }
+        if (!mysqlAvailable) return res.json(jsonDb.statistik);
+        res.json(results[0] || jsonDb.statistik);
+    } catch (err) { res.json(jsonDb.statistik || {}); }
 });
 
 // 6. Get Info Kelurahan & Batas Wilayah
 app.get('/api/info-kelurahan', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.info_kelurahan);
         const results = await dbQuery('SELECT * FROM info_kelurahan LIMIT 1');
-        res.json(results[0] || {});
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil info kelurahan.' });
-    }
+        if (!mysqlAvailable) return res.json(jsonDb.info_kelurahan);
+        res.json(results[0] || jsonDb.info_kelurahan || {});
+    } catch (err) { res.json(jsonDb.info_kelurahan || {}); }
 });
 
 // 7. Get Berita / Kabar Kelurahan
 app.get('/api/berita', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.berita);
         const results = await dbQuery('SELECT * FROM berita ORDER BY created_at DESC');
+        if (!mysqlAvailable) return res.json(jsonDb.berita);
         res.json(results);
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil berita.' });
-    }
+    } catch (err) { res.json(jsonDb.berita || []); }
 });
 
 app.get('/api/berita/:id', async (req, res) => {
     try {
+        if (mysqlAvailable === false) {
+            const item = jsonDb.berita.find(b => b.id == req.params.id);
+            return item ? res.json(item) : res.status(404).json({ message: 'Berita tidak ditemukan' });
+        }
         const results = await dbQuery('SELECT * FROM berita WHERE id = ?', [req.params.id]);
+        if (!mysqlAvailable) {
+            const item = jsonDb.berita.find(b => b.id == req.params.id);
+            return item ? res.json(item) : res.status(404).json({ message: 'Berita tidak ditemukan' });
+        }
         if (results.length === 0) return res.status(404).json({ message: 'Berita tidak ditemukan' });
         res.json(results[0]);
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil berita.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal mengambil berita.' }); }
 });
 
 // 8. Get Sarana Prasarana
 app.get('/api/sarana', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.sarana);
         const results = await dbQuery('SELECT * FROM sarana_prasarana ORDER BY id DESC');
+        if (!mysqlAvailable) return res.json(jsonDb.sarana);
         res.json(results);
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data sarana prasarana.' });
-    }
+    } catch (err) { res.json(jsonDb.sarana || []); }
 });
 
 // 9. Live Chat Warga Endpoints
@@ -1270,6 +1427,7 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/admin/sync-cms', async (req, res) => {
     try {
         const body = req.body || {};
+        // Update FALLBACK_DATA (in-memory)
         if (body.aparatur && Array.isArray(body.aparatur)) FALLBACK_DATA.aparatur = body.aparatur;
         if (body.pkk && Array.isArray(body.pkk)) FALLBACK_DATA.pkk_wilayah = body.pkk;
         if (body.berita && Array.isArray(body.berita)) FALLBACK_DATA.berita = body.berita;
@@ -1278,7 +1436,19 @@ app.post('/api/admin/sync-cms', async (req, res) => {
         if (body.kontak_rt && Array.isArray(body.kontak_rt)) FALLBACK_DATA.kontak_rt = body.kontak_rt;
         if (body.statistik) FALLBACK_DATA.statistik = body.statistik;
         if (body.info) FALLBACK_DATA.info_kelurahan = body.info;
-        res.json({ success: true, message: 'Local backend CMS synced!' });
+
+        // Juga simpan ke jsonDb (file persisten) agar tetap ada setelah server restart
+        if (body.aparatur && Array.isArray(body.aparatur)) jsonDb.aparatur = body.aparatur;
+        if (body.pkk && Array.isArray(body.pkk)) jsonDb.pkk_wilayah = body.pkk;
+        if (body.berita && Array.isArray(body.berita)) jsonDb.berita = body.berita;
+        if (body.sarana && Array.isArray(body.sarana)) jsonDb.sarana = body.sarana;
+        if (body.nomor_darurat && Array.isArray(body.nomor_darurat)) jsonDb.nomor_darurat = body.nomor_darurat;
+        if (body.kontak_rt && Array.isArray(body.kontak_rt)) jsonDb.kontak_rt = body.kontak_rt;
+        if (body.statistik) jsonDb.statistik = body.statistik;
+        if (body.info) jsonDb.info_kelurahan = body.info;
+        saveJsonDb();
+
+        res.json({ success: true, message: 'Local backend CMS synced & saved!' });
     } catch(e) {
         res.status(500).json({ message: 'Sync error' });
     }
@@ -1391,35 +1561,50 @@ app.post('/api/admin/reset-password-pin', async (req, res) => {
 app.post('/api/admin/pkk-wilayah', async (req, res) => {
     try {
         const { nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita } = req.body;
+        const newItem = { id: Date.now(), nama_wilayah, pkk_rw: pkk_rw||1, pkk_rt: pkk_rt||1, dasa_wisma: dasa_wisma||1, krt: krt||0, kk: kk||0, pria: pria||0, wanita: wanita||0 };
+        if (mysqlAvailable === false) {
+            jsonDb.pkk_wilayah.push(newItem);
+            saveJsonDb();
+            return res.json({ message: 'Data wilayah baru berhasil ditambahkan!', data: newItem });
+        }
         await dbQuery('INSERT INTO pkk_wilayah (nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-            nama_wilayah, pkk_rw || 1, pkk_rt || 1, dasa_wisma || 1, krt || 0, kk || 0, pria || 0, wanita || 0
+            nama_wilayah, pkk_rw||1, pkk_rt||1, dasa_wisma||1, krt||0, kk||0, pria||0, wanita||0
         ]);
-        res.json({ message: 'Data wilayah baru berhasil ditambahkan!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menambah data wilayah.' });
-    }
+        if (!mysqlAvailable) { jsonDb.pkk_wilayah.push(newItem); saveJsonDb(); }
+        res.json({ message: 'Data wilayah baru berhasil ditambahkan!', data: newItem });
+    } catch (err) { res.status(500).json({ message: 'Gagal menambah data wilayah.' }); }
 });
 
 app.put('/api/admin/pkk-wilayah/:id', async (req, res) => {
     try {
         const { nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita } = req.body;
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.pkk_wilayah.find(p => p.id == id);
+            if (item) Object.assign(item, { nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita });
+            saveJsonDb();
+            return res.json({ message: 'Data wilayah berhasil diperbarui!' });
+        }
         await dbQuery('UPDATE pkk_wilayah SET nama_wilayah=?, pkk_rw=?, pkk_rt=?, dasa_wisma=?, krt=?, kk=?, pria=?, wanita=? WHERE id=?', [
-            nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita, req.params.id
+            nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita, id
         ]);
+        if (!mysqlAvailable) { const item = jsonDb.pkk_wilayah.find(p => p.id == id); if (item) Object.assign(item, { nama_wilayah, pkk_rw, pkk_rt, dasa_wisma, krt, kk, pria, wanita }); saveJsonDb(); }
         res.json({ message: 'Data wilayah berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal memperbarui data wilayah.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal memperbarui data wilayah.' }); }
 });
 
 app.delete('/api/admin/pkk-wilayah/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        if (mysqlAvailable === false) {
+            jsonDb.pkk_wilayah = jsonDb.pkk_wilayah.filter(p => p.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Data wilayah berhasil dihapus!' });
+        }
         await dbQuery('DELETE FROM pkk_wilayah WHERE id=?', [id]);
+        if (!mysqlAvailable) { jsonDb.pkk_wilayah = jsonDb.pkk_wilayah.filter(p => p.id != id); saveJsonDb(); }
         res.json({ message: 'Data wilayah berhasil dihapus!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menghapus data wilayah.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus data wilayah.' }); }
 });
 
 // Admin Management: Pengajuan Surat
@@ -1488,177 +1673,198 @@ app.delete('/api/admin/pengajuan/:no_resi', async (req, res) => {
 app.post('/api/admin/aparatur', upload.single('foto'), async (req, res) => {
     try {
         const { nama, nip, jabatan, is_lurah, sambutan, urutan } = req.body;
-        const foto = req.file ? req.file.filename : null;
-        const query = 'INSERT INTO aparatur (nama, nip, jabatan, foto, is_lurah, sambutan, urutan) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        await dbQuery(query, [nama, nip, jabatan, foto, is_lurah === 'true' || is_lurah === 1 ? 1 : 0, sambutan || null, urutan || 0]);
-        res.json({ message: 'Aparatur berhasil ditambahkan!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menambah aparatur.' });
-    }
+        const foto = req.file ? req.file.filename : (req.body.foto || null);
+        const isLurah = is_lurah === 'true' || is_lurah === 1 || is_lurah === '1' ? 1 : 0;
+        const newItem = { id: Date.now(), nama, nip, jabatan, foto, is_lurah: isLurah, sambutan: sambutan||null, urutan: urutan||0 };
+        if (mysqlAvailable === false) {
+            if (isLurah) jsonDb.aparatur.forEach(a => a.is_lurah = 0);
+            jsonDb.aparatur.push(newItem);
+            saveJsonDb();
+            return res.json({ message: 'Aparatur berhasil ditambahkan!', data: newItem });
+        }
+        await dbQuery('INSERT INTO aparatur (nama, nip, jabatan, foto, is_lurah, sambutan, urutan) VALUES (?, ?, ?, ?, ?, ?, ?)', [nama, nip, jabatan, foto, isLurah, sambutan||null, urutan||0]);
+        if (!mysqlAvailable) { if (isLurah) jsonDb.aparatur.forEach(a => a.is_lurah = 0); jsonDb.aparatur.push(newItem); saveJsonDb(); }
+        res.json({ message: 'Aparatur berhasil ditambahkan!', data: newItem });
+    } catch (err) { res.status(500).json({ message: 'Gagal menambah aparatur.' }); }
 });
 
 app.put('/api/admin/aparatur/:id', upload.single('foto'), async (req, res) => {
     try {
         const { nama, nip, jabatan, is_lurah, sambutan, urutan } = req.body;
-        const foto = req.file ? req.file.filename : null;
-
-        let query = 'UPDATE aparatur SET nama=?, nip=?, jabatan=?, is_lurah=?, sambutan=?, urutan=?';
-        let params = [nama, nip, jabatan, is_lurah === 'true' || is_lurah === 1 ? 1 : 0, sambutan || null, urutan || 0];
-
-        if (foto) {
-            query += ', foto=?';
-            params.push(foto);
+        const foto = req.file ? req.file.filename : (req.body.foto || null);
+        const id = req.params.id;
+        const isLurah = is_lurah === 'true' || is_lurah === 1 || is_lurah === '1' ? 1 : 0;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.aparatur.find(a => a.id == id);
+            if (item) { Object.assign(item, { nama, nip, jabatan, is_lurah: isLurah, sambutan: sambutan||null, urutan: urutan||0 }); if (foto) item.foto = foto; }
+            if (isLurah) jsonDb.aparatur.forEach(a => { if (a.id != id) a.is_lurah = 0; });
+            saveJsonDb();
+            return res.json({ message: 'Data aparatur berhasil diperbarui!' });
         }
-
-        query += ' WHERE id=?';
-        params.push(req.params.id);
-
+        let query = 'UPDATE aparatur SET nama=?, nip=?, jabatan=?, is_lurah=?, sambutan=?, urutan=?';
+        let params = [nama, nip, jabatan, isLurah, sambutan||null, urutan||0];
+        if (foto) { query += ', foto=?'; params.push(foto); }
+        query += ' WHERE id=?'; params.push(id);
         await dbQuery(query, params);
+        if (!mysqlAvailable) {
+            const item = jsonDb.aparatur.find(a => a.id == id);
+            if (item) { Object.assign(item, { nama, nip, jabatan, is_lurah: isLurah, sambutan, urutan }); if (foto) item.foto = foto; }
+            saveJsonDb();
+        }
         res.json({ message: 'Data aparatur berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengubah aparatur.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal mengubah aparatur.' }); }
 });
 
 app.delete('/api/admin/aparatur/:id', async (req, res) => {
     try {
-        await dbQuery('DELETE FROM aparatur WHERE id=?', [req.params.id]);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            jsonDb.aparatur = jsonDb.aparatur.filter(a => a.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Aparatur berhasil dihapus!' });
+        }
+        await dbQuery('DELETE FROM aparatur WHERE id=?', [id]);
+        if (!mysqlAvailable) { jsonDb.aparatur = jsonDb.aparatur.filter(a => a.id != id); saveJsonDb(); }
         res.json({ message: 'Aparatur berhasil dihapus!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menghapus aparatur.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus aparatur.' }); }
 });
 
 // Admin CMS: Kabar / Berita
 app.post('/api/admin/berita', upload.single('gambar'), async (req, res) => {
     try {
         const { judul, kategori, isi, penulis } = req.body;
-        const gambar = req.file ? req.file.filename : null;
-        await dbQuery('INSERT INTO berita (judul, kategori, isi, gambar, penulis) VALUES (?, ?, ?, ?, ?)', [
-            judul, kategori || 'Pengumuman', isi, gambar, penulis || 'Admin Kelurahan'
-        ]);
-        res.json({ message: 'Berita berhasil diterbitkan!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menambah berita.' });
-    }
+        const gambar = req.file ? req.file.filename : (req.body.gambar || null);
+        const newItem = { id: Date.now(), judul, kategori: kategori||'Pengumuman', isi, gambar, penulis: penulis||'Admin Kelurahan', created_at: new Date().toISOString() };
+        if (mysqlAvailable === false) {
+            jsonDb.berita.unshift(newItem);
+            saveJsonDb();
+            return res.json({ message: 'Berita berhasil diterbitkan!', data: newItem });
+        }
+        await dbQuery('INSERT INTO berita (judul, kategori, isi, gambar, penulis) VALUES (?, ?, ?, ?, ?)', [judul, kategori||'Pengumuman', isi, gambar, penulis||'Admin Kelurahan']);
+        if (!mysqlAvailable) { jsonDb.berita.unshift(newItem); saveJsonDb(); }
+        res.json({ message: 'Berita berhasil diterbitkan!', data: newItem });
+    } catch (err) { res.status(500).json({ message: 'Gagal menambah berita.' }); }
 });
 
 app.put('/api/admin/berita/:id', upload.single('gambar'), async (req, res) => {
     try {
         const { judul, kategori, isi, penulis } = req.body;
-        const gambar = req.file ? req.file.filename : null;
-
+        const gambar = req.file ? req.file.filename : (req.body.gambar || null);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.berita.find(b => b.id == id);
+            if (item) { Object.assign(item, { judul, kategori, isi, penulis }); if (gambar) item.gambar = gambar; }
+            saveJsonDb();
+            return res.json({ message: 'Berita berhasil diperbarui!' });
+        }
         let query = 'UPDATE berita SET judul=?, kategori=?, isi=?, penulis=?';
         let params = [judul, kategori, isi, penulis];
-
-        if (gambar) {
-            query += ', gambar=?';
-            params.push(gambar);
-        }
-
-        query += ' WHERE id=?';
-        params.push(req.params.id);
-
+        if (gambar) { query += ', gambar=?'; params.push(gambar); }
+        query += ' WHERE id=?'; params.push(id);
         await dbQuery(query, params);
+        if (!mysqlAvailable) { const item = jsonDb.berita.find(b => b.id == id); if (item) { Object.assign(item, { judul, kategori, isi, penulis }); if (gambar) item.gambar = gambar; } saveJsonDb(); }
         res.json({ message: 'Berita berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal memperbarui berita.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal memperbarui berita.' }); }
 });
 
 app.delete('/api/admin/berita/:id', async (req, res) => {
     try {
-        await dbQuery('DELETE FROM berita WHERE id=?', [req.params.id]);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            jsonDb.berita = jsonDb.berita.filter(b => b.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Berita berhasil dihapus!' });
+        }
+        await dbQuery('DELETE FROM berita WHERE id=?', [id]);
+        if (!mysqlAvailable) { jsonDb.berita = jsonDb.berita.filter(b => b.id != id); saveJsonDb(); }
         res.json({ message: 'Berita berhasil dihapus!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menghapus berita.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus berita.' }); }
 });
 
 // Admin CMS: Statistik Penduduk
 app.put('/api/admin/statistik', async (req, res) => {
     try {
         const { total_pria, total_wanita, total_kk, total_rt, total_rw, luas_wilayah } = req.body;
+        if (mysqlAvailable === false) {
+            Object.assign(jsonDb.statistik, { total_pria, total_wanita, total_kk, total_rt, total_rw, luas_wilayah });
+            saveJsonDb();
+            return res.json({ message: 'Statistik penduduk berhasil diperbarui!' });
+        }
         await dbQuery('UPDATE statistik SET total_pria=?, total_wanita=?, total_kk=?, total_rt=?, total_rw=?, luas_wilayah=? WHERE id=1', [
             total_pria, total_wanita, total_kk, total_rt, total_rw, luas_wilayah
         ]);
+        if (!mysqlAvailable) { Object.assign(jsonDb.statistik, { total_pria, total_wanita, total_kk, total_rt, total_rw, luas_wilayah }); saveJsonDb(); }
         res.json({ message: 'Statistik penduduk berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengupdate statistik.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal mengupdate statistik.' }); }
 });
 
 // Admin CMS: Info Kelurahan & Batas Wilayah & Kontak
 app.put('/api/admin/info-kelurahan', async (req, res) => {
     try {
-        const {
-            deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url,
-            alamat_kantor, email_resmi, telepon_kantor, jam_pelayanan, teks_marquee
-        } = req.body;
-        await dbQuery(
-            `UPDATE info_kelurahan SET 
-                deskripsi_profil=?, batas_utara=?, batas_selatan=?, batas_timur=?, batas_barat=?, embed_map_url=?,
-                alamat_kantor=?, email_resmi=?, telepon_kantor=?, jam_pelayanan=?, teks_marquee=? 
-             WHERE id=1`,
-            [
-                deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url,
-                alamat_kantor || 'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel',
-                email_resmi || 'kelurahan.lompoe@pareparekota.go.id',
-                telepon_kantor || '(0421) 12345',
-                jam_pelayanan || 'Senin - Jumat (08.00 - 16.00 WITA)',
-                teks_marquee || '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE'
-            ]
-        );
+        const { deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url, alamat_kantor, email_resmi, telepon_kantor, jam_pelayanan, teks_marquee } = req.body;
+        const newInfo = { deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url, alamat_kantor: alamat_kantor||'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel', email_resmi: email_resmi||'kelurahan.lompoe@pareparekota.go.id', telepon_kantor: telepon_kantor||'(0421) 12345', jam_pelayanan: jam_pelayanan||'Senin - Jumat (08.00 - 16.00 WITA)', teks_marquee: teks_marquee||'' };
+        if (mysqlAvailable === false) {
+            Object.assign(jsonDb.info_kelurahan, newInfo);
+            saveJsonDb();
+            return res.json({ message: 'Info profil, kontak kantor & wilayah berhasil diperbarui!' });
+        }
+        await dbQuery(`UPDATE info_kelurahan SET deskripsi_profil=?, batas_utara=?, batas_selatan=?, batas_timur=?, batas_barat=?, embed_map_url=?, alamat_kantor=?, email_resmi=?, telepon_kantor=?, jam_pelayanan=?, teks_marquee=? WHERE id=1`,
+            [deskripsi_profil, batas_utara, batas_selatan, batas_timur, batas_barat, embed_map_url, newInfo.alamat_kantor, newInfo.email_resmi, newInfo.telepon_kantor, newInfo.jam_pelayanan, newInfo.teks_marquee]);
+        if (!mysqlAvailable) { Object.assign(jsonDb.info_kelurahan, newInfo); saveJsonDb(); }
         res.json({ message: 'Info profil, kontak kantor & wilayah berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengupdate info kelurahan.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal mengupdate info kelurahan.' }); }
 });
 
 // Admin CMS: Sarana & Prasarana
 app.post('/api/admin/sarana', upload.single('foto'), async (req, res) => {
     try {
         const { nama_sarana, kategori, lokasi, kondisi } = req.body;
-        const foto = req.file ? req.file.filename : null;
-        await dbQuery('INSERT INTO sarana_prasarana (nama_sarana, kategori, lokasi, kondisi, foto) VALUES (?, ?, ?, ?, ?)', [
-            nama_sarana, kategori, lokasi, kondisi || 'Baik', foto
-        ]);
-        res.json({ message: 'Sarana & Prasarana berhasil ditambahkan!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menginput sarana prasarana.' });
-    }
+        const foto = req.file ? req.file.filename : (req.body.foto || null);
+        const newItem = { id: Date.now(), nama_sarana, kategori, lokasi, kondisi: kondisi||'Baik', foto };
+        if (mysqlAvailable === false) {
+            jsonDb.sarana.push(newItem);
+            saveJsonDb();
+            return res.json({ message: 'Sarana & Prasarana berhasil ditambahkan!', data: newItem });
+        }
+        await dbQuery('INSERT INTO sarana_prasarana (nama_sarana, kategori, lokasi, kondisi, foto) VALUES (?, ?, ?, ?, ?)', [nama_sarana, kategori, lokasi, kondisi||'Baik', foto]);
+        if (!mysqlAvailable) { jsonDb.sarana.push(newItem); saveJsonDb(); }
+        res.json({ message: 'Sarana & Prasarana berhasil ditambahkan!', data: newItem });
+    } catch (err) { res.status(500).json({ message: 'Gagal menginput sarana prasarana.' }); }
 });
 
 app.put('/api/admin/sarana/:id', upload.single('foto'), async (req, res) => {
     try {
         const { nama_sarana, kategori, lokasi, kondisi } = req.body;
-        const foto = req.file ? req.file.filename : null;
-
+        const foto = req.file ? req.file.filename : (req.body.foto || null);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.sarana.find(s => s.id == id);
+            if (item) { Object.assign(item, { nama_sarana, kategori, lokasi, kondisi }); if (foto) item.foto = foto; }
+            saveJsonDb();
+            return res.json({ message: 'Sarana & Prasarana berhasil diperbarui!' });
+        }
         let query = 'UPDATE sarana_prasarana SET nama_sarana=?, kategori=?, lokasi=?, kondisi=?';
         let params = [nama_sarana, kategori, lokasi, kondisi];
-
-        if (foto) {
-            query += ', foto=?';
-            params.push(foto);
-        }
-
-        query += ' WHERE id=?';
-        params.push(req.params.id);
-
+        if (foto) { query += ', foto=?'; params.push(foto); }
+        query += ' WHERE id=?'; params.push(id);
         await dbQuery(query, params);
+        if (!mysqlAvailable) { const item = jsonDb.sarana.find(s => s.id == id); if (item) { Object.assign(item, { nama_sarana, kategori, lokasi, kondisi }); if (foto) item.foto = foto; } saveJsonDb(); }
         res.json({ message: 'Sarana & Prasarana berhasil diperbarui!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal memperbarui sarana prasarana.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal memperbarui sarana prasarana.' }); }
 });
 
 app.delete('/api/admin/sarana/:id', async (req, res) => {
     try {
-        await dbQuery('DELETE FROM sarana_prasarana WHERE id=?', [req.params.id]);
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            jsonDb.sarana = jsonDb.sarana.filter(s => s.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Sarana & Prasarana berhasil dihapus!' });
+        }
+        await dbQuery('DELETE FROM sarana_prasarana WHERE id=?', [id]);
+        if (!mysqlAvailable) { jsonDb.sarana = jsonDb.sarana.filter(s => s.id != id); saveJsonDb(); }
         res.json({ message: 'Sarana & Prasarana berhasil dihapus!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menghapus sarana prasarana.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus sarana prasarana.' }); }
 });
 
 // Admin Live Chat Center: Get Rooms
@@ -1680,48 +1886,118 @@ app.get('/api/admin/chat-rooms', async (req, res) => {
 // GET NOMOR DARURAT
 app.get('/api/nomor-darurat', async (req, res) => {
     try {
+        if (mysqlAvailable === false) return res.json(jsonDb.nomor_darurat);
         const rows = await dbQuery('SELECT * FROM nomor_darurat ORDER BY id ASC');
+        if (!mysqlAvailable) return res.json(jsonDb.nomor_darurat);
         res.json(rows);
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal mengambil data nomor darurat.' });
-    }
+    } catch (err) { res.json(jsonDb.nomor_darurat || []); }
 });
 
 // POST ADD / EDIT NOMOR DARURAT (ADMIN)
 app.post('/api/admin/nomor-darurat', async (req, res) => {
     const { id, nama_instansi, nomor_telepon, kategori, icon } = req.body;
-    if (!nama_instansi || !nomor_telepon) {
-        return res.status(400).json({ message: 'Nama instansi dan nomor telepon wajib diisi.' });
-    }
-
+    if (!nama_instansi || !nomor_telepon) return res.status(400).json({ message: 'Nama instansi dan nomor telepon wajib diisi.' });
     try {
+        if (mysqlAvailable === false) {
+            if (id) {
+                const item = jsonDb.nomor_darurat.find(d => d.id == id);
+                if (item) Object.assign(item, { nama_instansi, nomor_telepon, kategori: kategori||'Darurat', icon: icon||'🚨' });
+                saveJsonDb();
+                return res.json({ message: 'Nomor darurat berhasil diperbarui!' });
+            } else {
+                const newItem = { id: Date.now(), nama_instansi, nomor_telepon, kategori: kategori||'Darurat', icon: icon||'🚨' };
+                jsonDb.nomor_darurat.push(newItem);
+                saveJsonDb();
+                return res.json({ message: 'Nomor darurat baru berhasil ditambahkan!', data: newItem });
+            }
+        }
         if (id) {
-            await dbQuery(
-                'UPDATE nomor_darurat SET nama_instansi = ?, nomor_telepon = ?, kategori = ?, icon = ? WHERE id = ?',
-                [nama_instansi, nomor_telepon, kategori || 'Darurat', icon || '🚨', id]
-            );
+            await dbQuery('UPDATE nomor_darurat SET nama_instansi = ?, nomor_telepon = ?, kategori = ?, icon = ? WHERE id = ?', [nama_instansi, nomor_telepon, kategori||'Darurat', icon||'🚨', id]);
+            if (!mysqlAvailable) { const item = jsonDb.nomor_darurat.find(d => d.id == id); if (item) Object.assign(item, { nama_instansi, nomor_telepon, kategori: kategori||'Darurat', icon: icon||'🚨' }); saveJsonDb(); }
             res.json({ message: 'Nomor darurat berhasil diperbarui!' });
         } else {
-            await dbQuery(
-                'INSERT INTO nomor_darurat (nama_instansi, nomor_telepon, kategori, icon) VALUES (?, ?, ?, ?)',
-                [nama_instansi, nomor_telepon, kategori || 'Darurat', icon || '🚨']
-            );
-            res.json({ message: 'Nomor darurat baru berhasil ditambahkan!' });
+            const newItem = { id: Date.now(), nama_instansi, nomor_telepon, kategori: kategori||'Darurat', icon: icon||'🚨' };
+            await dbQuery('INSERT INTO nomor_darurat (nama_instansi, nomor_telepon, kategori, icon) VALUES (?, ?, ?, ?)', [nama_instansi, nomor_telepon, kategori||'Darurat', icon||'🚨']);
+            if (!mysqlAvailable) { jsonDb.nomor_darurat.push(newItem); saveJsonDb(); }
+            res.json({ message: 'Nomor darurat baru berhasil ditambahkan!', data: newItem });
         }
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menyimpan nomor darurat.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menyimpan nomor darurat.' }); }
+});
+
+app.put('/api/admin/nomor-darurat/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { nama_instansi, nomor_telepon, kategori, icon } = req.body;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.nomor_darurat.find(d => d.id == id);
+            if (item) Object.assign(item, { nama_instansi, nomor_telepon, kategori: kategori||'Darurat', icon: icon||'🚨' });
+            saveJsonDb();
+            return res.json({ message: 'Nomor darurat berhasil diupdate!' });
+        }
+        await dbQuery('UPDATE nomor_darurat SET nama_instansi = ?, nomor_telepon = ?, kategori = ?, icon = ? WHERE id = ?', [nama_instansi, nomor_telepon, kategori||'Darurat', icon||'🚨', id]);
+        res.json({ message: 'Nomor darurat berhasil diupdate!' });
+    } catch (err) { res.status(500).json({ message: 'Gagal update nomor darurat.' }); }
 });
 
 // DELETE NOMOR DARURAT (ADMIN)
 app.delete('/api/admin/nomor-darurat/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        if (mysqlAvailable === false) {
+            jsonDb.nomor_darurat = jsonDb.nomor_darurat.filter(d => d.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Nomor darurat berhasil dihapus!' });
+        }
         await dbQuery('DELETE FROM nomor_darurat WHERE id = ?', [id]);
+        if (!mysqlAvailable) { jsonDb.nomor_darurat = jsonDb.nomor_darurat.filter(d => d.id != id); saveJsonDb(); }
         res.json({ message: 'Nomor darurat berhasil dihapus!' });
-    } catch (err) {
-        res.status(500).json({ message: 'Gagal menghapus nomor darurat.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus nomor darurat.' }); }
+});
+
+// POST / PUT / DELETE KONTAK RT/RW (ADMIN)
+app.post('/api/admin/kontak-rt', async (req, res) => {
+    try {
+        const { rt_rw, nama_ketua, no_wa } = req.body;
+        const newItem = { id: Date.now(), rt_rw: rt_rw||'RT 01 / RW 01', nama_ketua: nama_ketua||'', no_wa: no_wa||'' };
+        if (mysqlAvailable === false) {
+            jsonDb.kontak_rt.push(newItem);
+            saveJsonDb();
+            return res.json({ message: 'Kontak RT/RW berhasil ditambahkan!', data: newItem });
+        }
+        await dbQuery('INSERT INTO kontak_rt (rt_rw, nama_ketua, no_wa) VALUES (?, ?, ?)', [newItem.rt_rw, newItem.nama_ketua, newItem.no_wa]);
+        if (!mysqlAvailable) { jsonDb.kontak_rt.push(newItem); saveJsonDb(); }
+        res.json({ message: 'Kontak RT/RW berhasil ditambahkan!', data: newItem });
+    } catch (err) { res.status(500).json({ message: 'Gagal menambah kontak RT/RW.' }); }
+});
+
+app.put('/api/admin/kontak-rt/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { rt_rw, nama_ketua, no_wa } = req.body;
+        if (mysqlAvailable === false) {
+            const item = jsonDb.kontak_rt.find(k => k.id == id);
+            if (item) Object.assign(item, { rt_rw, nama_ketua, no_wa });
+            saveJsonDb();
+            return res.json({ message: 'Kontak RT/RW berhasil diperbarui!' });
+        }
+        await dbQuery('UPDATE kontak_rt SET rt_rw = ?, nama_ketua = ?, no_wa = ? WHERE id = ?', [rt_rw, nama_ketua, no_wa, id]);
+        if (!mysqlAvailable) { const item = jsonDb.kontak_rt.find(k => k.id == id); if (item) Object.assign(item, { rt_rw, nama_ketua, no_wa }); saveJsonDb(); }
+        res.json({ message: 'Kontak RT/RW berhasil diperbarui!' });
+    } catch (err) { res.status(500).json({ message: 'Gagal memperbarui kontak RT/RW.' }); }
+});
+
+app.delete('/api/admin/kontak-rt/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (mysqlAvailable === false) {
+            jsonDb.kontak_rt = jsonDb.kontak_rt.filter(k => k.id != id);
+            saveJsonDb();
+            return res.json({ message: 'Kontak RT/RW berhasil dihapus!' });
+        }
+        await dbQuery('DELETE FROM kontak_rt WHERE id = ?', [id]);
+        if (!mysqlAvailable) { jsonDb.kontak_rt = jsonDb.kontak_rt.filter(k => k.id != id); saveJsonDb(); }
+        res.json({ message: 'Kontak RT/RW berhasil dihapus!' });
+    } catch (err) { res.status(500).json({ message: 'Gagal menghapus kontak RT/RW.' }); }
 });
 
 if (!process.env.VERCEL) {

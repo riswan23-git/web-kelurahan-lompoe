@@ -1,8 +1,16 @@
 import { API_BASE_URL } from './apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
+
+const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
+  if (!foto) return null;
+  if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
+    return foto;
+  }
+  return `${apiBaseUrl}/uploads/${foto}`;
+};
 
 const DEFAULT_BERITA = [
   {
@@ -11,38 +19,63 @@ const DEFAULT_BERITA = [
     kategori: 'Pengumuman',
     ringkasan: 'Warga Kelurahan Lompoe bersama aparatur kelurahan dan TP PKK melaksanakan kegiatan kebersihan lingkungan dan penanaman bibit tanaman pangan.',
     isi: 'Kegiatan gotong royong rutin dilaksanakan di seluruh wilayah RW Kelurahan Lompoe untuk menjaga kebersihan dan kekeluargaan antar warga.',
-    tanggal: '2026-08-10',
+    created_at: '2026-08-10',
     gambar: null
   }
 ];
 
 function Berita() {
-  const [beritaList, setBeritaList] = useState(DEFAULT_BERITA);
-  const [loading, setLoading] = useState(true);
+  const [beritaList, setBeritaList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_BERITA;
+    } catch (e) { return DEFAULT_BERITA; }
+  });
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('Semua');
   const [selectedBerita, setSelectedBerita] = useState(null);
 
+  const reloadFromLocal = useCallback(() => {
+    try {
+      const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
+      if (Array.isArray(localBerita) && localBerita.length > 0) {
+        setBeritaList(localBerita);
+      }
+    } catch (e) {}
+  }, []);
+
   useEffect(() => {
-    const localBerita = JSON.parse(localStorage.getItem('store_berita') || 'null');
-    if (Array.isArray(localBerita)) {
-      setBeritaList(localBerita);
-    }
+    reloadFromLocal();
+
+    const handleStorage = () => reloadFromLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'berita' && Array.isArray(e.detail.data)) {
+        setBeritaList(e.detail.data);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
     const fetchBerita = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/berita`).catch(() => null);
-        if (response?.data && Array.isArray(response.data)) {
+        const response = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
+        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
           setBeritaList(response.data);
           localStorage.setItem('store_berita', JSON.stringify(response.data));
         }
       } catch (err) {
         console.error('Error fetching berita:', err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchBerita();
-  }, []);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
+  }, [reloadFromLocal]);
 
   const filteredBerita = beritaList.filter(item => {
     const matchSearch = item.judul.toLowerCase().includes(search.toLowerCase()) || item.isi.toLowerCase().includes(search.toLowerCase());
@@ -98,9 +131,9 @@ function Berita() {
             {filteredBerita.map((item) => (
               <div key={item.id} className="col-md-6 col-lg-4">
                 <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column">
-                  {item.gambar ? (
+                  {getImageSrc(item.gambar) ? (
                     <img 
-                      src={`${API_BASE_URL}/uploads/${item.gambar}`} 
+                      src={getImageSrc(item.gambar)} 
                       alt={item.judul}
                       style={{ height: '200px', objectFit: 'cover' }}
                     />
@@ -147,9 +180,9 @@ function Berita() {
               </div>
               <div className="modal-body p-4">
                 <h4 className="fw-bold mb-3">{selectedBerita.judul}</h4>
-                {selectedBerita.gambar && (
+                {getImageSrc(selectedBerita.gambar) && (
                   <img 
-                    src={`${API_BASE_URL}/uploads/${selectedBerita.gambar}`} 
+                    src={getImageSrc(selectedBerita.gambar)} 
                     alt={selectedBerita.judul}
                     className="img-fluid rounded-4 mb-4 shadow-sm w-100"
                     style={{ maxHeight: '350px', objectFit: 'cover' }}

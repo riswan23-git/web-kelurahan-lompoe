@@ -4,21 +4,54 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 function Footer() {
-  const [info, setInfo] = useState({
-    alamat_kantor: 'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel',
-    email_resmi: 'kelurahan.lompoe@pareparekota.go.id',
-    telepon_kantor: '(0421) 12345',
-    jam_pelayanan: 'Senin - Jumat (08.00 - 16.00 WITA)'
+  const [info, setInfo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('store_info') || '{}') || {
+        alamat_kantor: 'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel',
+        email_resmi: 'kelurahan.lompoe@pareparekota.go.id',
+        telepon_kantor: '(0421) 12345',
+        jam_pelayanan: 'Senin - Jumat (08.00 - 16.00 WITA)'
+      };
+    } catch (e) {
+      return {
+        alamat_kantor: 'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel',
+        email_resmi: 'kelurahan.lompoe@pareparekota.go.id',
+        telepon_kantor: '(0421) 12345',
+        jam_pelayanan: 'Senin - Jumat (08.00 - 16.00 WITA)'
+      };
+    }
   });
 
   useEffect(() => {
-    const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
-    if (localInfo) setInfo(localInfo);
-    axios.get(`${API_BASE_URL}/api/info-kelurahan`)
+    const reloadLocal = () => {
+      try {
+        const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+        if (localInfo && Object.keys(localInfo).length > 0) setInfo(localInfo);
+      } catch (e) {}
+    };
+    reloadLocal();
+
+    const handleStorage = () => reloadLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'info' && e.detail.data) setInfo(e.detail.data);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
+    axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
       .then(res => {
-        if (res.data && !localInfo) setInfo(res.data);
+        if (res.data && Object.keys(res.data).length > 0) {
+          setInfo(res.data);
+          localStorage.setItem('store_info', JSON.stringify(res.data));
+        }
       })
       .catch(() => {});
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
   }, []);
 
   return (

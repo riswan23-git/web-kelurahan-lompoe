@@ -50,6 +50,14 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+export const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
+  if (!foto) return null;
+  if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
+    return foto;
+  }
+  return `${apiBaseUrl}/uploads/${foto}`;
+};
+
 const getCleanDocxUrl = (item, apiBaseUrl) => {
   if (!item) return '#';
   try {
@@ -176,12 +184,14 @@ function AdminDashboard() {
   const fetchKontakRt = () => {
     const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
     if (local && local.length > 0) setKontakRtList(local);
-    axios.get(`${API_BASE_URL}/api/kontak-rt`)
+    axios.get(`${API_BASE_URL}/api/kontak-rt?_t=${Date.now()}`)
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : [];
-        if (!local && list.length > 0) {
+        if (list.length > 0) {
           setKontakRtList(list);
           localStorage.setItem('store_kontak_rt', JSON.stringify(list));
+        } else if (!local) {
+          setKontakRtList([]);
         }
       })
       .catch(() => {
@@ -192,12 +202,14 @@ function AdminDashboard() {
   const fetchNomorDarurat = () => {
     const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
     if (local && local.length > 0) setNomorDaruratList(local);
-    axios.get(`${API_BASE_URL}/api/nomor-darurat`)
+    axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`)
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : [];
-        if (!local && list.length > 0) {
+        if (list.length > 0) {
           setNomorDaruratList(list);
           localStorage.setItem('store_nomor_darurat', JSON.stringify(list));
+        } else if (!local) {
+          setNomorDaruratList(DEFAULT_DARURAT);
         }
       })
       .catch(() => {
@@ -211,14 +223,16 @@ function AdminDashboard() {
       let updated;
       if (editDaruratMode) {
         updated = nomorDaruratList.map(d => d.id === formDarurat.id ? { ...d, ...formDarurat } : d);
+        axios.put(`${API_BASE_URL}/api/admin/nomor-darurat/${formDarurat.id}`, formDarurat).catch(() => {});
       } else {
-        const newItem = { ...formDarurat, id: Date.now() };
+        const res = await axios.post(`${API_BASE_URL}/api/admin/nomor-darurat`, formDarurat).catch(() => null);
+        const newItem = res?.data?.data || { ...formDarurat, id: Date.now() };
         updated = [newItem, ...nomorDaruratList];
       }
       setNomorDaruratList(updated);
       localStorage.setItem('store_nomor_darurat', JSON.stringify(updated));
-      const res = await axios.post(`${API_BASE_URL}/api/admin/nomor-darurat`, formDarurat);
-      showNotif(res.data?.message || 'Nomor darurat berhasil disimpan!');
+      syncCmsCloud('nomor_darurat', updated);
+      showNotif(editDaruratMode ? 'Nomor darurat berhasil diupdate!' : 'Nomor darurat berhasil ditambahkan!');
       setFormDarurat({ id: null, nama_instansi: '', nomor_telepon: '', kategori: 'Darurat', icon: '🚨' });
       setEditDaruratMode(false);
     } catch (err) {
@@ -232,7 +246,8 @@ function AdminDashboard() {
       const updated = nomorDaruratList.filter(d => d.id !== id);
       setNomorDaruratList(updated);
       localStorage.setItem('store_nomor_darurat', JSON.stringify(updated));
-      await axios.delete(`${API_BASE_URL}/api/admin/nomor-darurat/${id}`);
+      syncCmsCloud('nomor_darurat', updated);
+      await axios.delete(`${API_BASE_URL}/api/admin/nomor-darurat/${id}`).catch(() => {});
       showNotif('Nomor darurat berhasil dihapus!');
     } catch (err) {
       showNotif('Gagal menghapus nomor darurat.');
@@ -322,29 +337,15 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
       const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      let finalList = [];
-      if (local && Array.isArray(local) && local.length > 0) {
-        finalList = local;
-        if (apiData.length > 0) {
-          const localIds = new Set(local.map(i => String(i.id)));
-          apiData.forEach(item => {
-            if (!localIds.has(String(item.id))) {
-              finalList.push(item);
-            }
-          });
-        }
+      if (apiData.length > 0) {
+        setAparaturList(apiData);
+        localStorage.setItem('store_aparatur', JSON.stringify(apiData));
       } else {
-        finalList = apiData;
-      }
-
-      if (finalList.length > 0) {
-        setAparaturList(finalList);
-        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
-        syncCmsCloud('aparatur', finalList);
+        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        if (local.length > 0) setAparaturList(local);
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
@@ -354,26 +355,16 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      let finalList = [];
-      if (local && Array.isArray(local) && local.length > 0) {
-        finalList = local;
-        if (apiData.length > 0) {
-          const localIds = new Set(local.map(i => String(i.id)));
-          apiData.forEach(item => {
-            if (!localIds.has(String(item.id))) finalList.push(item);
-          });
-        }
+      if (apiData.length > 0) {
+        setPkkList(apiData);
+        localStorage.setItem('store_pkk', JSON.stringify(apiData));
       } else {
-        finalList = apiData.length > 0 ? apiData : DEFAULT_PKK;
+        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
       }
-
-      setPkkList(finalList);
-      localStorage.setItem('store_pkk', JSON.stringify(finalList));
-      syncCmsCloud('pkk', finalList);
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -382,21 +373,15 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      let finalList = [];
-      if (local && Array.isArray(local) && local.length > 0) {
-        finalList = local;
-        if (apiData.length > 0) {
-          const localIds = new Set(local.map(i => String(i.id)));
-          apiData.forEach(item => {
-            if (!localIds.has(String(item.id))) finalList.push(item);
-          });
-        }
+      let finalList;
+      if (apiData.length > 0) {
+        finalList = apiData;
       } else {
-        finalList = apiData.length > 0 ? apiData : DEFAULT_BERITA;
+        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
+        finalList = local && local.length > 0 ? local : DEFAULT_BERITA;
       }
 
       setBeritaList(finalList);
@@ -432,26 +417,16 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      let finalList = [];
-      if (local && Array.isArray(local) && local.length > 0) {
-        finalList = local;
-        if (apiData.length > 0) {
-          const localIds = new Set(local.map(i => String(i.id)));
-          apiData.forEach(item => {
-            if (!localIds.has(String(item.id))) finalList.push(item);
-          });
-        }
+      if (apiData.length > 0) {
+        setSaranaList(apiData);
+        localStorage.setItem('store_sarana', JSON.stringify(apiData));
       } else {
-        finalList = apiData.length > 0 ? apiData : DEFAULT_SARANA;
+        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
+        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
       }
-
-      setSaranaList(finalList);
-      localStorage.setItem('store_sarana', JSON.stringify(finalList));
-      syncCmsCloud('sarana', finalList);
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
@@ -615,13 +590,14 @@ function AdminDashboard() {
         updated = pkkList.map(p => p.id === formPkk.id ? { ...p, ...formPkk } : p);
         showNotif('Data wilayah berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk).catch(() => { });
+        const res = await axios.post(`${API_BASE_URL}/api/admin/pkk-wilayah`, formPkk).catch(() => null);
         const newItem = res?.data?.data || { ...formPkk, id: Date.now() };
         updated = [...pkkList, newItem];
         showNotif('Wilayah baru berhasil ditambahkan!');
       }
       setPkkList(updated);
       localStorage.setItem('store_pkk', JSON.stringify(updated));
+      syncCmsCloud('pkk', updated);
       setFormPkk({ id: null, nama_wilayah: '', pkk_rw: 1, pkk_rt: 1, dasa_wisma: 1, krt: 0, kk: 0, pria: 0, wanita: 0 });
       setEditPkkMode(false);
     } catch (err) {
@@ -641,12 +617,21 @@ function AdminDashboard() {
         const updated = pkkList.filter(p => p.id !== id);
         setPkkList(updated);
         localStorage.setItem('store_pkk', JSON.stringify(updated));
+        syncCmsCloud('pkk', updated);
         showNotif('Data wilayah berhasil dihapus!');
       } catch (err) { showNotif('Gagal menghapus data wilayah'); }
     }
   };
 
+  const broadcastStoreUpdate = (key, data) => {
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('lompoe_store_update', { detail: { key, data } }));
+    } catch (e) {}
+  };
+
   const syncCmsCloud = (key, data) => {
+    broadcastStoreUpdate(key, data);
     axios.post(`${API_BASE_URL}/api/admin/sync-cms`, { [key]: data }).catch(() => {});
     if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/admin/sync-cms`, { [key]: data }).catch(() => {});
@@ -657,19 +642,26 @@ function AdminDashboard() {
   const handleSaveAparatur = async (e) => {
     e.preventDefault();
     try {
+      let photoData = formAparatur.foto || null;
+      if (fotoAparatur) {
+        const b64 = await readFileAsBase64(fotoAparatur);
+        if (b64) photoData = b64;
+      }
+      const dataToSave = { ...formAparatur, foto: photoData };
+
       let updated;
       if (editAparaturMode) {
-        axios.put(`${API_BASE_URL}/api/admin/aparatur/${formAparatur.id}`, formAparatur).catch(() => { });
-        updated = aparaturList.map(a => a.id === formAparatur.id ? { ...a, ...formAparatur } : a);
-        if (formAparatur.is_lurah) {
-          updated = updated.map(a => a.id === formAparatur.id ? a : { ...a, is_lurah: 0 });
+        axios.put(`${API_BASE_URL}/api/admin/aparatur/${dataToSave.id}`, dataToSave).catch(() => { });
+        updated = aparaturList.map(a => a.id === dataToSave.id ? { ...a, ...dataToSave } : a);
+        if (dataToSave.is_lurah) {
+          updated = updated.map(a => a.id === dataToSave.id ? a : { ...a, is_lurah: 0 });
         }
         showNotif('Data aparatur berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, formAparatur).catch(() => { });
-        const newItem = res?.data?.data || { ...formAparatur, id: Date.now() };
+        const res = await axios.post(`${API_BASE_URL}/api/admin/aparatur`, dataToSave).catch(() => { });
+        const newItem = res?.data?.data || { ...dataToSave, id: Date.now() };
         updated = [...aparaturList, newItem];
-        if (formAparatur.is_lurah) {
+        if (dataToSave.is_lurah) {
           updated = updated.map(a => a.id === newItem.id ? a : { ...a, is_lurah: 0 });
         }
         showNotif('Aparatur baru berhasil ditambahkan!');
@@ -677,7 +669,7 @@ function AdminDashboard() {
       setAparaturList(updated);
       localStorage.setItem('store_aparatur', JSON.stringify(updated));
       syncCmsCloud('aparatur', updated);
-      setFormAparatur({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0 });
+      setFormAparatur({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0, foto: null });
       setFotoAparatur(null);
       setEditAparaturMode(false);
     } catch (err) {
@@ -707,20 +699,28 @@ function AdminDashboard() {
   const handleSaveBerita = async (e) => {
     e.preventDefault();
     try {
+      let imageCover = formBerita.gambar || null;
+      if (gambarBerita) {
+        const b64 = await readFileAsBase64(gambarBerita);
+        if (b64) imageCover = b64;
+      }
+      const dataToSave = { ...formBerita, gambar: imageCover };
+
       let updated;
       if (editBeritaMode) {
-        axios.put(`${API_BASE_URL}/api/admin/berita/${formBerita.id}`, formBerita).catch(() => { });
-        updated = beritaList.map(b => b.id === formBerita.id ? { ...b, ...formBerita } : b);
+        axios.put(`${API_BASE_URL}/api/admin/berita/${dataToSave.id}`, dataToSave).catch(() => { });
+        updated = beritaList.map(b => b.id === dataToSave.id ? { ...b, ...dataToSave } : b);
         showNotif('Berita berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, formBerita).catch(() => { });
-        const newItem = res?.data?.data || { ...formBerita, id: Date.now(), tanggal: new Date().toISOString().split('T')[0] };
+        const res = await axios.post(`${API_BASE_URL}/api/admin/berita`, dataToSave).catch(() => null);
+        const newItem = res?.data?.data || { ...dataToSave, id: Date.now(), created_at: new Date().toISOString() };
         updated = [newItem, ...beritaList];
         showNotif('Berita baru berhasil diterbitkan!');
       }
       setBeritaList(updated);
       localStorage.setItem('store_berita', JSON.stringify(updated));
-      setFormBerita({ id: null, judul: '', kategori: 'Pengumuman', isi: '', penulis: 'Admin Kelurahan' });
+      syncCmsCloud('berita', updated);
+      setFormBerita({ id: null, judul: '', kategori: 'Pengumuman', isi: '', penulis: 'Admin Kelurahan', gambar: null });
       setGambarBerita(null);
       setEditBeritaMode(false);
     } catch (err) {
@@ -740,6 +740,7 @@ function AdminDashboard() {
         const updated = beritaList.filter(b => b.id !== id);
         setBeritaList(updated);
         localStorage.setItem('store_berita', JSON.stringify(updated));
+        syncCmsCloud('berita', updated);
         showNotif('Berita berhasil dihapus!');
       } catch (err) { showNotif('Gagal menghapus berita'); }
     }
@@ -751,6 +752,7 @@ function AdminDashboard() {
     try {
       axios.put(`${API_BASE_URL}/api/admin/statistik`, stats).catch(() => { });
       localStorage.setItem('store_stats', JSON.stringify(stats));
+      syncCmsCloud('statistik', stats);
       showNotif('Statistik penduduk berhasil diupdate!');
     } catch (err) { showNotif('Gagal update statistik'); }
   };
@@ -760,6 +762,7 @@ function AdminDashboard() {
     try {
       axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info).catch(() => { });
       localStorage.setItem('store_info', JSON.stringify(info));
+      syncCmsCloud('info', info);
       showNotif('Info profil & peta wilayah berhasil diupdate!');
     } catch (err) { showNotif('Gagal update info kelurahan'); }
   };
@@ -768,20 +771,28 @@ function AdminDashboard() {
   const handleSaveSarana = async (e) => {
     e.preventDefault();
     try {
+      let photoSar = formSarana.foto || null;
+      if (fotoSarana) {
+        const b64 = await readFileAsBase64(fotoSarana);
+        if (b64) photoSar = b64;
+      }
+      const dataToSave = { ...formSarana, foto: photoSar };
+
       let updated;
       if (editSaranaMode) {
-        axios.put(`${API_BASE_URL}/api/admin/sarana/${formSarana.id}`, formSarana).catch(() => { });
-        updated = saranaList.map(s => s.id === formSarana.id ? { ...s, ...formSarana } : s);
+        axios.put(`${API_BASE_URL}/api/admin/sarana/${dataToSave.id}`, dataToSave).catch(() => { });
+        updated = saranaList.map(s => s.id === dataToSave.id ? { ...s, ...dataToSave } : s);
         showNotif('Sarana & prasarana berhasil diupdate!');
       } else {
-        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, formSarana).catch(() => { });
-        const newItem = res?.data?.data || { ...formSarana, id: Date.now() };
+        const res = await axios.post(`${API_BASE_URL}/api/admin/sarana`, dataToSave).catch(() => null);
+        const newItem = res?.data?.data || { ...dataToSave, id: Date.now() };
         updated = [...saranaList, newItem];
         showNotif('Sarana & prasarana berhasil ditambahkan!');
       }
       setSaranaList(updated);
       localStorage.setItem('store_sarana', JSON.stringify(updated));
-      setFormSarana({ id: null, nama_sarana: '', kategori: 'Layanan Publik', lokasi: '', kondisi: 'Baik' });
+      syncCmsCloud('sarana', updated);
+      setFormSarana({ id: null, nama_sarana: '', kategori: 'Layanan Publik', lokasi: '', kondisi: 'Baik', foto: null });
       setFotoSarana(null);
       setEditSaranaMode(false);
     } catch (err) { showNotif('Gagal menyimpan sarana prasarana'); }
@@ -794,6 +805,7 @@ function AdminDashboard() {
         const updated = saranaList.filter(s => s.id !== id);
         setSaranaList(updated);
         localStorage.setItem('store_sarana', JSON.stringify(updated));
+        syncCmsCloud('sarana', updated);
         showNotif('Sarana prasarana dihapus!');
       } catch (err) { showNotif('Gagal menghapus'); }
     }
@@ -1314,7 +1326,7 @@ function AdminDashboard() {
                           <tr key={item.id}>
                             <td>
                               {item.foto ? (
-                                <img src={`${API_BASE_URL}/uploads/${item.foto}`} alt={item.nama} className="rounded-circle" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                                <img src={getImageSrc(item.foto)} alt={item.nama} className="rounded-circle" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
                               ) : '🧑🏻‍💼'}
                             </td>
                             <td>
@@ -1547,7 +1559,12 @@ function AdminDashboard() {
                     <label className="form-label fw-semibold">Foto Fasilitas</label>
                     <input type="file" className="form-control" accept="image/*" onChange={(e) => setFotoSarana(e.target.files[0])} />
                   </div>
-                  <button type="submit" className="btn btn-primary w-100 fw-bold">Simpan Sarana</button>
+                  <div className="d-flex gap-2">
+                    <button type="submit" className="btn btn-primary w-100 fw-bold">{editSaranaMode ? 'Update Sarana' : 'Simpan Sarana'}</button>
+                    {editSaranaMode && (
+                      <button type="button" onClick={() => { setFormSarana({ id: null, nama_sarana: '', kategori: 'Layanan Publik', lokasi: '', kondisi: 'Baik', foto: null }); setEditSaranaMode(false); }} className="btn btn-outline-secondary">Batal</button>
+                    )}
+                  </div>
                 </form>
               </div>
             </div>
@@ -1577,6 +1594,7 @@ function AdminDashboard() {
                             <td>{item.lokasi || '-'}</td>
                             <td><span className="badge bg-success">{item.kondisi}</span></td>
                             <td>
+                              <button onClick={() => { setFormSarana(item); setEditSaranaMode(true); }} className="btn btn-sm btn-outline-primary me-2">Edit</button>
                               <button onClick={() => handleDeleteSarana(item.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
                             </td>
                           </tr>
@@ -1698,13 +1716,15 @@ function AdminDashboard() {
                 }
                 setKontakRtList(updated);
                 localStorage.setItem('store_kontak_rt', JSON.stringify(updated));
-                axios.post(`${API_BASE_URL}/api/admin/kontak-rt`, formKontakRt)
-                  .then(res => {
-                    showNotif(res.data?.message || 'Kontak RT/RW disimpan!');
-                    setFormKontakRt({ id: null, rt_rw: '', nama_ketua: '', no_wa: '' });
-                    setEditKontakRtMode(false);
-                  })
-                  .catch(() => showNotif('Kontak RT/RW berhasil disimpan!'));
+                syncCmsCloud('kontak_rt', updated);
+                if (editKontakRtMode && formKontakRt.id) {
+                  axios.put(`${API_BASE_URL}/api/admin/kontak-rt/${formKontakRt.id}`, formKontakRt).catch(() => {});
+                } else {
+                  axios.post(`${API_BASE_URL}/api/admin/kontak-rt`, formKontakRt).catch(() => {});
+                }
+                showNotif(editKontakRtMode ? 'Kontak RT/RW berhasil diupdate!' : 'Kontak RT/RW berhasil ditambahkan!');
+                setFormKontakRt({ id: null, rt_rw: '', nama_ketua: '', no_wa: '' });
+                setEditKontakRtMode(false);
               }}>
                 <div className="row g-3 align-items-end">
                   <div className="col-md-4">
@@ -1792,12 +1812,9 @@ function AdminDashboard() {
                                 const updated = kontakRtList.filter(k => k.id !== item.id);
                                 setKontakRtList(updated);
                                 localStorage.setItem('store_kontak_rt', JSON.stringify(updated));
-                                try {
-                                  await axios.delete(`${API_BASE_URL}/api/admin/kontak-rt/${item.id}`);
-                                  showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
-                                } catch (err) {
-                                  showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
-                                }
+                                syncCmsCloud('kontak_rt', updated);
+                                axios.delete(`${API_BASE_URL}/api/admin/kontak-rt/${item.id}`).catch(() => {});
+                                showNotif(`Kontak ${item.rt_rw} berhasil dihapus!`);
                               }
                             }}
                           >

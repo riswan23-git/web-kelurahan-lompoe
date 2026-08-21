@@ -1,8 +1,16 @@
 import { API_BASE_URL } from './apiConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
+
+const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
+  if (!foto) return null;
+  if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
+    return foto;
+  }
+  return `${apiBaseUrl}/uploads/${foto}`;
+};
 
 const DEFAULT_PKK = Array.from({ length: 10 }, (_, i) => ({
   id: i + 1,
@@ -17,12 +25,50 @@ const DEFAULT_PKK = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 function Profil() {
-  const [aparaturList, setAparaturList] = useState([]);
-  const [info, setInfo] = useState({});
-  const [pkkWilayah, setPkkWilayah] = useState(DEFAULT_PKK);
-  const [loading, setLoading] = useState(true);
+  const [aparaturList, setAparaturList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : [];
+    } catch (e) { return []; }
+  });
+  const [info, setInfo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('store_info') || '{}');
+    } catch (e) { return {}; }
+  });
+  const [pkkWilayah, setPkkWilayah] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_PKK;
+    } catch (e) { return DEFAULT_PKK; }
+  });
+  const [loading, setLoading] = useState(false);
+
+  const reloadFromLocal = useCallback(() => {
+    try {
+      const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      if (Array.isArray(localAparatur) && localAparatur.length > 0) setAparaturList(localAparatur);
+      const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
+      if (localInfo && Object.keys(localInfo).length > 0) setInfo(localInfo);
+      const localPkk = JSON.parse(localStorage.getItem('store_pkk') || 'null');
+      if (Array.isArray(localPkk) && localPkk.length > 0) setPkkWilayah(localPkk);
+    } catch (e) {}
+  }, []);
 
   useEffect(() => {
+    reloadFromLocal();
+
+    // Listen to changes from Admin in other tabs / same window
+    const handleStorage = () => reloadFromLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'aparatur' && Array.isArray(e.detail.data)) setAparaturList(e.detail.data);
+      if (e?.detail?.key === 'info' && e.detail.data) setInfo(e.detail.data);
+      if (e?.detail?.key === 'pkk' && Array.isArray(e.detail.data)) setPkkWilayah(e.detail.data);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
     const fetchData = async () => {
       try {
         const [resAparatur, resInfo, resPkk] = await Promise.all([
@@ -34,43 +80,37 @@ function Profil() {
         if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
           setAparaturList(resAparatur.data);
           localStorage.setItem('store_aparatur', JSON.stringify(resAparatur.data));
-        } else {
-          const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
-          if (Array.isArray(localAparatur) && localAparatur.length > 0) setAparaturList(localAparatur);
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
           setInfo(resInfo.data);
           localStorage.setItem('store_info', JSON.stringify(resInfo.data));
-        } else {
-          const localInfo = JSON.parse(localStorage.getItem('store_info') || 'null');
-          if (localInfo) setInfo(localInfo);
         }
 
         if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) {
           setPkkWilayah(resPkk.data);
           localStorage.setItem('store_pkk', JSON.stringify(resPkk.data));
-        } else {
-          const localPkk = JSON.parse(localStorage.getItem('store_pkk') || 'null');
-          if (Array.isArray(localPkk) && localPkk.length > 0) setPkkWilayah(localPkk);
         }
       } catch (err) {
         console.error('Error fetching profil:', err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchData();
-  }, []);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
+  }, [reloadFromLocal]);
 
   const lurah = aparaturList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || aparaturList[0];
-  const stafList = lurah ? aparaturList.filter(a => a.id !== lurah.id) : [];
+  const stafList = lurah ? aparaturList.filter(a => String(a.id) !== String(lurah.id)) : aparaturList;
 
   // Totals for PKK table
-  const totalKRT = pkkWilayah.reduce((acc, curr) => acc + (curr.krt || 0), 0);
-  const totalKK = pkkWilayah.reduce((acc, curr) => acc + (curr.kk || 0), 0);
-  const totalPria = pkkWilayah.reduce((acc, curr) => acc + (curr.pria || 0), 0);
-  const totalWanita = pkkWilayah.reduce((acc, curr) => acc + (curr.wanita || 0), 0);
+  const totalKRT = pkkWilayah.reduce((acc, curr) => acc + (parseInt(curr.krt) || 0), 0);
+  const totalKK = pkkWilayah.reduce((acc, curr) => acc + (parseInt(curr.kk) || 0), 0);
+  const totalPria = pkkWilayah.reduce((acc, curr) => acc + (parseInt(curr.pria) || 0), 0);
+  const totalWanita = pkkWilayah.reduce((acc, curr) => acc + (parseInt(curr.wanita) || 0), 0);
   const totalJiwa = totalPria + totalWanita;
 
   return (
@@ -94,9 +134,9 @@ function Profil() {
               <div className="card-body p-4 p-md-5">
                 <div className="row align-items-center g-4">
                   <div className="col-md-4 text-center">
-                    {lurah?.foto ? (
+                    {getImageSrc(lurah?.foto) ? (
                       <img 
-                        src={`${API_BASE_URL}/uploads/${lurah.foto}`} 
+                        src={getImageSrc(lurah?.foto)} 
                         alt={lurah.nama} 
                         className="rounded-circle border border-4 border-primary shadow"
                         style={{ width: '170px', height: '170px', objectFit: 'cover' }}
@@ -221,9 +261,9 @@ function Profil() {
                 {stafList.map((staf) => (
                   <div key={staf.id} className="col-md-6 col-lg-4">
                     <div className="card border-0 shadow-sm rounded-4 h-100 text-center p-4 bg-white card-hover">
-                      {staf.foto ? (
+                      {getImageSrc(staf.foto) ? (
                         <img 
-                          src={`${API_BASE_URL}/uploads/${staf.foto}`} 
+                          src={getImageSrc(staf.foto)} 
                           alt={staf.nama}
                           className="rounded-circle border mb-3 mx-auto shadow-sm"
                           style={{ width: '90px', height: '90px', objectFit: 'cover' }}

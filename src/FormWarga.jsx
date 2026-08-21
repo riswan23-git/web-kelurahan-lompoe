@@ -53,16 +53,43 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 
 function FormWarga() {
-  const [listKontakRt, setListKontakRt] = useState([]);
+  const [listKontakRt, setListKontakRt] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : [];
+    } catch (e) { return []; }
+  });
 
   useEffect(() => {
-    const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
-    if (local && local.length > 0) setListKontakRt(local);
-    axios.get(`${API_BASE_URL}/api/kontak-rt`)
+    const reloadLocal = () => {
+      try {
+        const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
+        if (Array.isArray(local) && local.length > 0) setListKontakRt(local);
+      } catch (e) {}
+    };
+    reloadLocal();
+
+    const handleStorage = () => reloadLocal();
+    const handleCustomStore = (e) => {
+      if (e?.detail?.key === 'kontak_rt' && Array.isArray(e.detail.data)) setListKontakRt(e.detail.data);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('lompoe_store_update', handleCustomStore);
+
+    axios.get(`${API_BASE_URL}/api/kontak-rt?_t=${Date.now()}`)
       .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0 && !local) setListKontakRt(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setListKontakRt(res.data);
+          localStorage.setItem('store_kontak_rt', JSON.stringify(res.data));
+        }
       })
       .catch(() => { });
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('lompoe_store_update', handleCustomStore);
+    };
   }, []);
   const [formData, setFormData] = useState({
     nik: '',
