@@ -181,40 +181,53 @@ function AdminDashboard() {
     setTimeout(() => setPesanNotif(''), 4000);
   };
 
-  const fetchKontakRt = () => {
-    const local = JSON.parse(localStorage.getItem('store_kontak_rt') || 'null');
-    if (local && local.length > 0) setKontakRtList(local);
-    axios.get(`${API_BASE_URL}/api/kontak-rt?_t=${Date.now()}`)
-      .then(res => {
-        const list = Array.isArray(res.data) ? res.data : [];
-        if (list.length > 0) {
-          setKontakRtList(list);
-          localStorage.setItem('store_kontak_rt', JSON.stringify(list));
-        } else if (!local) {
-          setKontakRtList([]);
-        }
-      })
-      .catch(() => {
-        if (!local) setKontakRtList([]);
-      });
+  const fetchKontakRt = async () => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_kontak_rt') || '[]');
+      const res = await axios.get(`${API_BASE_URL}/api/kontak-rt?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
+      }
+      const finalList = Array.from(combinedMap.values());
+      setKontakRtList(finalList);
+      localStorage.setItem('store_kontak_rt', JSON.stringify(finalList));
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_kontak_rt') || '[]');
+      if (local.length > 0) setKontakRtList(local);
+    }
   };
 
-  const fetchNomorDarurat = () => {
-    const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
-    if (local && local.length > 0) setNomorDaruratList(local);
-    axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`)
-      .then(res => {
-        const list = Array.isArray(res.data) ? res.data : [];
-        if (list.length > 0) {
-          setNomorDaruratList(list);
-          localStorage.setItem('store_nomor_darurat', JSON.stringify(list));
-        } else if (!local) {
-          setNomorDaruratList(DEFAULT_DARURAT);
-        }
-      })
-      .catch(() => {
-        if (!local) setNomorDaruratList(DEFAULT_DARURAT);
-      });
+  const fetchNomorDarurat = async () => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || '[]');
+      const res = await axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`).catch(() => null);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
+      }
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_DARURAT;
+      setNomorDaruratList(resList);
+      localStorage.setItem('store_nomor_darurat', JSON.stringify(resList));
+    } catch (err) {
+      const local = JSON.parse(localStorage.getItem('store_nomor_darurat') || 'null');
+      setNomorDaruratList(local && local.length > 0 ? local : DEFAULT_DARURAT);
+    }
   };
 
   const handleSaveDarurat = async (e) => {
