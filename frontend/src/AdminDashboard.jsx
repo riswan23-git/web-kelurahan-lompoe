@@ -363,16 +363,23 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_pkk') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      if (apiData.length > 0) {
-        setPkkList(apiData);
-        localStorage.setItem('store_pkk', JSON.stringify(apiData));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
-        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_PKK;
+      setPkkList(resList);
+      localStorage.setItem('store_pkk', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -381,20 +388,23 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_berita') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      let finalList;
-      if (apiData.length > 0) {
-        finalList = apiData;
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
-        finalList = local && local.length > 0 ? local : DEFAULT_BERITA;
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
-
-      setBeritaList(finalList);
-      localStorage.setItem('store_berita', JSON.stringify(finalList));
-      syncCmsCloud('berita', finalList);
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_BERITA;
+      setBeritaList(resList);
+      localStorage.setItem('store_berita', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
