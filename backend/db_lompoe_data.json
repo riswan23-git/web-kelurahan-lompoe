@@ -91,6 +91,16 @@
       "urutan": 7
     },
     {
+      "id": 10,
+      "nama": "HAMSAH",
+      "nip": "19710202 198911 1 001",
+      "jabatan": "Staff",
+      "foto": null,
+      "is_lurah": 0,
+      "sambutan": "",
+      "urutan": 8
+    },
+    {
       "id": 1787293285951,
       "nama": "Dr. H. Andi Syamsul, M.Si.",
       "nip": "197501012000031001",

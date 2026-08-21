@@ -75,7 +75,8 @@ const FALLBACK_DATA = {
         { id: 6, nama: 'Sitti Kamaria, SE', nip: '197301042006042008', jabatan: 'Kepala Seksi Kesejahteraan Masyarakat', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
         { id: 7, nama: 'Salma, S.Ap', nip: '198594142914112881', jabatan: 'Kepala Seksi Pelayanan Umum & Pemas', foto: null, is_lurah: 0, sambutan: '', urutan: 5 },
         { id: 8, nama: 'NANNIS', nip: '19820416 202521 2 026', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 6 },
-        { id: 9, nama: 'ANDI HADI WIJAYA', nip: '20000714 202521 1 014', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 7 }
+        { id: 9, nama: 'ANDI HADI WIJAYA', nip: '20000714 202521 1 014', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 7 },
+        { id: 10, nama: 'HAMSAH', nip: '19710202 198911 1 001', jabatan: 'Staff', foto: null, is_lurah: 0, sambutan: '', urutan: 8 }
     ],
     statistik: { id: 1, total_pria: 6285, total_wanita: 6185, total_kk: 3772, total_rt: 26, total_rw: 10, luas_wilayah: '30.9 Ha' },
     info_kelurahan: {
