@@ -711,6 +711,7 @@ function AdminDashboard() {
   const syncCmsCloud = (key, data) => {
     broadcastStoreUpdate(key, data);
     axios.post(`${API_BASE_URL}/api/admin/sync-cms`, { [key]: data }).catch(() => {});
+    axios.post(`${API_BASE_URL}/api/cloud-store`, { [key]: data }).catch(() => {});
     if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/admin/sync-cms`, { [key]: data }).catch(() => {});
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { [key]: data }).catch(() => {});

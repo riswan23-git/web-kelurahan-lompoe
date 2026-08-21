@@ -83,31 +83,19 @@ function Profil() {
         const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
         const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
 
-        const combinedMap = new Map();
-        localAparatur.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-        if (Array.isArray(cloudAparatur)) {
-          cloudAparatur.forEach(item => {
-            if (item && item.id && !deletedIds.includes(String(item.id)) && !combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          });
-        }
-        if (Array.isArray(serverAparatur)) {
-          serverAparatur.forEach(item => {
-            if (item && item.id && !deletedIds.includes(String(item.id)) && !combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          });
+        let targetAparatur = [];
+        if (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) {
+          targetAparatur = cloudAparatur;
+        } else if (Array.isArray(serverAparatur) && serverAparatur.length > 0) {
+          targetAparatur = serverAparatur;
+        } else if (Array.isArray(localAparatur) && localAparatur.length > 0) {
+          targetAparatur = localAparatur;
         }
 
-        const mergedList = Array.from(combinedMap.values());
-        if (mergedList.length > 0) {
-          setAparaturList(mergedList);
-          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
+        const filteredList = targetAparatur.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+        if (filteredList.length > 0) {
+          setAparaturList(filteredList);
+          localStorage.setItem('store_aparatur', JSON.stringify(filteredList));
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
