@@ -75,16 +75,39 @@ function Profil() {
           axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
           axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
           axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null),
-          axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621').catch(() => null)
+          axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
         ]);
 
-        const cloudAparatur = resCloud?.data?.aparatur;
         const serverAparatur = resAparatur?.data && Array.isArray(resAparatur.data) ? resAparatur.data : [];
-        const targetAparatur = (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) ? cloudAparatur : serverAparatur;
+        const cloudAparatur = resCloud?.data?.aparatur || [];
+        const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
 
-        if (targetAparatur && targetAparatur.length > 0) {
-          setAparaturList(targetAparatur);
-          localStorage.setItem('store_aparatur', JSON.stringify(targetAparatur));
+        const combinedMap = new Map();
+        localAparatur.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
+        if (Array.isArray(cloudAparatur)) {
+          cloudAparatur.forEach(item => {
+            if (item && item.id && !deletedIds.includes(String(item.id)) && !combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          });
+        }
+        if (Array.isArray(serverAparatur)) {
+          serverAparatur.forEach(item => {
+            if (item && item.id && !deletedIds.includes(String(item.id)) && !combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          });
+        }
+
+        const mergedList = Array.from(combinedMap.values());
+        if (mergedList.length > 0) {
+          setAparaturList(mergedList);
+          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
