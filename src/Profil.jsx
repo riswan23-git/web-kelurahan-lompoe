@@ -81,21 +81,32 @@ function Profil() {
         const serverAparatur = resAparatur?.data && Array.isArray(resAparatur.data) ? resAparatur.data : [];
         const cloudAparatur = resCloud?.data?.aparatur || [];
         const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-        const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
 
-        let targetAparatur = [];
-        if (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) {
-          targetAparatur = cloudAparatur;
-        } else if (Array.isArray(serverAparatur) && serverAparatur.length > 0) {
-          targetAparatur = serverAparatur;
-        } else if (Array.isArray(localAparatur) && localAparatur.length > 0) {
-          targetAparatur = localAparatur;
+        localStorage.removeItem('deleted_aparatur_ids');
+
+        const combinedMap = new Map();
+        if (Array.isArray(localAparatur)) {
+          localAparatur.forEach(item => {
+            if (item && item.id) combinedMap.set(String(item.id), item);
+          });
+        }
+        if (Array.isArray(cloudAparatur)) {
+          cloudAparatur.forEach(item => {
+            if (item && item.id) combinedMap.set(String(item.id), item);
+          });
+        }
+        if (Array.isArray(serverAparatur)) {
+          serverAparatur.forEach(item => {
+            if (item && item.id && !combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          });
         }
 
-        const filteredList = targetAparatur.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
-        if (filteredList.length > 0) {
-          setAparaturList(filteredList);
-          localStorage.setItem('store_aparatur', JSON.stringify(filteredList));
+        const mergedList = Array.from(combinedMap.values());
+        if (mergedList.length > 0) {
+          setAparaturList(mergedList);
+          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
