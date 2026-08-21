@@ -674,6 +674,14 @@ function AdminDashboard() {
     if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/admin/sync-cms`, { [key]: data }).catch(() => {});
     }
+    // Real-time Cloud Store sync for multi-device (Laptop <-> HP)
+    axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621')
+      .then(res => {
+        const cloudData = res.data || {};
+        cloudData[key] = data;
+        delete cloudData._id;
+        axios.put('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621', cloudData).catch(() => {});
+      }).catch(() => {});
   };
 
   // Handlers for Aparatur CRUD

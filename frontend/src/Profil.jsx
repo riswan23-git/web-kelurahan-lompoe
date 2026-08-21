@@ -71,25 +71,27 @@ function Profil() {
 
     const fetchData = async () => {
       try {
-        const [resAparatur, resInfo, resPkk] = await Promise.all([
+        const [resAparatur, resInfo, resPkk, resCloud] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
           axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
-          axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null)
+          axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null),
+          axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621').catch(() => null)
         ]);
 
-        if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
-          const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-          const serverAparatur = resAparatur.data;
-          const combinedMap = new Map();
-          serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localAparatur)) {
-            localAparatur.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) {
-                combinedMap.set(String(item.id), item);
-              }
-            });
-          }
-          const mergedList = Array.from(combinedMap.values());
+        const cloudAparatur = resCloud?.data?.aparatur || [];
+        const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        const serverAparatur = resAparatur?.data && Array.isArray(resAparatur.data) ? resAparatur.data : [];
+
+        const combinedMap = new Map();
+        serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+        if (Array.isArray(cloudAparatur)) {
+          cloudAparatur.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
+        }
+        if (Array.isArray(localAparatur)) {
+          localAparatur.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
+        }
+        const mergedList = Array.from(combinedMap.values());
+        if (mergedList.length > 0) {
           setAparaturList(mergedList);
           localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
@@ -99,19 +101,20 @@ function Profil() {
           localStorage.setItem('store_info', JSON.stringify(resInfo.data));
         }
 
-        if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) {
-          const localPkk = JSON.parse(localStorage.getItem('store_pkk') || '[]');
-          const serverPkk = resPkk.data;
-          const combinedMap = new Map();
-          serverPkk.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localPkk)) {
-            localPkk.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) {
-                combinedMap.set(String(item.id), item);
-              }
-            });
-          }
-          const mergedPkk = Array.from(combinedMap.values());
+        const cloudPkk = resCloud?.data?.pkk || [];
+        const localPkk = JSON.parse(localStorage.getItem('store_pkk') || '[]');
+        const serverPkk = resPkk?.data && Array.isArray(resPkk.data) ? resPkk.data : [];
+
+        const combinedPkkMap = new Map();
+        serverPkk.forEach(item => { if (item && item.id) combinedPkkMap.set(String(item.id), item); });
+        if (Array.isArray(cloudPkk)) {
+          cloudPkk.forEach(item => { if (item && item.id && !combinedPkkMap.has(String(item.id))) combinedPkkMap.set(String(item.id), item); });
+        }
+        if (Array.isArray(localPkk)) {
+          localPkk.forEach(item => { if (item && item.id && !combinedPkkMap.has(String(item.id))) combinedPkkMap.set(String(item.id), item); });
+        }
+        const mergedPkk = Array.from(combinedPkkMap.values());
+        if (mergedPkk.length > 0) {
           setPkkWilayah(mergedPkk);
           localStorage.setItem('store_pkk', JSON.stringify(mergedPkk));
         }
