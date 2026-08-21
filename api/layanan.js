@@ -654,9 +654,9 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
             global.__LOMPOE_CLOUD_STORE__.pengajuan = [];
         }
-        const existingIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && p.no_resi === resi);
-        if (existingIdx >= 0) {
-            global.__LOMPOE_CLOUD_STORE__.pengajuan[existingIdx] = newItem;
+        const cloudIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && p.no_resi === resi);
+        if (cloudIdx >= 0) {
+            global.__LOMPOE_CLOUD_STORE__.pengajuan[cloudIdx] = newItem;
         } else {
             global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(newItem);
         }
