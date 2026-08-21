@@ -94,18 +94,30 @@ function Home() {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('lompoe_store_update', handleCustomStore);
 
-    // Fetch API in background with direct cloud priority
+    // Fetch API in background with direct cloud-store priority
     Promise.all([
       axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
-      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
     ]).then(([resApi, resCloud]) => {
       const cloudAparatur = resCloud?.data?.aparatur;
       const serverAparatur = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
-      const targetAparatur = (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) ? cloudAparatur : serverAparatur;
-      if (targetAparatur && targetAparatur.length > 0) {
-        const apiLurah = targetAparatur.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || targetAparatur[0];
+      const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
+
+      let targetAparatur = [];
+      if (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) {
+        targetAparatur = cloudAparatur;
+      } else if (Array.isArray(serverAparatur) && serverAparatur.length > 0) {
+        targetAparatur = serverAparatur;
+      } else if (Array.isArray(localAparatur) && localAparatur.length > 0) {
+        targetAparatur = localAparatur;
+      }
+
+      const filteredList = targetAparatur.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+      if (filteredList.length > 0) {
+        const apiLurah = filteredList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || filteredList[0];
         setLurah(apiLurah || null);
-        localStorage.setItem('store_aparatur', JSON.stringify(targetAparatur));
+        localStorage.setItem('store_aparatur', JSON.stringify(filteredList));
       }
     }).catch(() => {});
 
@@ -119,40 +131,76 @@ function Home() {
 
     Promise.all([
       axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
-      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
     ]).then(([resApi, resCloud]) => {
       const cloudBerita = resCloud?.data?.berita;
       const serverBerita = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
-      const targetBerita = (Array.isArray(cloudBerita) && cloudBerita.length > 0) ? cloudBerita : serverBerita;
-      if (targetBerita && targetBerita.length > 0) {
-        setBeritaList(targetBerita);
-        localStorage.setItem('store_berita', JSON.stringify(targetBerita));
+      const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
+
+      let targetBerita = [];
+      if (Array.isArray(cloudBerita) && cloudBerita.length > 0) {
+        targetBerita = cloudBerita;
+      } else if (Array.isArray(serverBerita) && serverBerita.length > 0) {
+        targetBerita = serverBerita;
+      } else if (Array.isArray(localBerita) && localBerita.length > 0) {
+        targetBerita = localBerita;
+      }
+
+      const filteredList = targetBerita.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+      if (filteredList.length > 0) {
+        setBeritaList(filteredList);
+        localStorage.setItem('store_berita', JSON.stringify(filteredList));
       }
     }).catch(() => {});
 
     Promise.all([
       axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null),
-      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
     ]).then(([resApi, resCloud]) => {
       const cloudSarana = resCloud?.data?.sarana;
       const serverSarana = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
-      const targetSarana = (Array.isArray(cloudSarana) && cloudSarana.length > 0) ? cloudSarana : serverSarana;
-      if (targetSarana && targetSarana.length > 0) {
-        setSaranaList(targetSarana);
-        localStorage.setItem('store_sarana', JSON.stringify(targetSarana));
+      const localSarana = JSON.parse(localStorage.getItem('store_sarana') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_sarana_ids') || '[]');
+
+      let targetSarana = [];
+      if (Array.isArray(cloudSarana) && cloudSarana.length > 0) {
+        targetSarana = cloudSarana;
+      } else if (Array.isArray(serverSarana) && serverSarana.length > 0) {
+        targetSarana = serverSarana;
+      } else if (Array.isArray(localSarana) && localSarana.length > 0) {
+        targetSarana = localSarana;
+      }
+
+      const filteredList = targetSarana.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+      if (filteredList.length > 0) {
+        setSaranaList(filteredList);
+        localStorage.setItem('store_sarana', JSON.stringify(filteredList));
       }
     }).catch(() => {});
 
     Promise.all([
       axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`).catch(() => null),
-      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
     ]).then(([resApi, resCloud]) => {
       const cloudDarurat = resCloud?.data?.nomor_darurat;
       const serverDarurat = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
-      const targetDarurat = (Array.isArray(cloudDarurat) && cloudDarurat.length > 0) ? cloudDarurat : serverDarurat;
-      if (targetDarurat && targetDarurat.length > 0) {
-        setNomorDaruratList(targetDarurat);
-        localStorage.setItem('store_nomor_darurat', JSON.stringify(targetDarurat));
+      const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_darurat_ids') || '[]');
+
+      let targetDarurat = [];
+      if (Array.isArray(cloudDarurat) && cloudDarurat.length > 0) {
+        targetDarurat = cloudDarurat;
+      } else if (Array.isArray(serverDarurat) && serverDarurat.length > 0) {
+        targetDarurat = serverDarurat;
+      } else if (Array.isArray(localDarurat) && localDarurat.length > 0) {
+        targetDarurat = localDarurat;
+      }
+
+      const filteredList = targetDarurat.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+      if (filteredList.length > 0) {
+        setNomorDaruratList(filteredList);
+        localStorage.setItem('store_nomor_darurat', JSON.stringify(filteredList));
       }
     }).catch(() => {});
 
