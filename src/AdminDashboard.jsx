@@ -827,6 +827,13 @@ function AdminDashboard() {
         const updated = beritaList.filter(b => b.id !== id);
         setBeritaList(updated);
         localStorage.setItem('store_berita', JSON.stringify(updated));
+        
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
+        if (!deletedIds.includes(String(id))) {
+          deletedIds.push(String(id));
+          localStorage.setItem('deleted_berita_ids', JSON.stringify(deletedIds));
+        }
+
         syncCmsCloud('berita', updated);
         showNotif('Berita berhasil dihapus!');
       } catch (err) { showNotif('Gagal menghapus berita'); }

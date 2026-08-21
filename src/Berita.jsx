@@ -62,16 +62,27 @@ function Berita() {
       try {
         const [response, resCloud] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
-          axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+          axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
         ]);
 
-        const cloudBerita = resCloud?.data?.berita;
         const serverBerita = response?.data && Array.isArray(response.data) ? response.data : [];
-        const targetBerita = (Array.isArray(cloudBerita) && cloudBerita.length > 0) ? cloudBerita : serverBerita;
+        const cloudBerita = resCloud?.data?.berita || [];
+        const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
 
-        if (targetBerita && targetBerita.length > 0) {
-          setBeritaList(targetBerita);
-          localStorage.setItem('store_berita', JSON.stringify(targetBerita));
+        let targetBerita = [];
+        if (Array.isArray(cloudBerita) && cloudBerita.length > 0) {
+          targetBerita = cloudBerita;
+        } else if (Array.isArray(serverBerita) && serverBerita.length > 0) {
+          targetBerita = serverBerita;
+        } else if (Array.isArray(localBerita) && localBerita.length > 0) {
+          targetBerita = localBerita;
+        }
+
+        const filteredList = targetBerita.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
+        if (filteredList.length > 0) {
+          setBeritaList(filteredList);
+          localStorage.setItem('store_berita', JSON.stringify(filteredList));
         }
       } catch (err) {
         console.error('Error fetching berita:', err);
