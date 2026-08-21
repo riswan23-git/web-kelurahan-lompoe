@@ -350,13 +350,33 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        setAparaturList(res.data);
-        localStorage.setItem('store_aparatur', JSON.stringify(res.data));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-        if (local.length > 0) setAparaturList(local);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
+      }
+      if (Array.isArray(apiData)) {
+        apiData.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            if (!combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          }
+        });
+      }
+
+      const finalList = Array.from(combinedMap.values());
+      if (finalList.length > 0) {
+        setAparaturList(finalList);
+        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
@@ -366,14 +386,33 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_pkk') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_pkk_ids') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        setPkkList(res.data);
-        localStorage.setItem('store_pkk', JSON.stringify(res.data));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
-        setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
+      if (Array.isArray(apiData)) {
+        apiData.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            if (!combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          }
+        });
+      }
+
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_PKK;
+      setPkkList(resList);
+      localStorage.setItem('store_pkk', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_pkk') || 'null');
       setPkkList(local && local.length > 0 ? local : DEFAULT_PKK);
@@ -382,14 +421,33 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_berita') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        setBeritaList(res.data);
-        localStorage.setItem('store_berita', JSON.stringify(res.data));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
-        setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
+      if (Array.isArray(apiData)) {
+        apiData.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            if (!combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          }
+        });
+      }
+
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_BERITA;
+      setBeritaList(resList);
+      localStorage.setItem('store_berita', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_berita') || 'null');
       setBeritaList(local && local.length > 0 ? local : DEFAULT_BERITA);
@@ -420,14 +478,33 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_sarana') || '[]');
+      const deletedIds = JSON.parse(localStorage.getItem('deleted_sarana_ids') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        setSaranaList(res.data);
-        localStorage.setItem('store_sarana', JSON.stringify(res.data));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
+      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+
+      const combinedMap = new Map();
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
+      if (Array.isArray(apiData)) {
+        apiData.forEach(item => {
+          if (item && item.id && !deletedIds.includes(String(item.id))) {
+            if (!combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          }
+        });
+      }
+
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_SARANA;
+      setSaranaList(resList);
+      localStorage.setItem('store_sarana', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
@@ -691,6 +768,13 @@ function AdminDashboard() {
         const updated = aparaturList.filter(a => a.id !== id);
         setAparaturList(updated);
         localStorage.setItem('store_aparatur', JSON.stringify(updated));
+        
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
+        if (!deletedIds.includes(String(id))) {
+          deletedIds.push(String(id));
+          localStorage.setItem('deleted_aparatur_ids', JSON.stringify(deletedIds));
+        }
+
         syncCmsCloud('aparatur', updated);
         showNotif('Aparatur berhasil dihapus!');
       } catch (err) { showNotif('Gagal menghapus aparatur'); }
