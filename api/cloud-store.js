@@ -1,89 +1,77 @@
 const store = require('./_store.js');
 const https = require('https');
 
-// Global memory persistence across lambda container invocations
+const FIREBASE_DB_URL = 'https://web-kelurahan-lompoe-ca95c-default-rtdb.asia-southeast1.firebasedatabase.app/store.json';
+
+// Initialize global store if not already set
 if (!global.__LOMPOE_CLOUD_STORE__) {
     global.__LOMPOE_CLOUD_STORE__ = store;
 }
 
-function updateGithubStoreFile(token, newStoreData) {
+function fetchFromFirebase() {
     return new Promise((resolve) => {
-        const path = 'api/_store.js';
-        const repo = 'riswan23-git/web-kelurahan-lompoe';
-        const fileContent = `// Global shared memory store for Vercel Serverless Functions\nconst globalStore = global.__LOMPOE_STORE__ || ${JSON.stringify(newStoreData, null, 4)};\n\nmodule.exports = globalStore;\n`;
-        const base64Content = Buffer.from(fileContent).toString('base64');
-
-        // First GET current sha
-        const getReq = https.request(`https://api.github.com/repos/${repo}/contents/${path}`, {
-            method: 'GET',
-            headers: {
-                'User-Agent': 'LompoeCMS-AutoSync',
-                'Authorization': `Bearer ${token}`
-            }
-        }, (getRes) => {
+        const req = https.request(FIREBASE_DB_URL, { method: 'GET' }, (res) => {
             let body = '';
-            getRes.on('data', c => body += c);
-            getRes.on('end', () => {
-                let sha = null;
+            res.on('data', c => body += c);
+            res.on('end', () => {
                 try {
-                    const parsed = JSON.parse(body);
-                    sha = parsed.sha;
-                } catch (e) {}
-
-                if (!sha) return resolve(false);
-
-                // PUT updated content
-                const putPayload = JSON.stringify({
-                    message: 'Auto-sync CMS store update via Admin Dashboard',
-                    content: base64Content,
-                    sha: sha,
-                    branch: 'main'
-                });
-
-                const putReq = https.request(`https://api.github.com/repos/${repo}/contents/${path}`, {
-                    method: 'PUT',
-                    headers: {
-                        'User-Agent': 'LompoeCMS-AutoSync',
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(putPayload)
+                    const data = JSON.parse(body);
+                    if (data && typeof data === 'object') {
+                        resolve(data);
+                        return;
                     }
-                }, (putRes) => {
-                    resolve(putRes.statusCode === 200 || putRes.statusCode === 201);
-                });
-                putReq.on('error', () => resolve(false));
-                putReq.write(putPayload);
-                putReq.end();
+                } catch (e) {}
+                resolve(null);
             });
         });
-        getReq.on('error', () => resolve(false));
-        getReq.end();
+        req.on('error', () => resolve(null));
+        req.end();
+    });
+}
+
+function saveToFirebase(dataObj) {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify(dataObj);
+        const req = https.request(FIREBASE_DB_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            resolve(res.statusCode === 200);
+        });
+        req.on('error', () => resolve(false));
+        req.write(payload);
+        req.end();
     });
 }
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
-    const currentStore = global.__LOMPOE_CLOUD_STORE__;
-
-    if (req.method === 'GET') {
-        return res.status(200).json(currentStore);
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
-    if (req.method === 'POST' || req.method === 'PUT') {
-        let body = {};
-        try {
-            if (req.body && typeof req.body === 'object') body = req.body;
-            else if (req.body && typeof req.body === 'string') body = JSON.parse(req.body);
-        } catch (e) {}
+    let currentStore = global.__LOMPOE_CLOUD_STORE__ || store;
 
+    // Sync from Firebase DB on GET
+    if (req.method === 'GET') {
+        const fbData = await fetchFromFirebase();
+        if (fbData) {
+            currentStore = { ...currentStore, ...fbData };
+            global.__LOMPOE_CLOUD_STORE__ = currentStore;
+        }
+        return res.status(200).json({ success: true, data: currentStore });
+    }
+
+    if (req.method === 'POST') {
+        const body = req.body || {};
+        
         if (body.aparatur && Array.isArray(body.aparatur)) currentStore.aparatur = body.aparatur;
         if (body.pkk && Array.isArray(body.pkk)) currentStore.pkk = body.pkk;
         if (body.berita && Array.isArray(body.berita)) currentStore.berita = body.berita;
@@ -94,14 +82,13 @@ module.exports = async (req, res) => {
         if (body.statistik) currentStore.statistik = body.statistik;
         if (body.info) currentStore.info = body.info;
 
+        currentStore.updated_at = new Date().toISOString();
         global.__LOMPOE_CLOUD_STORE__ = currentStore;
 
-        const githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-        if (githubToken) {
-            updateGithubStoreFile(githubToken, currentStore).catch(() => {});
-        }
+        // Persist to Firebase Realtime DB
+        await saveToFirebase(currentStore);
 
-        return res.status(200).json({ success: true, message: 'Cloud store updated successfully!', data: currentStore });
+        return res.status(200).json({ success: true, message: 'Cloud store updated successfully via Firebase!', data: currentStore });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
