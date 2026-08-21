@@ -337,15 +337,23 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      if (apiData.length > 0) {
-        setAparaturList(apiData);
-        localStorage.setItem('store_aparatur', JSON.stringify(apiData));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-        if (local.length > 0) setAparaturList(local);
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
+      }
+      const finalList = Array.from(combinedMap.values());
+      if (finalList.length > 0) {
+        setAparaturList(finalList);
+        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
@@ -417,16 +425,23 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
+      const local = JSON.parse(localStorage.getItem('store_sarana') || '[]');
       const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
       const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
 
-      if (apiData.length > 0) {
-        setSaranaList(apiData);
-        localStorage.setItem('store_sarana', JSON.stringify(apiData));
-      } else {
-        const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
-        setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
+      const combinedMap = new Map();
+      apiData.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+      if (Array.isArray(local)) {
+        local.forEach(item => {
+          if (item && item.id && !combinedMap.has(String(item.id))) {
+            combinedMap.set(String(item.id), item);
+          }
+        });
       }
+      const finalList = Array.from(combinedMap.values());
+      const resList = finalList.length > 0 ? finalList : DEFAULT_SARANA;
+      setSaranaList(resList);
+      localStorage.setItem('store_sarana', JSON.stringify(resList));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_sarana') || 'null');
       setSaranaList(local && local.length > 0 ? local : DEFAULT_SARANA);
