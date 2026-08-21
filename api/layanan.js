@@ -648,6 +648,19 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
         saveDiskStore();
 
+        if (!global.__LOMPOE_CLOUD_STORE__) {
+            global.__LOMPOE_CLOUD_STORE__ = store;
+        }
+        if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
+            global.__LOMPOE_CLOUD_STORE__.pengajuan = [];
+        }
+        const existingIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && p.no_resi === resi);
+        if (existingIdx >= 0) {
+            global.__LOMPOE_CLOUD_STORE__.pengajuan[existingIdx] = newItem;
+        } else {
+            global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(newItem);
+        }
+
         return res.status(200).json({
             success: true,
             message: 'Pengajuan surat berhasil dikirim! Silakan catat nomor resi Anda.',

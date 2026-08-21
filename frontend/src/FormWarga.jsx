@@ -345,6 +345,12 @@ function FormWarga() {
     // Fire API call asynchronously in background (do not block UI!)
     const finalSyncItem = { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus, file_data_map: fileDataMap };
     axios.post(`${API_BASE_URL}/api/pengajuan`, finalSyncItem).catch(err => console.log('Background sync notification done.'));
+    
+    // Broadcast to Cloud Store so all devices (Chrome, Edge, HP) see the letter submission
+    axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: updatedLocalList }).catch(() => {});
+    if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+      axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { pengajuan: updatedLocalList }).catch(() => {});
+    }
   };
 
   const targetRtObj = Array.isArray(listKontakRt) ? listKontakRt.find(k => k && k.rt_rw === formData.rt_rw) : null;

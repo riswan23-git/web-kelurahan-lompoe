@@ -88,6 +88,7 @@ module.exports = async (req, res) => {
         if (body.pkk && Array.isArray(body.pkk)) currentStore.pkk = body.pkk;
         if (body.berita && Array.isArray(body.berita)) currentStore.berita = body.berita;
         if (body.sarana && Array.isArray(body.sarana)) currentStore.sarana = body.sarana;
+        if (body.pengajuan && Array.isArray(body.pengajuan)) currentStore.pengajuan = body.pengajuan;
         if (body.nomor_darurat && Array.isArray(body.nomor_darurat)) currentStore.nomor_darurat = body.nomor_darurat;
         if (body.kontak_rt && Array.isArray(body.kontak_rt)) currentStore.kontak_rt = body.kontak_rt;
         if (body.statistik) currentStore.statistik = body.statistik;

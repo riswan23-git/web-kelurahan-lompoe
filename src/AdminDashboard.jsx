@@ -270,55 +270,34 @@ function AdminDashboard() {
   // Fetch functions
   const fetchPengajuan = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/pengajuan`);
-      const serverData = Array.isArray(res.data) ? res.data : [];
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/pengajuan?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const serverData = Array.isArray(resServer?.data) ? resServer.data : [];
+      const cloudData = Array.isArray(resCloud?.data?.pengajuan) ? resCloud.data.pengajuan : [];
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
 
       const combinedMap = new Map();
       localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
+      cloudData.forEach(item => {
+        if (item && item.no_resi) {
+          const existing = combinedMap.get(item.no_resi) || {};
+          combinedMap.set(item.no_resi, { ...existing, ...item });
+        }
+      });
       serverData.forEach(item => {
         if (item && item.no_resi) {
           const existing = combinedMap.get(item.no_resi) || {};
-          const mergedFileMap = { ...(existing.file_data_map || {}), ...(item.file_data_map || {}) };
-          combinedMap.set(item.no_resi, { ...existing, ...item, file_data_map: mergedFileMap });
+          combinedMap.set(item.no_resi, { ...existing, ...item });
         }
       });
 
       const combinedList = Array.from(combinedMap.values());
-      setPengajuanList(combinedList.length > 0 ? combinedList : [
-        {
-          id: 101,
-          no_resi: 'LMP-891472',
-          nomor_resi: 'LMP-891472',
-          nama_pemohon: 'Riswan Fachrezy',
-          nama_lengkap: 'Riswan Fachrezy',
-          nik: '7372012404950001',
-          tempat_tgl_lahir: 'Parepare, 24 April 1995',
-          jenis_kelamin: 'Laki-laki',
-          agama: 'Islam',
-          pekerjaan: 'Wiraswasta',
-          alamat: 'Jl. Poros Lompoe No. 88',
-          jenis_surat: 'Surat Izin Keramaian',
-          rt_rw: 'RW 02 / RT 03',
-          telepon: '081234567890',
-          no_hp: '081234567890',
-          nomor_wa: '081234567890',
-          keperluan: 'Pengurusan Administrasi Izin Keramaian',
-          nama_acara: 'Syukuran & Pesta Pernikahan',
-          tanggal_acara: 'Senin, 24 Agustus 2026',
-          lokasi_acara: 'Gedung Gelora Lompoe',
-          status_rt: 'Disetujui RT/RW',
-          status_kelurahan: 'Progres',
-          status: 'Progres',
-          token_rt: 'tok_rt_891472',
-          tgl_pengajuan: '2026-08-17',
-          tanggal_pengajuan: '2026-08-17',
-          tanggal: '2026-08-17',
-          file_berkas: 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf',
-          berkas_warga: 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf'
-        }
-      ]);
-      localStorage.setItem('all_pengajuan', JSON.stringify(combinedList));
+      if (combinedList.length > 0) {
+        setPengajuanList(combinedList);
+        localStorage.setItem('all_pengajuan', JSON.stringify(combinedList));
+      }
     } catch (err) {
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
       setPengajuanList(localData);
