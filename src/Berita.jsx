@@ -62,25 +62,16 @@ function Berita() {
       try {
         const [response, resCloud] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
-          axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621').catch(() => null)
+          axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
         ]);
 
-        const cloudBerita = resCloud?.data?.berita || [];
-        const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
+        const cloudBerita = resCloud?.data?.berita;
         const serverBerita = response?.data && Array.isArray(response.data) ? response.data : [];
+        const targetBerita = (Array.isArray(cloudBerita) && cloudBerita.length > 0) ? cloudBerita : serverBerita;
 
-        const combinedMap = new Map();
-        serverBerita.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-        if (Array.isArray(cloudBerita)) {
-          cloudBerita.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
-        }
-        if (Array.isArray(localBerita)) {
-          localBerita.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
-        }
-        const mergedBerita = Array.from(combinedMap.values());
-        if (mergedBerita.length > 0) {
-          setBeritaList(mergedBerita);
-          localStorage.setItem('store_berita', JSON.stringify(mergedBerita));
+        if (targetBerita && targetBerita.length > 0) {
+          setBeritaList(targetBerita);
+          localStorage.setItem('store_berita', JSON.stringify(targetBerita));
         }
       } catch (err) {
         console.error('Error fetching berita:', err);

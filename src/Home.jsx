@@ -94,25 +94,20 @@ function Home() {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('lompoe_store_update', handleCustomStore);
 
-    // Fetch API in background with smart merge
-    axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`)
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-          const serverAparatur = res.data;
-          const combinedMap = new Map();
-          serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localAparatur)) {
-            localAparatur.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
-            });
-          }
-          const mergedList = Array.from(combinedMap.values());
-          const apiLurah = mergedList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || mergedList[0];
-          setLurah(apiLurah || null);
-          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
-        }
-      }).catch(() => {});
+    // Fetch API in background with direct cloud priority
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
+      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudAparatur = resCloud?.data?.aparatur;
+      const serverAparatur = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
+      const targetAparatur = (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) ? cloudAparatur : serverAparatur;
+      if (targetAparatur && targetAparatur.length > 0) {
+        const apiLurah = targetAparatur.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || targetAparatur[0];
+        setLurah(apiLurah || null);
+        localStorage.setItem('store_aparatur', JSON.stringify(targetAparatur));
+      }
+    }).catch(() => {});
 
     axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`)
       .then(res => {
@@ -122,59 +117,44 @@ function Home() {
         }
       }).catch(() => {});
 
-    axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`)
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
-          const serverBerita = res.data;
-          const combinedMap = new Map();
-          serverBerita.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localBerita)) {
-            localBerita.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
-            });
-          }
-          const mergedBerita = Array.from(combinedMap.values());
-          setBeritaList(mergedBerita);
-          localStorage.setItem('store_berita', JSON.stringify(mergedBerita));
-        }
-      }).catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
+      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudBerita = resCloud?.data?.berita;
+      const serverBerita = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
+      const targetBerita = (Array.isArray(cloudBerita) && cloudBerita.length > 0) ? cloudBerita : serverBerita;
+      if (targetBerita && targetBerita.length > 0) {
+        setBeritaList(targetBerita);
+        localStorage.setItem('store_berita', JSON.stringify(targetBerita));
+      }
+    }).catch(() => {});
 
-    axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`)
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const localSarana = JSON.parse(localStorage.getItem('store_sarana') || '[]');
-          const serverSarana = res.data;
-          const combinedMap = new Map();
-          serverSarana.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localSarana)) {
-            localSarana.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
-            });
-          }
-          const mergedSarana = Array.from(combinedMap.values());
-          setSaranaList(mergedSarana);
-          localStorage.setItem('store_sarana', JSON.stringify(mergedSarana));
-        }
-      }).catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null),
+      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudSarana = resCloud?.data?.sarana;
+      const serverSarana = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
+      const targetSarana = (Array.isArray(cloudSarana) && cloudSarana.length > 0) ? cloudSarana : serverSarana;
+      if (targetSarana && targetSarana.length > 0) {
+        setSaranaList(targetSarana);
+        localStorage.setItem('store_sarana', JSON.stringify(targetSarana));
+      }
+    }).catch(() => {});
 
-    axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`)
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || '[]');
-          const serverDarurat = res.data;
-          const combinedMap = new Map();
-          serverDarurat.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localDarurat)) {
-            localDarurat.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
-            });
-          }
-          const mergedDarurat = Array.from(combinedMap.values());
-          setNomorDaruratList(mergedDarurat);
-          localStorage.setItem('store_nomor_darurat', JSON.stringify(mergedDarurat));
-        }
-      }).catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`).catch(() => null),
+      axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudDarurat = resCloud?.data?.nomor_darurat;
+      const serverDarurat = resApi?.data && Array.isArray(resApi.data) ? resApi.data : [];
+      const targetDarurat = (Array.isArray(cloudDarurat) && cloudDarurat.length > 0) ? cloudDarurat : serverDarurat;
+      if (targetDarurat && targetDarurat.length > 0) {
+        setNomorDaruratList(targetDarurat);
+        localStorage.setItem('store_nomor_darurat', JSON.stringify(targetDarurat));
+      }
+    }).catch(() => {});
 
     return () => {
       window.removeEventListener('storage', handleStorage);

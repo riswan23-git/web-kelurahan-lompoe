@@ -51,20 +51,18 @@ function Sarana() {
 
     const fetchSarana = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
-        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-          const localSarana = JSON.parse(localStorage.getItem('store_sarana') || '[]');
-          const serverSarana = response.data;
-          const combinedMap = new Map();
-          serverSarana.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-          if (Array.isArray(localSarana)) {
-            localSarana.forEach(item => {
-              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
-            });
-          }
-          const mergedSarana = Array.from(combinedMap.values());
-          setSaranaList(mergedSarana);
-          localStorage.setItem('store_sarana', JSON.stringify(mergedSarana));
+        const [response, resCloud] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null),
+          axios.get(`https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621?_t=${Date.now()}`).catch(() => null)
+        ]);
+
+        const cloudSarana = resCloud?.data?.sarana;
+        const serverSarana = response?.data && Array.isArray(response.data) ? response.data : [];
+        const targetSarana = (Array.isArray(cloudSarana) && cloudSarana.length > 0) ? cloudSarana : serverSarana;
+
+        if (targetSarana && targetSarana.length > 0) {
+          setSaranaList(targetSarana);
+          localStorage.setItem('store_sarana', JSON.stringify(targetSarana));
         }
       } catch (err) {
         console.error('Error fetching sarana:', err);

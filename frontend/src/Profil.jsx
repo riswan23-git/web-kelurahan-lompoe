@@ -78,22 +78,13 @@ function Profil() {
           axios.get('https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621').catch(() => null)
         ]);
 
-        const cloudAparatur = resCloud?.data?.aparatur || [];
-        const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+        const cloudAparatur = resCloud?.data?.aparatur;
         const serverAparatur = resAparatur?.data && Array.isArray(resAparatur.data) ? resAparatur.data : [];
+        const targetAparatur = (Array.isArray(cloudAparatur) && cloudAparatur.length > 0) ? cloudAparatur : serverAparatur;
 
-        const combinedMap = new Map();
-        serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
-        if (Array.isArray(cloudAparatur)) {
-          cloudAparatur.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
-        }
-        if (Array.isArray(localAparatur)) {
-          localAparatur.forEach(item => { if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item); });
-        }
-        const mergedList = Array.from(combinedMap.values());
-        if (mergedList.length > 0) {
-          setAparaturList(mergedList);
-          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
+        if (targetAparatur && targetAparatur.length > 0) {
+          setAparaturList(targetAparatur);
+          localStorage.setItem('store_aparatur', JSON.stringify(targetAparatur));
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
@@ -101,22 +92,13 @@ function Profil() {
           localStorage.setItem('store_info', JSON.stringify(resInfo.data));
         }
 
-        const cloudPkk = resCloud?.data?.pkk || [];
-        const localPkk = JSON.parse(localStorage.getItem('store_pkk') || '[]');
+        const cloudPkk = resCloud?.data?.pkk;
         const serverPkk = resPkk?.data && Array.isArray(resPkk.data) ? resPkk.data : [];
+        const targetPkk = (Array.isArray(cloudPkk) && cloudPkk.length > 0) ? cloudPkk : serverPkk;
 
-        const combinedPkkMap = new Map();
-        serverPkk.forEach(item => { if (item && item.id) combinedPkkMap.set(String(item.id), item); });
-        if (Array.isArray(cloudPkk)) {
-          cloudPkk.forEach(item => { if (item && item.id && !combinedPkkMap.has(String(item.id))) combinedPkkMap.set(String(item.id), item); });
-        }
-        if (Array.isArray(localPkk)) {
-          localPkk.forEach(item => { if (item && item.id && !combinedPkkMap.has(String(item.id))) combinedPkkMap.set(String(item.id), item); });
-        }
-        const mergedPkk = Array.from(combinedPkkMap.values());
-        if (mergedPkk.length > 0) {
-          setPkkWilayah(mergedPkk);
-          localStorage.setItem('store_pkk', JSON.stringify(mergedPkk));
+        if (targetPkk && targetPkk.length > 0) {
+          setPkkWilayah(targetPkk);
+          localStorage.setItem('store_pkk', JSON.stringify(targetPkk));
         }
       } catch (err) {
         console.error('Error fetching profil:', err);
