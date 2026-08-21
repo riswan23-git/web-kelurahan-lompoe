@@ -60,6 +60,7 @@ function Berita() {
 
     const fetchBerita = async () => {
       try {
+        localStorage.removeItem('deleted_berita_ids');
         const [response, resCloud] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
           axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
@@ -68,21 +69,30 @@ function Berita() {
         const serverBerita = response?.data && Array.isArray(response.data) ? response.data : [];
         const cloudBerita = resCloud?.data?.berita || [];
         const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
-        const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
 
-        let targetBerita = [];
-        if (Array.isArray(cloudBerita) && cloudBerita.length > 0) {
-          targetBerita = cloudBerita;
-        } else if (Array.isArray(serverBerita) && serverBerita.length > 0) {
-          targetBerita = serverBerita;
-        } else if (Array.isArray(localBerita) && localBerita.length > 0) {
-          targetBerita = localBerita;
+        const combinedMap = new Map();
+        if (Array.isArray(localBerita)) {
+          localBerita.forEach(item => {
+            if (item && item.id) combinedMap.set(String(item.id), item);
+          });
+        }
+        if (Array.isArray(cloudBerita)) {
+          cloudBerita.forEach(item => {
+            if (item && item.id) combinedMap.set(String(item.id), item);
+          });
+        }
+        if (Array.isArray(serverBerita)) {
+          serverBerita.forEach(item => {
+            if (item && item.id && !combinedMap.has(String(item.id))) {
+              combinedMap.set(String(item.id), item);
+            }
+          });
         }
 
-        const filteredList = targetBerita.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
-        if (filteredList.length > 0) {
-          setBeritaList(filteredList);
-          localStorage.setItem('store_berita', JSON.stringify(filteredList));
+        const mergedList = Array.from(combinedMap.values());
+        if (mergedList.length > 0) {
+          setBeritaList(mergedList);
+          localStorage.setItem('store_berita', JSON.stringify(mergedList));
         }
       } catch (err) {
         console.error('Error fetching berita:', err);
