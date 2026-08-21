@@ -350,33 +350,23 @@ function AdminDashboard() {
 
   const fetchAparatur = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-      const deletedIds = JSON.parse(localStorage.getItem('deleted_aparatur_ids') || '[]');
-      const res = await axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+      localStorage.removeItem('deleted_aparatur_ids');
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const cloudData = resCloud?.data?.aparatur;
+      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
+      const localData = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
 
-      const combinedMap = new Map();
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-      }
-      if (Array.isArray(apiData)) {
-        apiData.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            if (!combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          }
-        });
-      }
+      let active = [];
+      if (Array.isArray(cloudData) && cloudData.length > 0) active = cloudData;
+      else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
+      else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
-      const finalList = Array.from(combinedMap.values());
-      if (finalList.length > 0) {
-        setAparaturList(finalList);
-        localStorage.setItem('store_aparatur', JSON.stringify(finalList));
+      if (active.length > 0) {
+        setAparaturList(active);
+        localStorage.setItem('store_aparatur', JSON.stringify(active));
       }
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
@@ -386,31 +376,21 @@ function AdminDashboard() {
 
   const fetchPkk = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_pkk') || '[]');
-      const deletedIds = JSON.parse(localStorage.getItem('deleted_pkk_ids') || '[]');
-      const res = await axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+      localStorage.removeItem('deleted_pkk_ids');
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/pkk-wilayah?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const cloudData = resCloud?.data?.pkk;
+      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
+      const localData = JSON.parse(localStorage.getItem('store_pkk') || '[]');
 
-      const combinedMap = new Map();
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-      }
-      if (Array.isArray(apiData)) {
-        apiData.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            if (!combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          }
-        });
-      }
+      let active = [];
+      if (Array.isArray(cloudData) && cloudData.length > 0) active = cloudData;
+      else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
+      else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_PKK;
+      const resList = active.length > 0 ? active : DEFAULT_PKK;
       setPkkList(resList);
       localStorage.setItem('store_pkk', JSON.stringify(resList));
     } catch (err) {
@@ -421,31 +401,21 @@ function AdminDashboard() {
 
   const fetchBerita = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_berita') || '[]');
-      const deletedIds = JSON.parse(localStorage.getItem('deleted_berita_ids') || '[]');
-      const res = await axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+      localStorage.removeItem('deleted_berita_ids');
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const cloudData = resCloud?.data?.berita;
+      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
+      const localData = JSON.parse(localStorage.getItem('store_berita') || '[]');
 
-      const combinedMap = new Map();
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-      }
-      if (Array.isArray(apiData)) {
-        apiData.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            if (!combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          }
-        });
-      }
+      let active = [];
+      if (Array.isArray(cloudData) && cloudData.length > 0) active = cloudData;
+      else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
+      else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_BERITA;
+      const resList = active.length > 0 ? active : DEFAULT_BERITA;
       setBeritaList(resList);
       localStorage.setItem('store_berita', JSON.stringify(resList));
     } catch (err) {
@@ -478,31 +448,21 @@ function AdminDashboard() {
 
   const fetchSarana = async () => {
     try {
-      const local = JSON.parse(localStorage.getItem('store_sarana') || '[]');
-      const deletedIds = JSON.parse(localStorage.getItem('deleted_sarana_ids') || '[]');
-      const res = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
-      const apiData = res?.data && Array.isArray(res.data) ? res.data : [];
+      localStorage.removeItem('deleted_sarana_ids');
+      const [resServer, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const cloudData = resCloud?.data?.sarana;
+      const serverData = resServer?.data && Array.isArray(resServer.data) ? resServer.data : [];
+      const localData = JSON.parse(localStorage.getItem('store_sarana') || '[]');
 
-      const combinedMap = new Map();
-      if (Array.isArray(local)) {
-        local.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            combinedMap.set(String(item.id), item);
-          }
-        });
-      }
-      if (Array.isArray(apiData)) {
-        apiData.forEach(item => {
-          if (item && item.id && !deletedIds.includes(String(item.id))) {
-            if (!combinedMap.has(String(item.id))) {
-              combinedMap.set(String(item.id), item);
-            }
-          }
-        });
-      }
+      let active = [];
+      if (Array.isArray(cloudData) && cloudData.length > 0) active = cloudData;
+      else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
+      else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
-      const finalList = Array.from(combinedMap.values());
-      const resList = finalList.length > 0 ? finalList : DEFAULT_SARANA;
+      const resList = active.length > 0 ? active : DEFAULT_SARANA;
       setSaranaList(resList);
       localStorage.setItem('store_sarana', JSON.stringify(resList));
     } catch (err) {
