@@ -94,13 +94,23 @@ function Home() {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('lompoe_store_update', handleCustomStore);
 
-    // Fetch API in background
+    // Fetch API in background with smart merge
     axios.get(`${API_BASE_URL}/api/aparatur?_t=${Date.now()}`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          const apiLurah = res.data.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || res.data[0];
+          const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+          const serverAparatur = res.data;
+          const combinedMap = new Map();
+          serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localAparatur)) {
+            localAparatur.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
+            });
+          }
+          const mergedList = Array.from(combinedMap.values());
+          const apiLurah = mergedList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || mergedList[0];
           setLurah(apiLurah || null);
-          localStorage.setItem('store_aparatur', JSON.stringify(res.data));
+          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
       }).catch(() => {});
 
@@ -115,24 +125,54 @@ function Home() {
     axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          setBeritaList(res.data);
-          localStorage.setItem('store_berita', JSON.stringify(res.data));
+          const localBerita = JSON.parse(localStorage.getItem('store_berita') || '[]');
+          const serverBerita = res.data;
+          const combinedMap = new Map();
+          serverBerita.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localBerita)) {
+            localBerita.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
+            });
+          }
+          const mergedBerita = Array.from(combinedMap.values());
+          setBeritaList(mergedBerita);
+          localStorage.setItem('store_berita', JSON.stringify(mergedBerita));
         }
       }).catch(() => {});
 
     axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          setSaranaList(res.data);
-          localStorage.setItem('store_sarana', JSON.stringify(res.data));
+          const localSarana = JSON.parse(localStorage.getItem('store_sarana') || '[]');
+          const serverSarana = res.data;
+          const combinedMap = new Map();
+          serverSarana.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localSarana)) {
+            localSarana.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
+            });
+          }
+          const mergedSarana = Array.from(combinedMap.values());
+          setSaranaList(mergedSarana);
+          localStorage.setItem('store_sarana', JSON.stringify(mergedSarana));
         }
       }).catch(() => {});
 
     axios.get(`${API_BASE_URL}/api/nomor-darurat?_t=${Date.now()}`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          setNomorDaruratList(res.data);
-          localStorage.setItem('store_nomor_darurat', JSON.stringify(res.data));
+          const localDarurat = JSON.parse(localStorage.getItem('store_nomor_darurat') || '[]');
+          const serverDarurat = res.data;
+          const combinedMap = new Map();
+          serverDarurat.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localDarurat)) {
+            localDarurat.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
+            });
+          }
+          const mergedDarurat = Array.from(combinedMap.values());
+          setNomorDaruratList(mergedDarurat);
+          localStorage.setItem('store_nomor_darurat', JSON.stringify(mergedDarurat));
         }
       }).catch(() => {});
 

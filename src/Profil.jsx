@@ -78,8 +78,20 @@ function Profil() {
         ]);
 
         if (resAparatur?.data && Array.isArray(resAparatur.data) && resAparatur.data.length > 0) {
-          setAparaturList(resAparatur.data);
-          localStorage.setItem('store_aparatur', JSON.stringify(resAparatur.data));
+          const localAparatur = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
+          const serverAparatur = resAparatur.data;
+          const combinedMap = new Map();
+          serverAparatur.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localAparatur)) {
+            localAparatur.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) {
+                combinedMap.set(String(item.id), item);
+              }
+            });
+          }
+          const mergedList = Array.from(combinedMap.values());
+          setAparaturList(mergedList);
+          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
 
         if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
@@ -88,8 +100,20 @@ function Profil() {
         }
 
         if (resPkk?.data && Array.isArray(resPkk.data) && resPkk.data.length > 0) {
-          setPkkWilayah(resPkk.data);
-          localStorage.setItem('store_pkk', JSON.stringify(resPkk.data));
+          const localPkk = JSON.parse(localStorage.getItem('store_pkk') || '[]');
+          const serverPkk = resPkk.data;
+          const combinedMap = new Map();
+          serverPkk.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localPkk)) {
+            localPkk.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) {
+                combinedMap.set(String(item.id), item);
+              }
+            });
+          }
+          const mergedPkk = Array.from(combinedMap.values());
+          setPkkWilayah(mergedPkk);
+          localStorage.setItem('store_pkk', JSON.stringify(mergedPkk));
         }
       } catch (err) {
         console.error('Error fetching profil:', err);

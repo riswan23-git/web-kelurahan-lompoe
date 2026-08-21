@@ -53,8 +53,18 @@ function Sarana() {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/sarana?_t=${Date.now()}`).catch(() => null);
         if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-          setSaranaList(response.data);
-          localStorage.setItem('store_sarana', JSON.stringify(response.data));
+          const localSarana = JSON.parse(localStorage.getItem('store_sarana') || '[]');
+          const serverSarana = response.data;
+          const combinedMap = new Map();
+          serverSarana.forEach(item => { if (item && item.id) combinedMap.set(String(item.id), item); });
+          if (Array.isArray(localSarana)) {
+            localSarana.forEach(item => {
+              if (item && item.id && !combinedMap.has(String(item.id))) combinedMap.set(String(item.id), item);
+            });
+          }
+          const mergedSarana = Array.from(combinedMap.values());
+          setSaranaList(mergedSarana);
+          localStorage.setItem('store_sarana', JSON.stringify(mergedSarana));
         }
       } catch (err) {
         console.error('Error fetching sarana:', err);
