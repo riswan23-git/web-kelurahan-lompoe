@@ -39,6 +39,21 @@ function saveCmsDiskStore() {
             info: store.info
         };
         fs.writeFileSync(cmsTmpFilePath, JSON.stringify(payload), 'utf8');
+
+        // Async Push to External Cloud Store for Real-time Multi-Device Sync (Laptop <-> HP)
+        const CRUD_URL = 'https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621';
+        const cloudPayload = JSON.stringify({ store_name: 'LompoeCMS', ...payload });
+        const req = https.request(CRUD_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0',
+                'Content-Length': Buffer.byteLength(cloudPayload)
+            }
+        }, () => {});
+        req.on('error', () => {});
+        req.write(cloudPayload);
+        req.end();
     } catch (e) {}
 }
 

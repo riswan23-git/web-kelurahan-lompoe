@@ -2,8 +2,13 @@ const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
 
 const cmsTmpFilePath = path.join(os.tmpdir(), 'lompoe_cms_store.json');
+const CRUD_URL = 'https://crudcrud.com/api/654bc1c4f69b4b1aa3bf7395667c852b/cms_store/6a87f9c0310bbb03e8acb621';
+
+let inMemoryCloudData = null;
+let lastFetchTime = 0;
 
 function syncCmsDiskStore() {
     try {
@@ -24,12 +29,57 @@ function syncCmsDiskStore() {
     } catch (e) {}
 }
 
-module.exports = (req, res) => {
+function fetchFromExternalCloud() {
+    return new Promise((resolve) => {
+        if (inMemoryCloudData && (Date.now() - lastFetchTime < 3000)) {
+            return resolve(inMemoryCloudData);
+        }
+        const req = https.request(CRUD_URL, {
+            method: 'GET',
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        }, (res) => {
+            let body = '';
+            res.on('data', c => body += c);
+            res.on('end', () => {
+                try {
+                    if (res.statusCode === 200) {
+                        const parsed = JSON.parse(body);
+                        delete parsed._id;
+                        delete parsed.store_name;
+                        inMemoryCloudData = parsed;
+                        lastFetchTime = Date.now();
+                        resolve(parsed);
+                    } else {
+                        resolve(null);
+                    }
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        });
+        req.on('error', () => resolve(null));
+        req.end();
+    });
+}
+
+module.exports = async (req, res) => {
     syncCmsDiskStore();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    const cloudData = await fetchFromExternalCloud();
+    if (cloudData) {
+        if (Array.isArray(cloudData.aparatur) && cloudData.aparatur.length > 0) store.aparatur = cloudData.aparatur;
+        if (Array.isArray(cloudData.pkk) && cloudData.pkk.length > 0) store.pkk = cloudData.pkk;
+        if (Array.isArray(cloudData.berita) && cloudData.berita.length > 0) store.berita = cloudData.berita;
+        if (Array.isArray(cloudData.sarana) && cloudData.sarana.length > 0) store.sarana = cloudData.sarana;
+        if (Array.isArray(cloudData.nomor_darurat) && cloudData.nomor_darurat.length > 0) store.nomor_darurat = cloudData.nomor_darurat;
+        if (Array.isArray(cloudData.kontak_rt) && cloudData.kontak_rt.length > 0) store.kontak_rt = cloudData.kontak_rt;
+        if (cloudData.statistik) store.statistik = cloudData.statistik;
+        if (cloudData.info) store.info = cloudData.info;
+    }
 
     const url = req.url || '';
 
