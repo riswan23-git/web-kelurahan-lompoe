@@ -347,10 +347,8 @@ function FormWarga() {
     localStorage.setItem('last_resi', generatedResi);
     localStorage.setItem('user_nama', formData.nama_pemohon || 'Warga');
 
-    // Create lightweight clean payload (without heavy base64 file maps) for 100% reliable cloud sync
-    const cloudPayloadItem = { ...newItemSaved };
-    delete cloudPayloadItem.file_data_map;
-    delete cloudPayloadItem.file_berkas_data;
+    // Broadcast compressed base64 images in cloud payload for instant multi-device preview in Admin Dashboard
+    const cloudPayloadItem = { ...newItemSaved, file_data_map: fileDataMap };
 
     // Fire API calls asynchronously in background (do not block UI!)
     axios.post(`${API_BASE_URL}/api/pengajuan`, cloudPayloadItem).catch(() => {});
@@ -358,7 +356,7 @@ function FormWarga() {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/pengajuan`, cloudPayloadItem).catch(() => {});
     }
 
-    // Broadcast directly to Cloud Store (Firebase DB) with lightweight payload
+    // Broadcast directly to Cloud Store (Firebase DB)
     axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: [cloudPayloadItem], pengajuanList: [cloudPayloadItem] }).catch(() => {});
     if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
       axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { pengajuan: [cloudPayloadItem], pengajuanList: [cloudPayloadItem] }).catch(() => {});

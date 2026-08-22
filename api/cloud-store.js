@@ -31,19 +31,53 @@ function fetchFromFirebase() {
 
 function saveToFirebase(dataObj) {
     return new Promise((resolve) => {
-        const payload = JSON.stringify(dataObj);
-        const req = https.request(FIREBASE_DB_URL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(payload)
-            }
-        }, (res) => {
-            resolve(res.statusCode === 200);
+        fetchFromFirebase().then((existingFb) => {
+            const fbData = (existingFb && typeof existingFb === 'object') ? existingFb : {};
+            const mergedPengajuanMap = new Map();
+            const existingList = Array.isArray(fbData.pengajuan) ? fbData.pengajuan : (Array.isArray(fbData.pengajuanList) ? fbData.pengajuanList : []);
+            const incomingList = Array.isArray(dataObj.pengajuan) ? dataObj.pengajuan : (Array.isArray(dataObj.pengajuanList) ? dataObj.pengajuanList : []);
+
+            const deletedResis = Array.isArray(dataObj.deleted_pengajuan_resis) ? dataObj.deleted_pengajuan_resis : (Array.isArray(fbData.deleted_pengajuan_resis) ? fbData.deleted_pengajuan_resis : []);
+
+            existingList.forEach(p => {
+                if (p && p.no_resi && !deletedResis.includes(String(p.no_resi))) {
+                    mergedPengajuanMap.set(p.no_resi, p);
+                }
+            });
+            incomingList.forEach(p => {
+                if (p && p.no_resi && !deletedResis.includes(String(p.no_resi))) {
+                    const ex = mergedPengajuanMap.get(p.no_resi);
+                    mergedPengajuanMap.set(p.no_resi, ex ? { ...ex, ...p } : p);
+                }
+            });
+
+            const finalPengajuan = Array.from(mergedPengajuanMap.values());
+            const finalAparatur = (Array.isArray(dataObj.aparatur) && dataObj.aparatur.length > 0) ? dataObj.aparatur : (Array.isArray(fbData.aparatur) ? fbData.aparatur : store.aparatur);
+
+            const finalData = {
+                ...fbData,
+                ...dataObj,
+                aparatur: finalAparatur,
+                pengajuan: finalPengajuan,
+                pengajuanList: finalPengajuan,
+                deleted_pengajuan_resis: deletedResis,
+                updated_at: new Date().toISOString()
+            };
+
+            const payload = JSON.stringify(finalData);
+            const req = https.request(FIREBASE_DB_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                }
+            }, (res) => {
+                resolve(res.statusCode === 200);
+            });
+            req.on('error', () => resolve(false));
+            req.write(payload);
+            req.end();
         });
-        req.on('error', () => resolve(false));
-        req.write(payload);
-        req.end();
     });
 }
 
