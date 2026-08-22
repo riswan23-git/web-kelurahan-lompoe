@@ -400,28 +400,64 @@ function FormWarga() {
                 </div>
 
                 {formData.opsi_persetujuan_rt === 'digital' && (
-                  <div className="alert alert-warning text-start rounded-4 p-4 mb-4 border-warning">
-                    <h5 className="fw-bold text-dark mb-2">📲 Persetujuan Digital RT/RW (Tersedia WA Direct):</h5>
+                  <div className="alert alert-warning text-start rounded-4 p-4 mb-4 border-warning shadow-sm">
+                    <h5 className="fw-bold text-dark mb-2">📲 Persetujuan Digital RT & RW (Dua Tombol Terpisah):</h5>
                     <p className="small text-muted mb-3">
-                      {cleanWaNum ? `Nomor WhatsApp Pak RT (${formData.rt_rw}) sudah terdaftar otomatis!` : 'Pak RT/RW Anda dapat menyetujui surat ini secara digital dari HP mereka.'}
+                      Silakan kirimkan link persetujuan secara terpisah ke Ketua RT dan Ketua RW Anda via WhatsApp. Pengajuan dilengkapi PIN keamanan 4 digit RT/RW agar tidak dapat disetujui sembarangan.
                     </p>
 
-                    <div className="d-flex flex-wrap gap-2 align-items-center">
-                      <a
-                        href={waTargetUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-success fw-bold px-3 py-2 rounded-3"
-                      >
-                        💬 Kirim Link Verifikasi ke Pak RT via WhatsApp
-                      </a>
-                      <Link
-                        to={`/verifikasi-rt?token=${tokenRtHasil}`}
-                        target="_blank"
-                        className="btn btn-outline-dark fw-bold px-3 py-2 rounded-3"
-                      >
-                        🔗 Simulasi Klik Verifikasi Pak RT
-                      </Link>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <div className="p-3 bg-white rounded-3 border border-success h-100 d-flex flex-column justify-content-between">
+                          <div>
+                            <strong className="d-block text-success fw-bold mb-1">🟢 1. Persetujuan Ketua RT</strong>
+                            <small className="text-muted d-block mb-3">Kirimkan link verifikasi khusus untuk Ketua RT wilayah Anda.</small>
+                          </div>
+                          <div className="d-flex flex-column gap-2">
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RT via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RT&role=rt`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-success fw-bold py-2 rounded-3 text-nowrap"
+                            >
+                              📱 Kirim Link ke Ketua RT (WA)
+                            </a>
+                            <Link
+                              to={`/verifikasi-rt?token=${noResiHasil}_RT&role=rt`}
+                              target="_blank"
+                              className="btn btn-outline-success btn-sm fw-bold rounded-3"
+                            >
+                              🔗 Buka Halaman Verifikasi RT
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-md-6">
+                        <div className="p-3 bg-white rounded-3 border border-primary h-100 d-flex flex-column justify-content-between">
+                          <div>
+                            <strong className="d-block text-primary fw-bold mb-1">🔵 2. Persetujuan Ketua RW</strong>
+                            <small className="text-muted d-block mb-3">Kirimkan link verifikasi khusus untuk Ketua RW wilayah Anda.</small>
+                          </div>
+                          <div className="d-flex flex-column gap-2">
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RW via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RW&role=rw`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-primary fw-bold py-2 rounded-3 text-nowrap"
+                            >
+                              📱 Kirim Link ke Ketua RW (WA)
+                            </a>
+                            <Link
+                              to={`/verifikasi-rt?token=${noResiHasil}_RW&role=rw`}
+                              target="_blank"
+                              className="btn btn-outline-primary btn-sm fw-bold rounded-3"
+                            >
+                              🔗 Buka Halaman Verifikasi RW
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

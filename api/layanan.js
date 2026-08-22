@@ -525,20 +525,37 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         }
 
         if (req.method === 'POST') {
-            const statusRtNew = body.keputusan === 'SETUJUI' ? 'Disetujui RT/RW' : 'Ditolak RT/RW';
-            found.status_rt = statusRtNew + (body.nama_rt_rw ? ` (${body.nama_rt_rw})` : '');
-            found.catatan_rt = body.catatan_rt || '';
-            found.tgl_disetujui_rt = new Date().toISOString();
+            const isRw = body.role === 'rw' || token.includes('_RW');
+            const statusNew = body.keputusan === 'SETUJUI' 
+                ? (isRw ? `Disetujui RW (${body.nama_rt_rw || 'Ketua RW'})` : `Disetujui RT (${body.nama_rt_rw || 'Ketua RT'})`) 
+                : (isRw ? 'Ditolak RW' : 'Ditolak RT');
 
-            const storeIdx = store.pengajuanList.findIndex(p => p.no_resi === found.no_resi || p.token_rt === token);
+            if (isRw) {
+                found.status_rw = statusNew;
+                found.catatan_rw = body.catatan_rt || body.catatan_rw || '';
+                found.tgl_disetujui_rw = new Date().toISOString();
+            } else {
+                found.status_rt = statusNew;
+                found.catatan_rt = body.catatan_rt || '';
+                found.tgl_disetujui_rt = new Date().toISOString();
+            }
+
+            const storeIdx = store.pengajuanList.findIndex(p => p && (p.no_resi === found.no_resi || p.token_rt === token || p.token_rw === token));
             if (storeIdx >= 0) {
                 store.pengajuanList[storeIdx] = found;
             } else {
                 store.pengajuanList.unshift(found);
             }
+
+            if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
+                const cIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi === found.no_resi || p.token_rt === token || p.token_rw === token));
+                if (cIdx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[cIdx] = found;
+                else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(found);
+            }
+
             saveDiskStore();
 
-            return res.status(200).json({ success: true, message: `Persetujuan RT/RW (${statusRtNew}) berhasil disimpan!`, data: found });
+            return res.status(200).json({ success: true, message: `Persetujuan ${isRw ? 'Ketua RW' : 'Ketua RT'} (${statusNew}) berhasil disimpan!`, data: found });
         }
 
         return res.status(200).json(found);

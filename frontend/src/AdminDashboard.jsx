@@ -1168,9 +1168,14 @@ function AdminDashboard() {
                                 <small className="text-muted d-inline-block text-truncate" style={{ maxWidth: '180px' }}>{item.nama_acara || item.keperluan}</small>
                               </td>
                               <td>
-                                <span className={`badge ${item.status_rt?.includes('Disetujui') ? 'bg-success' : 'bg-warning text-dark'}`}>
-                                  {item.status_rt || 'Menunggu Verifikasi RT/RW'}
-                                </span>
+                                <div className="d-flex flex-column gap-1">
+                                  <span className={`badge ${item.status_rt?.includes('Disetujui') ? 'bg-success' : (item.status_rt?.includes('Ditolak') ? 'bg-danger' : 'bg-warning text-dark')}`}>
+                                    RT: {item.status_rt || 'Menunggu Verifikasi RT'}
+                                  </span>
+                                  <span className={`badge ${item.status_rw?.includes('Disetujui') ? 'bg-success' : (item.status_rw?.includes('Ditolak') ? 'bg-danger' : 'bg-warning text-dark')}`}>
+                                    RW: {item.status_rw || 'Menunggu Verifikasi RW'}
+                                  </span>
+                                </div>
                               </td>
                               <td>
                                 <span className={`badge ${item.status === 'Disetujui/Siap Diambil' || item.status === 'Selesai' ? 'bg-success' :
