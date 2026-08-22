@@ -761,11 +761,15 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
         saveDiskStore();
 
-        if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
-            const idx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi == item.no_resi || p.id == item.id));
-            if (idx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[idx] = item;
-            else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(item);
-        }
+        if (!global.__LOMPOE_CLOUD_STORE__) global.__LOMPOE_CLOUD_STORE__ = store;
+        if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) global.__LOMPOE_CLOUD_STORE__.pengajuan = [];
+        const idx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi == item.no_resi || p.id == item.id));
+        if (idx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[idx] = item;
+        else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(item);
+        global.__LOMPOE_CLOUD_STORE__.pengajuanList = global.__LOMPOE_CLOUD_STORE__.pengajuan;
+
+        // Persist update to Firebase Realtime DB immediately
+        saveToFirebase(global.__LOMPOE_CLOUD_STORE__).catch(() => {});
 
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!', data: item });
     }
@@ -774,10 +778,23 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         let resiFromUrl = url.split('pengajuan/')[1] || '';
         resiFromUrl = resiFromUrl.split('?')[0].trim();
         store.pengajuanList = store.pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
-        if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
-            global.__LOMPOE_CLOUD_STORE__.pengajuan = global.__LOMPOE_CLOUD_STORE__.pengajuan.filter(p => p && p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        
+        if (!global.__LOMPOE_CLOUD_STORE__) global.__LOMPOE_CLOUD_STORE__ = store;
+        if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) global.__LOMPOE_CLOUD_STORE__.pengajuan = [];
+        if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.deleted_pengajuan_resis)) global.__LOMPOE_CLOUD_STORE__.deleted_pengajuan_resis = [];
+
+        if (resiFromUrl && !global.__LOMPOE_CLOUD_STORE__.deleted_pengajuan_resis.includes(String(resiFromUrl))) {
+            global.__LOMPOE_CLOUD_STORE__.deleted_pengajuan_resis.push(String(resiFromUrl));
         }
+
+        global.__LOMPOE_CLOUD_STORE__.pengajuan = global.__LOMPOE_CLOUD_STORE__.pengajuan.filter(p => p && p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        global.__LOMPOE_CLOUD_STORE__.pengajuanList = global.__LOMPOE_CLOUD_STORE__.pengajuan;
+        
         saveDiskStore();
+
+        // Persist deletion to Firebase Realtime DB immediately
+        saveToFirebase(global.__LOMPOE_CLOUD_STORE__).catch(() => {});
+
         return res.status(200).json({ success: true, message: 'Pengajuan berhasil dihapus!' });
     }
 

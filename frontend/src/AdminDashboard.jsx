@@ -595,18 +595,17 @@ function AdminDashboard() {
       setPengajuanList(updatedListState);
       localStorage.setItem('all_pengajuan', JSON.stringify(updatedListState));
 
+      // Broadcast update to Firebase Cloud DB so citizens & other devices see the uploaded file
+      syncCmsCloud('pengajuan', updatedListState);
+
       showNotif(`Status pengajuan #${modalUpdate.no_resi} berhasil diperbarui! Dokumen hasil telah diteruskan ke warga.`);
       setModalUpdate(null);
 
-      // Async backend sync to serverless disk store (preserving all item fields)
-      axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, {
-        ...modalUpdate,
-        status: statusBaru,
-        status_kelurahan: statusBaru,
-        catatan_admin: catatanAdmin,
-        file_hasil: fileNameToSave,
-        file_hasil_data: fileHasilB64
-      }).catch(err => console.log('Background admin status PUT notification done.'));
+      // Async backend sync to serverless disk store
+      axios.put(`${API_BASE_URL}/api/admin/pengajuan/${modalUpdate.no_resi}`, updatedItem).catch(() => {});
+      if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+        axios.put(`https://web-kelurahan-lompoe.vercel.app/api/admin/pengajuan/${modalUpdate.no_resi}`, updatedItem).catch(() => {});
+      }
 
     } catch (err) {
       console.error('Error in handleSavePengajuan:', err);
@@ -619,6 +618,9 @@ function AdminDashboard() {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data pengajuan ${no_resi}? Data dan riwayat pesan akan dihapus permanen.`)) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/pengajuan/${no_resi}`);
+        if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+          axios.delete(`https://web-kelurahan-lompoe.vercel.app/api/admin/pengajuan/${no_resi}`).catch(() => {});
+        }
       } catch (err) { }
 
       // Remove from localStorage all_pengajuan
@@ -633,8 +635,11 @@ function AdminDashboard() {
       }
 
       // Sync deletion to Cloud Store (Firebase DB)
-      syncCmsCloud('deleted_pengajuan_resis', deletedResis);
-      syncCmsCloud('pengajuan', updatedLocal);
+      const payloadCloud = { deleted_pengajuan_resis: deletedResis, pengajuan: updatedLocal, pengajuanList: updatedLocal };
+      axios.post(`${API_BASE_URL}/api/cloud-store`, payloadCloud).catch(() => {});
+      if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+        axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, payloadCloud).catch(() => {});
+      }
 
       // Remove from React State immediately
       setPengajuanList(prev => prev.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi));

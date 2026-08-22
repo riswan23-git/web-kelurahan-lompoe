@@ -115,24 +115,30 @@ module.exports = async (req, res) => {
 
         const incomingPengajuan = body.pengajuan || body.pengajuanList;
         if (incomingPengajuan && Array.isArray(incomingPengajuan)) {
-            const combinedMap = new Map();
-            const existingRaw = currentStore.pengajuan || currentStore.pengajuanList || [];
-            existingRaw.forEach(p => {
-                if (p && p.no_resi) combinedMap.set(p.no_resi, p);
-            });
-            incomingPengajuan.forEach(p => {
-                if (p && p.no_resi) {
-                    const existing = combinedMap.get(p.no_resi);
-                    if (existing) {
-                        const finalNama = (existing.nama_pemohon && existing.nama_pemohon !== 'Pemohon RT/RW') ? existing.nama_pemohon : (p.nama_pemohon || existing.nama_pemohon);
-                        combinedMap.set(p.no_resi, { ...existing, ...p, nama_pemohon: finalNama });
-                    } else {
-                        combinedMap.set(p.no_resi, p);
+            let mergedList = [];
+            if (body.deleted_pengajuan_resis && Array.isArray(body.deleted_pengajuan_resis)) {
+                mergedList = incomingPengajuan.filter(p => p && p.no_resi && !currentStore.deleted_pengajuan_resis.includes(String(p.no_resi)));
+            } else {
+                const combinedMap = new Map();
+                const existingRaw = currentStore.pengajuan || currentStore.pengajuanList || [];
+                existingRaw.forEach(p => {
+                    if (p && p.no_resi) combinedMap.set(p.no_resi, p);
+                });
+                incomingPengajuan.forEach(p => {
+                    if (p && p.no_resi) {
+                        const existing = combinedMap.get(p.no_resi);
+                        if (existing) {
+                            const finalNama = (existing.nama_pemohon && existing.nama_pemohon !== 'Pemohon RT/RW') ? existing.nama_pemohon : (p.nama_pemohon || existing.nama_pemohon);
+                            combinedMap.set(p.no_resi, { ...existing, ...p, nama_pemohon: finalNama });
+                        } else {
+                            combinedMap.set(p.no_resi, p);
+                        }
                     }
-                }
-            });
+                });
 
-            let mergedList = Array.from(combinedMap.values());
+                mergedList = Array.from(combinedMap.values());
+            }
+
             if (currentStore.deleted_pengajuan_resis.length > 0) {
                 mergedList = mergedList.filter(p => p && !currentStore.deleted_pengajuan_resis.includes(String(p.no_resi)));
             }
