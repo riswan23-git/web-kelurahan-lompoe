@@ -664,7 +664,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             const berkasStr = body.file_berkas || 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf';
 
             const newItem = {
-                id: Date.now(),
+                ...body,
+                id: body.id || Date.now(),
                 no_resi: resi,
                 nomor_resi: resi,
                 nama_pemohon: namaPemohon,
@@ -684,10 +685,12 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 nama_acara: body.nama_acara || keperluan,
                 tanggal_acara: body.tanggal_acara || 'Senin, 24 Agustus 2026',
                 lokasi_acara: body.lokasi_acara || body.alamat || 'Kediaman Pemohon',
-                status_rt: body.status_rt || (body.opsi_persetujuan_rt === 'upload' ? 'Disetujui Manual (Surat Pengantar RT)' : 'Menunggu Verifikasi RT/RW'),
-                status_kelurahan: 'Pending',
-                status: 'Pending',
+                status_rt: body.status_rt || 'Menunggu Verifikasi RT',
+                status_rw: body.status_rw || 'Menunggu Verifikasi RW',
+                status_kelurahan: body.status_kelurahan || body.status || 'Progres',
+                status: body.status || body.status_kelurahan || 'Progres',
                 token_rt: tokenRt,
+                token_rw: body.token_rw || (resi + '_RW'),
                 tgl_pengajuan: todayStr,
                 tanggal_pengajuan: todayStr,
                 tanggal: todayStr,
