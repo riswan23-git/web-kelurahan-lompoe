@@ -613,18 +613,26 @@ function AdminDashboard() {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data pengajuan ${no_resi}? Data dan riwayat pesan akan dihapus permanen.`)) {
       try {
         await axios.delete(`${API_BASE_URL}/api/admin/pengajuan/${no_resi}`);
-      } catch (err) {
-        console.error('Server delete error, executing local delete:', err);
-      }
+      } catch (err) { }
 
       // Remove from localStorage all_pengajuan
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
       const updatedLocal = localData.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi);
       localStorage.setItem('all_pengajuan', JSON.stringify(updatedLocal));
 
+      const deletedResis = JSON.parse(localStorage.getItem('deleted_pengajuan_resis') || '[]');
+      if (!deletedResis.includes(String(no_resi))) {
+        deletedResis.push(String(no_resi));
+        localStorage.setItem('deleted_pengajuan_resis', JSON.stringify(deletedResis));
+      }
+
+      // Sync deletion to Cloud Store (Firebase DB)
+      syncCmsCloud('deleted_pengajuan_resis', deletedResis);
+      syncCmsCloud('pengajuan', updatedLocal);
+
       // Remove from React State immediately
       setPengajuanList(prev => prev.filter(i => i.no_resi !== no_resi && i.id !== no_resi && i.nomor_resi !== no_resi));
-      showNotif(`Pengajuan ${no_resi} berhasil dihapus permanen!`);
+      showNotif(`Pengajuan ${no_resi} berhasil dihapus & disinkronkan ke seluruh perangkat!`);
     }
   };
 

@@ -345,14 +345,21 @@ function FormWarga() {
     localStorage.setItem('user_nama', formData.nama_pemohon || 'Warga');
 
     // Fire API call asynchronously in background (do not block UI!)
-    const finalSyncItem = { ...payload, no_resi: generatedResi, token_rt: generatedToken, status_rt: initialRtStatus, file_data_map: fileDataMap };
-    axios.post(`${API_BASE_URL}/api/pengajuan`, finalSyncItem).catch(err => console.log('Background sync notification done.'));
+    const finalSyncItem = { ...newItemSaved, file_data_map: fileDataMap };
+    axios.post(`${API_BASE_URL}/api/pengajuan`, finalSyncItem).catch(() => {});
     
-    // Broadcast to Cloud Store so all devices (Chrome, Edge, HP) see the letter submission
-    axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: updatedLocalList }).catch(() => {});
-    if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
-      axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { pengajuan: updatedLocalList }).catch(() => {});
-    }
+    // Broadcast to Cloud Store (Firebase DB) so all devices (Chrome, Edge, HP) see the letter submission
+    axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).then(resCloud => {
+      const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudList = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : [];
+      const updatedCloudList = [newItemSaved, ...cloudList.filter(i => i && i.no_resi !== generatedResi)];
+      axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: updatedCloudList }).catch(() => {});
+      if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+        axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { pengajuan: updatedCloudList }).catch(() => {});
+      }
+    }).catch(() => {
+      axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: [newItemSaved] }).catch(() => {});
+    });
   };
 
   const targetRtObj = Array.isArray(listKontakRt) ? listKontakRt.find(k => k && k.rt_rw === formData.rt_rw) : null;
