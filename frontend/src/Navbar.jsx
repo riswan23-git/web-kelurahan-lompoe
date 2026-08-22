@@ -38,14 +38,18 @@ function Navbar() {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('lompoe_store_update', handleCustomStore);
 
-    axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
-      .then(res => {
-        if (res.data && Object.keys(res.data).length > 0) {
-          setInfo(res.data);
-          localStorage.setItem('store_info', JSON.stringify(res.data));
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudInfo = cloudStoreObj.info || resCloud?.data?.info;
+      const targetInfo = (cloudInfo && Object.keys(cloudInfo).length > 0) ? cloudInfo : resApi?.data;
+      if (targetInfo && Object.keys(targetInfo).length > 0) {
+        setInfo(targetInfo);
+        localStorage.setItem('store_info', JSON.stringify(targetInfo));
+      }
+    }).catch(() => {});
 
     return () => {
       window.removeEventListener('storage', handleStorage);
@@ -56,6 +60,10 @@ function Navbar() {
   const handleNavClick = () => {
     setIsNavCollapsed(true);
   };
+
+  const igValue = info.instagram || '@kelurahan_lompoe';
+  const igUrl = igValue.startsWith('http') ? igValue : `https://instagram.com/${igValue.replace('@', '').trim()}`;
+  const igLabel = igValue.includes('instagram.com') ? '@' + igValue.split('instagram.com/')[1].replace('/', '') : (igValue.startsWith('@') ? igValue : '@' + igValue);
 
   return (
     <>
@@ -72,6 +80,9 @@ function Navbar() {
           <div className="d-none d-lg-flex align-items-center gap-3 text-white ms-3 small shrink-0">
             <span style={{ color: '#ffffff' }}><i className="bi bi-geo-alt-fill text-warning me-1"></i> Bacukiki, Parepare</span>
             <span style={{ color: '#ffffff' }}><i className="bi bi-telephone-fill text-success me-1"></i> {info.telepon_kantor || '(0421) 123456'}</span>
+            <a href={igUrl} target="_blank" rel="noopener noreferrer" className="text-white text-decoration-none">
+              <i className="bi bi-instagram text-danger me-1"></i> {igLabel}
+            </a>
           </div>
         </div>
       </div>

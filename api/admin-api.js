@@ -271,20 +271,26 @@ module.exports = async (req, res) => {
     if (url.includes('statistik')) {
         if (method === 'POST' || method === 'PUT') {
             Object.assign(store.statistik, body);
+            if (global.__LOMPOE_CLOUD_STORE__) {
+                global.__LOMPOE_CLOUD_STORE__.statistik = { ...global.__LOMPOE_CLOUD_STORE__.statistik, ...body };
+            }
             saveCmsDiskStore();
             return res.status(200).json({ success: true, message: 'Statistik berhasil diperbarui!', data: store.statistik });
         }
-        return res.status(200).json(store.statistik);
+        return res.status(200).json((global.__LOMPOE_CLOUD_STORE__ && global.__LOMPOE_CLOUD_STORE__.statistik) || store.statistik);
     }
 
     // 8. INFO KELURAHAN & BATAS WILAYAH
     if (url.includes('info')) {
         if (method === 'POST' || method === 'PUT') {
             Object.assign(store.info, body);
+            if (global.__LOMPOE_CLOUD_STORE__) {
+                global.__LOMPOE_CLOUD_STORE__.info = { ...global.__LOMPOE_CLOUD_STORE__.info, ...body };
+            }
             saveCmsDiskStore();
             return res.status(200).json({ success: true, message: 'Informasi kelurahan berhasil diperbarui!', data: store.info });
         }
-        return res.status(200).json(store.info);
+        return res.status(200).json((global.__LOMPOE_CLOUD_STORE__ && global.__LOMPOE_CLOUD_STORE__.info) || store.info);
     }
 
     return res.status(200).json({ success: true, message: 'Operasi admin berhasil diproses!' });

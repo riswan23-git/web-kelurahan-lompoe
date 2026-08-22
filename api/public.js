@@ -73,28 +73,17 @@ module.exports = async (req, res) => {
     res.setHeader('Surrogate-Control', 'no-store');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const cloudData = await fetchFromExternalCloud();
-    if (cloudData) {
-        if (Array.isArray(cloudData.aparatur) && cloudData.aparatur.length > 0) store.aparatur = cloudData.aparatur;
-        if (Array.isArray(cloudData.pkk) && cloudData.pkk.length > 0) store.pkk = cloudData.pkk;
-        if (Array.isArray(cloudData.berita) && cloudData.berita.length > 0) store.berita = cloudData.berita;
-        if (Array.isArray(cloudData.sarana) && cloudData.sarana.length > 0) store.sarana = cloudData.sarana;
-        if (Array.isArray(cloudData.nomor_darurat) && cloudData.nomor_darurat.length > 0) store.nomor_darurat = cloudData.nomor_darurat;
-        if (Array.isArray(cloudData.kontak_rt) && cloudData.kontak_rt.length > 0) store.kontak_rt = cloudData.kontak_rt;
-        if (cloudData.statistik) store.statistik = cloudData.statistik;
-        if (cloudData.info) store.info = cloudData.info;
-    }
-
+    const currentStore = global.__LOMPOE_CLOUD_STORE__ || store;
     const url = req.url || '';
 
-    if (url.includes('aparatur')) return res.status(200).json(store.aparatur);
-    if (url.includes('pkk-wilayah')) return res.status(200).json(store.pkk);
-    if (url.includes('berita')) return res.status(200).json(store.berita);
-    if (url.includes('sarana')) return res.status(200).json(store.sarana);
-    if (url.includes('nomor-darurat')) return res.status(200).json(store.nomor_darurat);
-    if (url.includes('kontak-rt')) return res.status(200).json(store.kontak_rt);
-    if (url.includes('statistik')) return res.status(200).json(store.statistik);
-    if (url.includes('info')) return res.status(200).json(store.info);
+    if (url.includes('aparatur')) return res.status(200).json(currentStore.aparatur || []);
+    if (url.includes('pkk-wilayah')) return res.status(200).json(currentStore.pkk || []);
+    if (url.includes('berita')) return res.status(200).json(currentStore.berita || []);
+    if (url.includes('sarana')) return res.status(200).json(currentStore.sarana || []);
+    if (url.includes('nomor-darurat')) return res.status(200).json(currentStore.nomor_darurat || []);
+    if (url.includes('kontak-rt')) return res.status(200).json(currentStore.kontak_rt || []);
+    if (url.includes('statistik')) return res.status(200).json(currentStore.statistik || {});
+    if (url.includes('info')) return res.status(200).json(currentStore.info || {});
 
-    return res.status(200).json({ success: true, data: store });
+    return res.status(200).json({ success: true, data: currentStore });
 };

@@ -39,20 +39,28 @@ function Footer() {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('lompoe_store_update', handleCustomStore);
 
-    axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`)
-      .then(res => {
-        if (res.data && Object.keys(res.data).length > 0) {
-          setInfo(res.data);
-          localStorage.setItem('store_info', JSON.stringify(res.data));
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudInfo = cloudStoreObj.info || resCloud?.data?.info;
+      const targetInfo = (cloudInfo && Object.keys(cloudInfo).length > 0) ? cloudInfo : resApi?.data;
+      if (targetInfo && Object.keys(targetInfo).length > 0) {
+        setInfo(targetInfo);
+        localStorage.setItem('store_info', JSON.stringify(targetInfo));
+      }
+    }).catch(() => {});
 
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('lompoe_store_update', handleCustomStore);
     };
   }, []);
+
+  const igValue = info.instagram || '@kelurahan_lompoe';
+  const igUrl = igValue.startsWith('http') ? igValue : `https://instagram.com/${igValue.replace('@', '').trim()}`;
+  const igLabel = igValue.includes('instagram.com') ? '@' + igValue.split('instagram.com/')[1].replace('/', '') : (igValue.startsWith('@') ? igValue : '@' + igValue);
 
   return (
     <footer className="text-white pt-5 pb-4 mt-auto" style={{ backgroundColor: '#1b262c' }}>
@@ -72,6 +80,11 @@ function Footer() {
               <li className="mb-2">📍 {info.alamat_kantor || 'Jl. Poros Lompoe, Kec. Bacukiki, Kota Parepare, Sulsel'}</li>
               <li className="mb-2">📧 {info.email_resmi || 'kelurahan.lompoe@pareparekota.go.id'}</li>
               <li className="mb-2">📞 {info.telepon_kantor || '(0421) 12345'}</li>
+              <li className="mb-2">
+                📷 <a href={igUrl} target="_blank" rel="noopener noreferrer" className="text-warning fw-semibold text-decoration-none">
+                  Instagram: {igLabel} ↗
+                </a>
+              </li>
               <li className="mb-2">🕒 Jam Pelayanan: {info.jam_pelayanan || 'Senin - Jumat (08.00 - 16.00 WITA)'}</li>
             </ul>
           </div>

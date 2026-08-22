@@ -121,13 +121,18 @@ function Home() {
       }
     }).catch(() => {});
 
-    axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`)
-      .then(res => {
-        if (res.data && Object.keys(res.data).length > 0) {
-          setStats(res.data);
-          localStorage.setItem('store_stats', JSON.stringify(res.data));
-        }
-      }).catch(() => {});
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`).catch(() => null),
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudStoreObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudStats = cloudStoreObj.statistik || resCloud?.data?.statistik;
+      const targetStats = (cloudStats && Object.keys(cloudStats).length > 0) ? cloudStats : resApi?.data;
+      if (targetStats && Object.keys(targetStats).length > 0) {
+        setStats(targetStats);
+        localStorage.setItem('store_stats', JSON.stringify(targetStats));
+      }
+    }).catch(() => {});
 
     Promise.all([
       axios.get(`${API_BASE_URL}/api/berita?_t=${Date.now()}`).catch(() => null),

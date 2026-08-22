@@ -110,9 +110,11 @@ function Profil() {
           localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
         }
 
-        if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
-          setInfo(resInfo.data);
-          localStorage.setItem('store_info', JSON.stringify(resInfo.data));
+        const cloudInfo = cloudStoreObj.info || resCloud?.data?.info;
+        const targetInfo = (cloudInfo && Object.keys(cloudInfo).length > 0) ? cloudInfo : resInfo?.data;
+        if (targetInfo && Object.keys(targetInfo).length > 0) {
+          setInfo(targetInfo);
+          localStorage.setItem('store_info', JSON.stringify(targetInfo));
         }
 
         const cloudPkk = resCloud?.data?.pkk;

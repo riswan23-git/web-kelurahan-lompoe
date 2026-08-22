@@ -404,23 +404,34 @@ function AdminDashboard() {
 
   const fetchStatsAndInfo = async () => {
     try {
-      const [resStats, resInfo] = await Promise.all([
+      const [resStats, resInfo, resCloud] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/statistik?_t=${Date.now()}`).catch(() => null),
-        axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null)
+        axios.get(`${API_BASE_URL}/api/info-kelurahan?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
       ]);
-      if (resStats?.data && Object.keys(resStats.data).length > 0) {
-        setStats(resStats.data);
-        localStorage.setItem('store_stats', JSON.stringify(resStats.data));
+      const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudStats = cloudObj.statistik || resCloud?.data?.statistik;
+      const cloudInfo = cloudObj.info || resCloud?.data?.info;
+
+      const localStats = JSON.parse(localStorage.getItem('store_stats') || '{}');
+      const localInfo = JSON.parse(localStorage.getItem('store_info') || '{}');
+
+      const finalStats = (cloudStats && Object.keys(cloudStats).length > 0) ? cloudStats : ((resStats?.data && Object.keys(resStats.data).length > 0) ? resStats.data : localStats);
+      const finalInfo = (cloudInfo && Object.keys(cloudInfo).length > 0) ? cloudInfo : ((resInfo?.data && Object.keys(resInfo.data).length > 0) ? resInfo.data : localInfo);
+
+      if (finalStats && Object.keys(finalStats).length > 0) {
+        setStats(finalStats);
+        localStorage.setItem('store_stats', JSON.stringify(finalStats));
       }
-      if (resInfo?.data && Object.keys(resInfo.data).length > 0) {
-        setInfo(resInfo.data);
-        localStorage.setItem('store_info', JSON.stringify(resInfo.data));
+      if (finalInfo && Object.keys(finalInfo).length > 0) {
+        setInfo(finalInfo);
+        localStorage.setItem('store_info', JSON.stringify(finalInfo));
       }
     } catch (err) {
       const localStats = JSON.parse(localStorage.getItem('store_stats') || '{}');
       const localInfo = JSON.parse(localStorage.getItem('store_info') || '{}');
-      setStats(localStats);
-      setInfo(localInfo);
+      if (Object.keys(localStats).length > 0) setStats(localStats);
+      if (Object.keys(localInfo).length > 0) setInfo(localInfo);
     }
   };
 
@@ -1526,6 +1537,11 @@ function AdminDashboard() {
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">📞 Nomor Telepon Kantor</label>
                     <input type="text" className="form-control" placeholder="Contoh: (0421) 12345" value={info.telepon_kantor || ''} onChange={(e) => setInfo({ ...info, telepon_kantor: e.target.value })} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold text-danger">📷 Instagram Resmi Kelurahan (Link / Username)</label>
+                    <input type="text" className="form-control" placeholder="Contoh: @kelurahan_lompoe atau https://instagram.com/kelurahan_lompoe" value={info.instagram || ''} onChange={(e) => setInfo({ ...info, instagram: e.target.value })} />
+                    <small className="text-muted">Username (@kelurahan_lompoe) atau Link URL Instagram resmi Kelurahan Lompoe.</small>
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold text-primary">🕒 Jam Pelayanan Kantor Loket</label>

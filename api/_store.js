@@ -42,6 +42,7 @@ const globalStore = global.__LOMPOE_STORE__ || {
         email_resmi: 'kelurahan.lompoe@pareparekota.go.id',
         telepon_kantor: '(0421) 12345',
         jam_pelayanan: 'Senin - Jumat (08.00 - 16.00 WITA)',
+        instagram: '@kelurahan_lompoe',
         teks_marquee: '🏛️ SELAMAT DATANG DI PORTAL DIGITAL KELURAHAN LOMPOE, KECAMATAN BACUKIKI, KOTA PAREPARE • 🕒 JAM PELAYANAN KANTOR LOKET: SENIN - JUMAT 08.00 - 16.00 WITA • 📝 LAYANAN PENGAJUAN SURAT & PERSETUJUAN LURAH BISA DILAKUKAN ONLINE 24 JAM'
     },
     pengajuanList: [
