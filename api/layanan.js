@@ -704,6 +704,12 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
 
         saveDiskStore();
 
+        if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
+            const idx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi == item.no_resi || p.id == item.id));
+            if (idx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[idx] = item;
+            else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(item);
+        }
+
         return res.status(200).json({ success: true, message: 'Status pengajuan berhasil diperbarui!', data: item });
     }
 
@@ -711,6 +717,9 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         let resiFromUrl = url.split('pengajuan/')[1] || '';
         resiFromUrl = resiFromUrl.split('?')[0].trim();
         store.pengajuanList = store.pengajuanList.filter(p => p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
+            global.__LOMPOE_CLOUD_STORE__.pengajuan = global.__LOMPOE_CLOUD_STORE__.pengajuan.filter(p => p && p.no_resi != resiFromUrl && p.id != resiFromUrl);
+        }
         saveDiskStore();
         return res.status(200).json({ success: true, message: 'Pengajuan berhasil dihapus!' });
     }

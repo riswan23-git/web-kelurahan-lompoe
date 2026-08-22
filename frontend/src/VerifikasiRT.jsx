@@ -71,6 +71,16 @@ function VerifikasiRT() {
           localList[idx] = updatedItem;
           localStorage.setItem('all_pengajuan', JSON.stringify(localList));
         }
+
+        // Broadcast to Cloud Store (Firebase DB)
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).then(resCloud => {
+          const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+          const cloudList = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : [];
+          const cIdx = cloudList.findIndex(i => i && (i.no_resi === data.no_resi || i.token_rt === token));
+          if (cIdx >= 0) cloudList[cIdx] = updatedItem;
+          else cloudList.unshift(updatedItem);
+          axios.post(`${API_BASE_URL}/api/cloud-store`, { key: 'pengajuan', data: cloudList }).catch(() => {});
+        }).catch(() => {});
       } catch(e) {}
     }
 

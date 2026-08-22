@@ -29,10 +29,26 @@ function CekResi() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/cek-resi/${noResi.trim()}`);
-      setHasilResi(response.data);
+      const cleanResi = noResi.trim();
+      const [resCek, resCloud] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/cek-resi/${cleanResi}?_t=${Date.now()}`).catch(() => null),
+        axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+      ]);
+      const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudList = cloudObj.pengajuan || [];
+      const cloudMatch = Array.isArray(cloudList) ? cloudList.find(p => p && (p.no_resi === cleanResi || p.nomor_resi === cleanResi)) : null;
+
+      const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const localMatch = Array.isArray(localList) ? localList.find(p => p && (p.no_resi === cleanResi || p.nomor_resi === cleanResi)) : null;
+
+      const finalItem = cloudMatch || (resCek?.data && resCek.data.no_resi ? resCek.data : null) || localMatch;
+      if (finalItem) {
+        setHasilResi(finalItem);
+      } else {
+        setErrorMsg('Nomor resi tidak ditemukan. Pastikan nomor resi sudah benar.');
+      }
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Nomor resi tidak ditemukan. Pastikan nomor resi sudah benar.');
+      setErrorMsg('Nomor resi tidak ditemukan. Pastikan nomor resi sudah benar.');
     } finally {
       setLoading(false);
     }
