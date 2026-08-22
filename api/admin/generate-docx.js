@@ -210,11 +210,11 @@ module.exports = (req, res) => {
 
         const payload = {
             ...extraJson,
-            'nomor_naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
-            'nomor naskah': `470 / ${item.id || 101} / KL-LMP / VIII / 2026`,
-            'tanggal_naskah': todayLongStr,
-            'tanggal naskah': todayLongStr,
-            'ttd_pengirim': pejabatNama,
+            'nomor_naskah': '${nomor_naskah}',
+            'nomor naskah': '${nomor_naskah}',
+            'tanggal_naskah': '${tanggal_naskah}',
+            'tanggal naskah': '${tanggal_naskah}',
+            'ttd_pengirim': '${ttd_pengirim}',
             'kp_raw': getKonsumenPenggunaRuns(item.keperluan || konsumenPenggunaVal),
 
             // PENGHASILAN SPECIFIC TAGS (EXACT TEMPLATE MATCH)
@@ -416,9 +416,9 @@ module.exports = (req, res) => {
                 if (tagName === 'jabatan_pejabat' || tagName === 'Jabatan Pejabat yang Bertanda Tangan') return pejabatJabatan;
                 if (tagName === 'nip_pejabat' || tagName === 'NIP Pejabat yang Bertanda Tangan') return pejabatNip;
                 if (tagName === 'pangkat_pejabat' || tagName === 'Pangkat Pejabat yang Bertanda Tangan') return pejabatPangkat;
-                if (tagName === 'ttd_pengirim') return pejabatNama;
-                if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return `470 / ${item.id || 101} / KL-LMP / VIII / 2026`;
-                if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return todayLongStr;
+                if (tagName === 'ttd_pengirim') return '${ttd_pengirim}';
+                if (tagName.includes('nomor_naskah') || tagName.includes('nomor naskah')) return '${nomor_naskah}';
+                if (tagName.includes('tanggal_naskah') || tagName.includes('tanggal naskah')) return '${tanggal_naskah}';
 
                 if (tagName.includes('Tempat/Tgl') || tagName.includes('tempat/tgl') || tagName.includes('Tempat, Tanggal')) return tempatTglLahirVal || 'Parepare, 12 Mei 1995';
                 if (tagName.includes('Pekerjaan') || tagName.includes('pekerjaan') || tagName.includes('PEKERJAAN')) return pekerjaanVal || 'Wiraswasta';
@@ -432,7 +432,7 @@ module.exports = (req, res) => {
 
         doc.render(payload);
 
-        // Post-render text replacement for ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim} and &lt;&lt;...&gt;&gt; tags
+        // Post-render text replacement for &lt;&lt;...&gt;&gt; tags while preserving literal ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim} for Srikandi app reading
         let generatedZip = doc.getZip();
         let renderedXml = generatedZip.file('word/document.xml').asText();
 
@@ -469,17 +469,7 @@ module.exports = (req, res) => {
         renderedXml = renderedXml.replaceAll('<<NIP Pejabat yang Bertanda Tangan>>', pejabatNip);
         renderedXml = renderedXml.replaceAll('<<Pangkat Pejabat yang Bertanda Tangan>>', pejabatPangkat);
 
-        // Clean authentic naskah number based on Resi or official field (no random timestamp numbers)
-        const cleanResiNo = (item.no_resi || noResi || '500536').replace(/[^0-9]/g, '') || '500536';
-        const naskahNo = item.nomor_naskah || extraJson.nomor_naskah || item.nomor_surat || `470 / ${cleanResiNo} / KL-LMP / VIII / 2026`;
-
-        renderedXml = renderedXml.replace(/\$\{nomor_naskah[^}]*\}/g, naskahNo);
-        renderedXml = renderedXml.replace(/\$\{tanggal_naskah[^}]*\}/g, todayLongStr);
-        renderedXml = renderedXml.replace(/\$\{ttd_pengirim[^}]*\}/g, pejabatNama);
-
-        renderedXml = renderedXml.replace(/\$\{nomor_naskah/g, naskahNo);
-        renderedXml = renderedXml.replace(/\$\{tanggal_naskah/g, todayLongStr);
-        renderedXml = renderedXml.replace(/\$\{ttd_pengirim/g, pejabatNama);
+        // Ensure Srikandi placeholders ${nomor_naskah}, ${tanggal_naskah}, ${ttd_pengirim} are kept untouched for Srikandi auto-injection
 
         generatedZip.file('word/document.xml', renderedXml);
         const buf = generatedZip.generate({ type: 'nodebuffer' });
