@@ -320,7 +320,9 @@ function FormWarga() {
       status_kelurahan: 'Progres',
       status: 'Progres',
       tgl_pengajuan: new Date().toISOString().split('T')[0],
-      tanggal_pengajuan: new Date().toISOString().split('T')[0]
+      tanggal_pengajuan: new Date().toISOString().split('T')[0],
+      file_data_map: fileDataMap,
+      file_berkas_data: fileDataMap
     };
 
     // Save locally immediately (0ms)

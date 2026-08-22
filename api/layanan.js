@@ -559,19 +559,19 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             };
         }
 
-        if (req.method === 'POST') {
-            const isRw = body.role === 'rw' || token.includes('_RW');
-            const statusNew = body.keputusan === 'SETUJUI' 
+        if (req.method === 'POST' || req.method === 'PUT') {
+            const isRw = body.role === 'rw' || token.includes('_RW') || body.is_rw === true;
+            const statusNew = body.status || (body.keputusan === 'SETUJUI' 
                 ? (isRw ? `Disetujui RW (${body.nama_rt_rw || 'Ketua RW'})` : `Disetujui RT (${body.nama_rt_rw || 'Ketua RT'})`) 
-                : (isRw ? 'Ditolak RW' : 'Ditolak RT');
+                : (isRw ? 'Ditolak RW' : 'Ditolak RT'));
 
             if (isRw) {
                 found.status_rw = statusNew;
-                found.catatan_rw = body.catatan_rt || body.catatan_rw || '';
+                found.catatan_rw = body.catatan_rt || body.catatan_rw || body.catatan || '';
                 found.tgl_disetujui_rw = new Date().toISOString();
             } else {
                 found.status_rt = statusNew;
-                found.catatan_rt = body.catatan_rt || '';
+                found.catatan_rt = body.catatan_rt || body.catatan || '';
                 found.tgl_disetujui_rt = new Date().toISOString();
             }
 
@@ -582,13 +582,18 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 store.pengajuanList.unshift(found);
             }
 
-            if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
-                const cIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi === found.no_resi || p.no_resi === cleanResi || p.token_rt === token || p.token_rw === token));
-                if (cIdx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[cIdx] = found;
-                else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(found);
-            }
+            if (!global.__LOMPOE_CLOUD_STORE__) global.__LOMPOE_CLOUD_STORE__ = store;
+            if (!Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) global.__LOMPOE_CLOUD_STORE__.pengajuan = [];
+            
+            const cIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi === found.no_resi || p.no_resi === cleanResi || p.token_rt === token || p.token_rw === token));
+            if (cIdx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[cIdx] = found;
+            else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(found);
+            global.__LOMPOE_CLOUD_STORE__.pengajuanList = global.__LOMPOE_CLOUD_STORE__.pengajuan;
 
             saveDiskStore();
+
+            // Persist approval status to Firebase Realtime DB immediately
+            saveToFirebase(global.__LOMPOE_CLOUD_STORE__).catch(() => {});
 
             return res.status(200).json({ success: true, message: `Persetujuan ${isRw ? 'Ketua RW' : 'Ketua RT'} (${statusNew}) berhasil disimpan!`, data: found });
         }

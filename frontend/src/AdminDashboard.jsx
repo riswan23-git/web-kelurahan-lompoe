@@ -2368,10 +2368,21 @@ function AdminDashboard() {
         const fileMap = item.file_data_map || item.file_berkas_data || {};
         const globalFileMap = JSON.parse(localStorage.getItem('all_file_data_map') || '{}');
 
-        const realB64 = fileMap[fileName] || fileMap[fileName.trim()] ||
+        const cleanFileName = (fileName || '').trim().toLowerCase();
+        let realB64 = fileMap[fileName] || fileMap[fileName.trim()] ||
           globalFileMap[fileName] || globalFileMap[fileName.trim()] ||
           localStorage.getItem('file_b64_' + fileName) || localStorage.getItem('file_b64_' + fileName.trim()) ||
-          Object.values(fileMap)[modalViewBerkas.idx - 1];
+          localStorage.getItem('file_b64_' + cleanFileName);
+
+        if (!realB64) {
+          const keys = Object.keys(fileMap || {});
+          if (keys.length > 0) {
+            const foundKey = keys.find(k => k.toLowerCase().includes(cleanFileName) || cleanFileName.includes(k.toLowerCase()));
+            if (foundKey) realB64 = fileMap[foundKey];
+            else if (fileMap[modalViewBerkas.idx - 1]) realB64 = fileMap[modalViewBerkas.idx - 1];
+            else if (Object.values(fileMap)[0]) realB64 = Object.values(fileMap)[0];
+          }
+        }
 
         // Always generate a clean visual SVG image data URL fallback
         const svgImageSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23f8fafc" rx="16"/><rect x="20" y="20" width="760" height="460" fill="%23ffffff" rx="12" stroke="%230284c7" stroke-width="2"/><text x="400" y="70" fill="%230369a1" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">PEMERINTAH KOTA PAREPARE - KELURAHAN LOMPOE</text><text x="400" y="100" fill="%23475569" font-family="sans-serif" font-size="14" text-anchor="middle">BERKAS LAMPIRAN PERSYARATAN WARGA (SRIKANDI)</text><line x1="40" y1="120" x2="760" y2="120" stroke="%230284c7" stroke-width="2"/><rect x="60" y="140" width="680" height="240" fill="%23f1f5f9" rx="8" stroke="%23cbd5e1"/><path d="M400 180 L450 250 L350 250 Z" fill="%230284c7"/><circle cx="430" cy="190" r="18" fill="%23eab308"/><text x="400" y="310" fill="%230f172a" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">${encodeURIComponent(fileName)}</text><text x="400" y="340" fill="%2364748b" font-family="sans-serif" font-size="14" text-anchor="middle">Pemohon: ${encodeURIComponent(item.nama_pemohon || 'Warga')} | NIK: ${encodeURIComponent(item.nik || '')} | Resi: ${encodeURIComponent(item.no_resi || '')}</text><rect x="200" y="410" width="400" height="45" fill="%2316a34a" rx="22"/><text x="400" y="438" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">✓ BERKAS FISIK TERVERIFIKASI SAH SRIKANDI</text></svg>`;

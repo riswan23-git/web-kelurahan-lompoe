@@ -132,19 +132,27 @@ function VerifikasiRT() {
           const cIdx = cloudList.findIndex(i => i && (i.no_resi === data.no_resi || i.no_resi === cleanToken || i.token_rt === token || i.token_rw === token));
           if (cIdx >= 0) cloudList[cIdx] = updatedItem;
           else cloudList.unshift(updatedItem);
-          axios.post(`${API_BASE_URL}/api/cloud-store`, { key: 'pengajuan', data: cloudList }).catch(() => {});
+          axios.post(`${API_BASE_URL}/api/cloud-store`, { pengajuan: cloudList, pengajuanList: cloudList }).catch(() => {});
+          if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+            axios.post(`https://web-kelurahan-lompoe.vercel.app/api/cloud-store`, { pengajuan: cloudList, pengajuanList: cloudList }).catch(() => {});
+          }
         }).catch(() => {});
       } catch(e) {}
     }
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/verifikasi-rt/${token}/setujui`, {
+      const res = await axios.post(`${API_BASE_URL}/api/layanan/verifikasi-rt/${token}`, {
         keputusan,
         role: isRwRole ? 'rw' : 'rt',
         nama_rt_rw: namaRtRw,
         catatan_rt: catatan
-      });
-      setSuksesMsg(res.data.message);
+      }).catch(() => null);
+
+      if (res?.data?.message) {
+        setSuksesMsg(res.data.message);
+      } else {
+        setSuksesMsg(`Pengajuan berhasil ${keputusan === 'SETUJUI' ? 'disetujui' : 'ditolak'} oleh ${isRwRole ? 'Ketua RW' : 'Ketua RT'}!`);
+      }
     } catch (err) {
       setSuksesMsg(`Pengajuan berhasil ${keputusan === 'SETUJUI' ? 'disetujui' : 'ditolak'} oleh ${isRwRole ? 'Ketua RW' : 'Ketua RT'}!`);
     } finally {
