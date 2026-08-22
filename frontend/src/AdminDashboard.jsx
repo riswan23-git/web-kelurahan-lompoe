@@ -50,6 +50,24 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const DEFAULT_APARATUR = [
+  { id: 1787325986341, nama: 'ASMIANTI.M, SE', nip: '19840927 201001 2 022', jabatan: 'LURAH', is_lurah: 1, sambutan: 'Assalamu Alaikum Warahmatullahi Wabarakatuh. Selamat datang di website resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare.', urutan: 1, foto: null },
+  { id: 1787326450693, nama: 'KOPTU MARIYANTO', nip: '31030391980383', jabatan: 'BABINSA', is_lurah: 0, sambutan: '', urutan: 2, foto: null },
+  { id: 1787326510797, nama: 'BRIPKA HARMANSYAH', nip: '87040660', jabatan: 'BHABINKAMTIBMAS', is_lurah: 0, sambutan: '', urutan: 2, foto: null },
+  { id: 1787326540564, nama: 'FAHRI FIRMAN, S.SOS', nip: '19850424 201903 1 003', jabatan: 'SEKRETARIS LURAH', is_lurah: 0, sambutan: '', urutan: 3, foto: null },
+  { id: 1787326596361, nama: 'SYAHRIR, SE', nip: '19790619 200502 1 004', jabatan: 'KEPALA SEKSI PEMERINTAHAN, KETENTRAMAN & KETERTIBAN', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326650123, nama: 'SITTI KAMARIAH, SE', nip: '19730104 200604 2 008', jabatan: 'KEPALA SEKSI KESEJAHTERAAN MASYARAKAT', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326710456, nama: 'SALMA, S.AP', nip: '19650414 201411 2 001', jabatan: 'KEPALA SEKSI PELAYANAN UMUM & PEMBERDAYAAN MASYARAKAT', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326780890, nama: 'NANNIS', nip: '19620416 202521 2 026', jabatan: 'Staff', is_lurah: 0, sambutan: '', urutan: 5, foto: null }
+];
+
+const DEFAULT_PENGAJUAN = [
+  { id: 101, no_resi: 'LMP-891472', nomor_resi: 'LMP-891472', nama_pemohon: 'Riswan Fachrezy', nama_lengkap: 'Riswan Fachrezy', nik: '7372012404950001', tempat_tgl_lahir: 'Parepare, 24 April 1995', jenis_kelamin: 'Laki-laki', agama: 'Islam', pekerjaan: 'Wiraswasta', alamat: 'Jl. Poros Lompoe No. 88', jenis_surat: 'Surat Izin Keramaian', rt_rw: 'RW 02 / RT 03', telepon: '081234567890', no_hp: '081234567890', nomor_wa: '081234567890', keperluan: 'Syukuran & Pesta Pernikahan', nama_acara: 'Syukuran & Pesta Pernikahan', hiburan_acara: 'Musik Elekton / Sound System', tanggal_acara: 'Senin, 24 Agustus 2026', lokasi_acara: 'Gedung Gelora Lompoe', status_rt: 'Menunggu Verifikasi RT', status_rw: 'Menunggu Verifikasi RW', status_kelurahan: 'Progres', status: 'Progres', token_rt: 'LMP-891472_RT', token_rw: 'LMP-891472_RW', tgl_pengajuan: '2026-08-17', tanggal_pengajuan: '2026-08-17', file_berkas: 'Surat_Pengantar_RT.pdf, KTP_Warga.pdf, KK_Warga.pdf' },
+  { id: 102, no_resi: 'LMP-102938', nomor_resi: 'LMP-102938', nama_pemohon: 'Andi M. Fajar', nama_lengkap: 'Andi M. Fajar', nik: '7372011205950001', tempat_tgl_lahir: 'Parepare, 12 Mei 1995', jenis_kelamin: 'Laki-laki', agama: 'Islam', pekerjaan: 'Wiraswasta', alamat: 'Jl. Poros Lompoe No. 12', jenis_surat: 'Surat Keterangan Usaha (SKU)', rt_rw: 'RW 01 / RT 02', telepon: '081234567890', no_hp: '081234567890', nomor_wa: '081234567890', keperluan: 'Persyaratan Pengajuan KUR Bank Dahulu', status_rt: 'Menunggu Verifikasi RT', status_rw: 'Menunggu Verifikasi RW', status_kelurahan: 'Progres', status: 'Progres', token_rt: 'LMP-102938_RT', token_rw: 'LMP-102938_RW', tgl_pengajuan: '2026-08-17', tanggal_pengajuan: '2026-08-17', file_berkas: 'Surat_Pengantar_RT_KTP_KK.pdf' },
+  { id: 103, no_resi: 'LMP-816794', nomor_resi: 'LMP-816794', nama_pemohon: 'Asep', nama_lengkap: 'Asep', nik: '7377273773838383', tempat_tgl_lahir: 'Parepare, 10 Juni 1996', jenis_kelamin: 'Laki-laki', agama: 'Islam', pekerjaan: 'Wiraswasta', alamat: 'Jl. Poros Lompoe', jenis_surat: 'Surat Izin Keramaian', rt_rw: 'RW 01 / RT 01', telepon: '089602366786', no_hp: '089602366786', nomor_wa: '089602366786', keperluan: 'Pesta pernikahan', nama_acara: 'Pesta pernikahan', hiburan_acara: 'Musik Elekton / Sound System', status_rt: 'Disetujui RT (Ketua RT (Pak Bustan))', status_rw: 'Disetujui RW (Ketua RT Riswang)', status_kelurahan: 'Disetujui/Siap Diambil', status: 'Disetujui/Siap Diambil', token_rt: 'LMP-816794_RT', token_rw: 'LMP-816794_RW', tgl_pengajuan: '2026-08-22', tanggal_pengajuan: '2026-08-22', file_berkas: 'IMG_3843.png' },
+  { id: 104, no_resi: 'LMP-451803', nomor_resi: 'LMP-451803', nama_pemohon: 'Kurni', nama_lengkap: 'Kurni', nik: '7378826373899399', tempat_tgl_lahir: 'Parepare, 05 Juli 1997', jenis_kelamin: 'Laki-laki', agama: 'Islam', pekerjaan: 'Wiraswasta', alamat: 'Jl. Poros Lompoe No. 19', jenis_surat: 'Surat Izin Keramaian', rt_rw: 'RW 01 / RT 01', telepon: '089602366786', no_hp: '089602366786', nomor_wa: '089602366786', keperluan: 'Syukuran', nama_acara: 'Syukuran', hiburan_acara: 'Musik Elekton / Sound System', status_rt: 'Disetujui RT (Ketua RT (Pak kadip))', status_rw: 'Disetujui RW (Ketua RT (Pak surya))', status_kelurahan: 'Progres', status: 'Progres', token_rt: 'LMP-451803_RT', token_rw: 'LMP-451803_RW', tgl_pengajuan: '2026-08-22', tanggal_pengajuan: '2026-08-22', file_berkas: 'Surat_Pengantar.pdf' }
+];
+
 export const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
   if (!foto) return null;
   if (typeof foto === 'string' && (foto.startsWith('data:') || foto.startsWith('http://') || foto.startsWith('https://') || foto.startsWith('/assets/'))) {
@@ -118,7 +136,12 @@ function AdminDashboard() {
   const [pesanNotif, setPesanNotif] = useState('');
 
   // 1. Data Pengajuan Surat
-  const [pengajuanList, setPengajuanList] = useState([]);
+  const [pengajuanList, setPengajuanList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('all_pengajuan') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_PENGAJUAN;
+    } catch(e) { return DEFAULT_PENGAJUAN; }
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [inputResiSync, setInputResiSync] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
@@ -130,7 +153,12 @@ function AdminDashboard() {
   const [fileHasil, setFileHasil] = useState(null);
 
   // 2. Data Aparatur & Struktur
-  const [aparaturList, setAparaturList] = useState([]);
+  const [aparaturList, setAparaturList] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_APARATUR;
+    } catch(e) { return DEFAULT_APARATUR; }
+  });
   const [formAparatur, setFormAparatur] = useState({ id: null, nama: '', nip: '', jabatan: '', is_lurah: 0, sambutan: '', urutan: 0 });
   const [fotoAparatur, setFotoAparatur] = useState(null);
   const [editAparaturMode, setEditAparaturMode] = useState(false);
@@ -321,13 +349,16 @@ function AdminDashboard() {
       if (deletedResis.length > 0) {
         combinedList = combinedList.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi)));
       }
+      if (combinedList.length === 0) combinedList = DEFAULT_PENGAJUAN;
 
       setPengajuanList(combinedList);
       localStorage.setItem('all_pengajuan', JSON.stringify(combinedList));
     } catch (err) {
       const deletedResis = JSON.parse(localStorage.getItem('deleted_pengajuan_resis') || '[]');
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-      setPengajuanList(localData.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi))));
+      const fallbackList = localData.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi)));
+      const finalPengajuan = fallbackList.length > 0 ? fallbackList : DEFAULT_PENGAJUAN;
+      setPengajuanList(finalPengajuan);
     }
   };
 
@@ -371,11 +402,14 @@ function AdminDashboard() {
       else if (Array.isArray(serverData) && serverData.length > 0) active = serverData;
       else if (Array.isArray(localData) && localData.length > 0) active = localData;
 
+      if (active.length === 0) active = DEFAULT_APARATUR;
+
       setAparaturList(active);
       localStorage.setItem('store_aparatur', JSON.stringify(active));
     } catch (err) {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || '[]');
-      setAparaturList(local);
+      const finalAparatur = local.length > 0 ? local : DEFAULT_APARATUR;
+      setAparaturList(finalAparatur);
     }
   };
 

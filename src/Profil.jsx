@@ -12,6 +12,17 @@ const getImageSrc = (foto, apiBaseUrl = API_BASE_URL) => {
   return `${apiBaseUrl}/uploads/${foto}`;
 };
 
+const DEFAULT_APARATUR = [
+  { id: 1787325986341, nama: 'ASMIANTI.M, SE', nip: '19840927 201001 2 022', jabatan: 'LURAH', is_lurah: 1, sambutan: 'Assalamu Alaikum Warahmatullahi Wabarakatuh. Selamat datang di website resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare.', urutan: 1, foto: null },
+  { id: 1787326450693, nama: 'KOPTU MARIYANTO', nip: '31030391980383', jabatan: 'BABINSA', is_lurah: 0, sambutan: '', urutan: 2, foto: null },
+  { id: 1787326510797, nama: 'BRIPKA HARMANSYAH', nip: '87040660', jabatan: 'BHABINKAMTIBMAS', is_lurah: 0, sambutan: '', urutan: 2, foto: null },
+  { id: 1787326540564, nama: 'FAHRI FIRMAN, S.SOS', nip: '19850424 201903 1 003', jabatan: 'SEKRETARIS LURAH', is_lurah: 0, sambutan: '', urutan: 3, foto: null },
+  { id: 1787326596361, nama: 'SYAHRIR, SE', nip: '19790619 200502 1 004', jabatan: 'KEPALA SEKSI PEMERINTAHAN, KETENTRAMAN & KETERTIBAN', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326650123, nama: 'SITTI KAMARIAH, SE', nip: '19730104 200604 2 008', jabatan: 'KEPALA SEKSI KESEJAHTERAAN MASYARAKAT', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326710456, nama: 'SALMA, S.AP', nip: '19650414 201411 2 001', jabatan: 'KEPALA SEKSI PELAYANAN UMUM & PEMBERDAYAAN MASYARAKAT', is_lurah: 0, sambutan: '', urutan: 4, foto: null },
+  { id: 1787326780890, nama: 'NANNIS', nip: '19620416 202521 2 026', jabatan: 'Staff', is_lurah: 0, sambutan: '', urutan: 5, foto: null }
+];
+
 const DEFAULT_PKK = Array.from({ length: 10 }, (_, i) => ({
   id: i + 1,
   nama_wilayah: `RW 0${i + 1}`,
@@ -28,8 +39,8 @@ function Profil() {
   const [aparaturList, setAparaturList] = useState(() => {
     try {
       const local = JSON.parse(localStorage.getItem('store_aparatur') || 'null');
-      return Array.isArray(local) && local.length > 0 ? local : [];
-    } catch (e) { return []; }
+      return Array.isArray(local) && local.length > 0 ? local : DEFAULT_APARATUR;
+    } catch (e) { return DEFAULT_APARATUR; }
   });
   const [info, setInfo] = useState(() => {
     try {
@@ -105,10 +116,9 @@ function Profil() {
         }
 
         const mergedList = Array.from(combinedMap.values());
-        if (mergedList.length > 0) {
-          setAparaturList(mergedList);
-          localStorage.setItem('store_aparatur', JSON.stringify(mergedList));
-        }
+        const finalAparaturList = mergedList.length > 0 ? mergedList : DEFAULT_APARATUR;
+        setAparaturList(finalAparaturList);
+        localStorage.setItem('store_aparatur', JSON.stringify(finalAparaturList));
 
         const cloudInfo = cloudStoreObj.info || resCloud?.data?.info;
         const targetInfo = (cloudInfo && Object.keys(cloudInfo).length > 0) ? cloudInfo : resInfo?.data;

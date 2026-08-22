@@ -71,6 +71,14 @@ module.exports = async (req, res) => {
         global.__LOMPOE_CLOUD_STORE__ = currentStore;
     }
 
+    if (!Array.isArray(currentStore.aparatur) || currentStore.aparatur.length === 0) {
+        currentStore.aparatur = store.aparatur;
+    }
+    if (!Array.isArray(currentStore.pengajuan) || currentStore.pengajuan.length === 0) {
+        currentStore.pengajuan = store.pengajuanList || [];
+        currentStore.pengajuanList = currentStore.pengajuan;
+    }
+
     if (!Array.isArray(currentStore.deleted_pengajuan_resis)) {
         currentStore.deleted_pengajuan_resis = [];
     }

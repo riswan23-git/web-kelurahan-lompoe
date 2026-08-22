@@ -114,11 +114,12 @@ function Home() {
       }
 
       const filteredList = targetAparatur.filter(item => item && item.id && !deletedIds.includes(String(item.id)));
-      if (filteredList.length > 0) {
-        const apiLurah = filteredList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || filteredList[0];
-        setLurah(apiLurah || null);
-        localStorage.setItem('store_aparatur', JSON.stringify(filteredList));
-      }
+      const finalAparaturList = filteredList.length > 0 ? filteredList : [
+        { id: 1787325986341, nama: 'ASMIANTI.M, SE', nip: '19840927 201001 2 022', jabatan: 'LURAH', is_lurah: 1, sambutan: 'Assalamu Alaikum Warahmatullahi Wabarakatuh. Selamat datang di website resmi Kelurahan Lompoe, Kecamatan Bacukiki, Kota Parepare.', urutan: 1, foto: null }
+      ];
+      const apiLurah = finalAparaturList.find(a => a.is_lurah === 1 || a.is_lurah === '1' || (a.jabatan && a.jabatan.toLowerCase().includes('lurah'))) || finalAparaturList[0];
+      setLurah(apiLurah || null);
+      localStorage.setItem('store_aparatur', JSON.stringify(finalAparaturList));
     }).catch(() => {});
 
     Promise.all([
