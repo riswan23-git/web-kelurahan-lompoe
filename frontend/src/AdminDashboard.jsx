@@ -278,50 +278,30 @@ function AdminDashboard() {
         axios.get(`${API_BASE_URL}/api/admin/pengajuan?_t=${Date.now()}`).catch(() => null),
         axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
       ]);
+
+      const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudData = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : (Array.isArray(resCloud?.data?.pengajuan) ? resCloud.data.pengajuan : []);
       const serverData = Array.isArray(resServer?.data) ? resServer.data : [];
-      const cloudData = Array.isArray(resCloud?.data?.pengajuan) ? resCloud.data.pengajuan : [];
-      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const deletedResis = Array.isArray(cloudObj.deleted_pengajuan_resis) ? cloudObj.deleted_pengajuan_resis : JSON.parse(localStorage.getItem('deleted_pengajuan_resis') || '[]');
 
-      const combinedMap = new Map();
-      const mergeItem = (existing, item) => {
-        if (!existing) return item;
-        const finalNama = (existing.nama_pemohon && existing.nama_pemohon !== 'Pemohon RT/RW') ? existing.nama_pemohon : (item.nama_pemohon || existing.nama_pemohon);
-        const finalNik = (existing.nik && existing.nik !== '-') ? existing.nik : (item.nik || existing.nik);
-        const finalHp = (existing.no_hp || existing.telepon || existing.nomor_wa) || (item.no_hp || item.telepon || item.nomor_wa);
-        return {
-          ...existing,
-          ...item,
-          nama_pemohon: finalNama,
-          nik: finalNik,
-          no_hp: finalHp,
-          telepon: finalHp,
-          status_rt: (item.status_rt && !item.status_rt.includes('Menunggu')) ? item.status_rt : (existing.status_rt || item.status_rt),
-          status_rw: (item.status_rw && !item.status_rw.includes('Menunggu')) ? item.status_rw : (existing.status_rw || item.status_rw)
-        };
-      };
+      // Cloud DB is the single primary source of truth across all devices
+      let primaryList = cloudData.length > 0 ? cloudData : serverData;
 
-      localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
-      cloudData.forEach(item => {
-        if (item && item.no_resi) {
-          const existing = combinedMap.get(item.no_resi);
-          combinedMap.set(item.no_resi, mergeItem(existing, item));
-        }
-      });
-      serverData.forEach(item => {
-        if (item && item.no_resi) {
-          const existing = combinedMap.get(item.no_resi);
-          combinedMap.set(item.no_resi, mergeItem(existing, item));
-        }
-      });
-
-      const combinedList = Array.from(combinedMap.values());
-      if (combinedList.length > 0) {
-        setPengajuanList(combinedList);
-        localStorage.setItem('all_pengajuan', JSON.stringify(combinedList));
+      if (primaryList.length > 0) {
+        // Filter out any resi in deletedResis
+        const cleanList = primaryList.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi)));
+        setPengajuanList(cleanList);
+        localStorage.setItem('all_pengajuan', JSON.stringify(cleanList));
+        return;
       }
-    } catch (err) {
+
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-      setPengajuanList(localData);
+      const cleanLocal = localData.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi)));
+      setPengajuanList(cleanLocal);
+    } catch (err) {
+      const deletedResis = JSON.parse(localStorage.getItem('deleted_pengajuan_resis') || '[]');
+      const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      setPengajuanList(localData.filter(item => item && item.no_resi && !deletedResis.includes(String(item.no_resi))));
     }
   };
 
