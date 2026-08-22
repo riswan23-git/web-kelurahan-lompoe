@@ -51,14 +51,26 @@ function VerifikasiRT() {
     ]).then(([resApi, resCloud]) => {
       const cloudObj = resCloud?.data?.data || resCloud?.data || {};
       const cloudList = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : [];
-      const cloudMatch = cloudList.find(i => i && (i.token_rt === token || i.token_rw === token || i.token_rt === cleanToken || (i.no_resi && i.no_resi.includes(cleanToken))));
+      
+      const findInList = (list) => {
+        if (!Array.isArray(list)) return null;
+        return list.find(i => i && (
+          i.no_resi === cleanToken ||
+          (i.no_resi && cleanToken.length > 3 && (cleanToken.includes(i.no_resi) || i.no_resi.includes(cleanToken))) ||
+          i.token_rt === token ||
+          i.token_rw === token ||
+          i.token_rt === cleanToken ||
+          i.token_rw === cleanToken
+        ));
+      };
 
+      const cloudMatch = findInList(cloudList);
       const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-      const localMatch = Array.isArray(localList) ? localList.find(i => i && (i.token_rt === token || i.token_rw === token || i.token_rt === cleanToken || (i.no_resi && i.no_resi.includes(cleanToken)))) : null;
+      const localMatch = findInList(localList);
 
-      const apiMatch = (resApi?.data && resApi.data.nama_pemohon && resApi.data.nama_pemohon !== 'Riswan Fachrezy') ? resApi.data : null;
+      const apiMatch = (resApi?.data && resApi.data.nama_pemohon && resApi.data.nama_pemohon !== 'Riswan Fachrezy' && resApi.data.nama_pemohon !== 'Pemohon RT/RW') ? resApi.data : null;
 
-      const finalMatch = cloudMatch || apiMatch || localMatch || (resApi?.data && resApi.data.nama_pemohon ? resApi.data : null);
+      const finalMatch = cloudMatch || localMatch || apiMatch || (resApi?.data && resApi.data.nama_pemohon && resApi.data.nama_pemohon !== 'Pemohon RT/RW' ? resApi.data : null);
 
       if (finalMatch && finalMatch.nama_pemohon) {
         setData(finalMatch);
@@ -90,6 +102,7 @@ function VerifikasiRT() {
     setSubmitting(true);
     setErrorMsg('');
     
+    const cleanToken = token.replace('_RT', '').replace('_RW', '');
     const keputusan = pendingKeputusan;
     const statusText = keputusan === 'SETUJUI' 
       ? (isRwRole ? `Disetujui RW (${namaRtRw || 'Ketua RW'})` : `Disetujui RT (${namaRtRw || 'Ketua RT'})`) 
@@ -104,18 +117,19 @@ function VerifikasiRT() {
       setData(updatedItem);
       try {
         const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-        const idx = localList.findIndex(i => i.no_resi === data.no_resi || i.token_rt === token || i.token_rw === token);
+        const idx = localList.findIndex(i => i && (i.no_resi === data.no_resi || i.no_resi === cleanToken || i.token_rt === token || i.token_rw === token));
         if (idx >= 0) {
           localList[idx] = updatedItem;
-          localStorage.setItem('all_pengajuan', JSON.stringify(localList));
+        } else {
+          localList.unshift(updatedItem);
         }
+        localStorage.setItem('all_pengajuan', JSON.stringify(localList));
 
         // Broadcast to Cloud Store (Firebase DB)
         axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).then(resCloud => {
           const cloudObj = resCloud?.data?.data || resCloud?.data || {};
           const cloudList = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : [];
-          const cleanToken = (token || '').replace('_RT', '').replace('_RW', '');
-          const cIdx = cloudList.findIndex(i => i && (i.no_resi === data.no_resi || i.token_rt === token || i.token_rw === token || (i.no_resi && i.no_resi.includes(cleanToken))));
+          const cIdx = cloudList.findIndex(i => i && (i.no_resi === data.no_resi || i.no_resi === cleanToken || i.token_rt === token || i.token_rw === token));
           if (cIdx >= 0) cloudList[cIdx] = updatedItem;
           else cloudList.unshift(updatedItem);
           axios.post(`${API_BASE_URL}/api/cloud-store`, { key: 'pengajuan', data: cloudList }).catch(() => {});

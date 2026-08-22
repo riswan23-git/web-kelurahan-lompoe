@@ -505,11 +505,25 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
     if (url.includes('verifikasi-rt')) {
         let token = url.split('verifikasi-rt/')[1] || '';
         token = token.split('?')[0].split('/')[0].trim();
+        const cleanResi = token.replace('_RT', '').replace('_RW', '').split('?')[0].split('/')[0].trim();
         const body = req.body || {};
 
         const cloudList = (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) ? global.__LOMPOE_CLOUD_STORE__.pengajuan : [];
-        let found = cloudList.find(p => p && (p.token_rt === token || (p.no_resi && p.no_resi.includes(token)))) ||
-                    store.pengajuanList.find(p => p && (p.token_rt === token || (p.no_resi && p.no_resi.includes(token))));
+
+        const findMatch = (list) => {
+            if (!Array.isArray(list)) return null;
+            return list.find(p => p && (
+                p.no_resi === cleanResi ||
+                p.no_resi === token ||
+                (p.no_resi && cleanResi.length > 3 && (cleanResi.includes(p.no_resi) || p.no_resi.includes(cleanResi))) ||
+                p.token_rt === token ||
+                p.token_rw === token ||
+                p.token_rt === cleanResi ||
+                p.token_rw === cleanResi
+            ));
+        };
+
+        let found = findMatch(cloudList) || findMatch(store.pengajuanList);
 
         if (!found && req.method === 'GET') {
             return res.status(404).json({ success: false, message: 'Data pengajuan verifikasi RT/RW tidak ditemukan.' });
@@ -518,8 +532,8 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         if (!found) {
             found = {
                 id: Date.now(),
-                no_resi: 'LMP-' + token.replace(/[^0-9]/g, ''),
-                nama_pemohon: 'Pemohon RT/RW',
+                no_resi: cleanResi.startsWith('LMP-') ? cleanResi : ('LMP-' + cleanResi.replace(/[^0-9]/g, '')),
+                nama_pemohon: 'Warga Kelurahan Lompoe',
                 token_rt: token
             };
         }
@@ -540,7 +554,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
                 found.tgl_disetujui_rt = new Date().toISOString();
             }
 
-            const storeIdx = store.pengajuanList.findIndex(p => p && (p.no_resi === found.no_resi || p.token_rt === token || p.token_rw === token));
+            const storeIdx = store.pengajuanList.findIndex(p => p && (p.no_resi === found.no_resi || p.no_resi === cleanResi || p.token_rt === token || p.token_rw === token));
             if (storeIdx >= 0) {
                 store.pengajuanList[storeIdx] = found;
             } else {
@@ -548,7 +562,7 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
             }
 
             if (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) {
-                const cIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi === found.no_resi || p.token_rt === token || p.token_rw === token));
+                const cIdx = global.__LOMPOE_CLOUD_STORE__.pengajuan.findIndex(p => p && (p.no_resi === found.no_resi || p.no_resi === cleanResi || p.token_rt === token || p.token_rw === token));
                 if (cIdx >= 0) global.__LOMPOE_CLOUD_STORE__.pengajuan[cIdx] = found;
                 else global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(found);
             }

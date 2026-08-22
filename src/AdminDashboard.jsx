@@ -283,17 +283,34 @@ function AdminDashboard() {
       const localData = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
 
       const combinedMap = new Map();
+      const mergeItem = (existing, item) => {
+        if (!existing) return item;
+        const finalNama = (existing.nama_pemohon && existing.nama_pemohon !== 'Pemohon RT/RW') ? existing.nama_pemohon : (item.nama_pemohon || existing.nama_pemohon);
+        const finalNik = (existing.nik && existing.nik !== '-') ? existing.nik : (item.nik || existing.nik);
+        const finalHp = (existing.no_hp || existing.telepon || existing.nomor_wa) || (item.no_hp || item.telepon || item.nomor_wa);
+        return {
+          ...existing,
+          ...item,
+          nama_pemohon: finalNama,
+          nik: finalNik,
+          no_hp: finalHp,
+          telepon: finalHp,
+          status_rt: (item.status_rt && !item.status_rt.includes('Menunggu')) ? item.status_rt : (existing.status_rt || item.status_rt),
+          status_rw: (item.status_rw && !item.status_rw.includes('Menunggu')) ? item.status_rw : (existing.status_rw || item.status_rw)
+        };
+      };
+
       localData.forEach(item => { if (item && item.no_resi) combinedMap.set(item.no_resi, item); });
       cloudData.forEach(item => {
         if (item && item.no_resi) {
-          const existing = combinedMap.get(item.no_resi) || {};
-          combinedMap.set(item.no_resi, { ...existing, ...item });
+          const existing = combinedMap.get(item.no_resi);
+          combinedMap.set(item.no_resi, mergeItem(existing, item));
         }
       });
       serverData.forEach(item => {
         if (item && item.no_resi) {
-          const existing = combinedMap.get(item.no_resi) || {};
-          combinedMap.set(item.no_resi, { ...existing, ...item });
+          const existing = combinedMap.get(item.no_resi);
+          combinedMap.set(item.no_resi, mergeItem(existing, item));
         }
       });
 

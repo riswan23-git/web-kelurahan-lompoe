@@ -304,16 +304,18 @@ function FormWarga() {
 
     // Instant 0-millisecond response generation
     const generatedResi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
-    const generatedToken = 'tok_rt_' + Math.floor(100000 + Math.random() * 900000);
-    const initialRtStatus = 'Menunggu Verifikasi RT/RW';
+    const initialRtStatus = 'Menunggu Verifikasi RT';
+    const initialRwStatus = 'Menunggu Verifikasi RW';
 
     const newItemSaved = {
       ...payload,
       id: Date.now(),
       no_resi: generatedResi,
       nomor_resi: generatedResi,
-      token_rt: generatedToken,
+      token_rt: generatedResi + '_RT',
+      token_rw: generatedResi + '_RW',
       status_rt: initialRtStatus,
+      status_rw: initialRwStatus,
       status_kelurahan: 'Progres',
       status: 'Progres',
       tgl_pengajuan: new Date().toISOString().split('T')[0],
