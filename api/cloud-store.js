@@ -63,6 +63,11 @@ module.exports = async (req, res) => {
     const fbData = await fetchFromFirebase();
     if (fbData && typeof fbData === 'object') {
         currentStore = { ...currentStore, ...fbData };
+        if (fbData.pengajuanList && Array.isArray(fbData.pengajuanList)) {
+            currentStore.pengajuan = fbData.pengajuanList;
+        } else if (fbData.pengajuan && Array.isArray(fbData.pengajuan)) {
+            currentStore.pengajuanList = fbData.pengajuan;
+        }
         global.__LOMPOE_CLOUD_STORE__ = currentStore;
     }
 
@@ -71,19 +76,24 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
-        let cleanPengajuan = Array.isArray(currentStore.pengajuan) ? currentStore.pengajuan : [];
+        let rawList = Array.isArray(currentStore.pengajuan) ? currentStore.pengajuan : (Array.isArray(currentStore.pengajuanList) ? currentStore.pengajuanList : []);
+        let cleanPengajuan = rawList;
         if (currentStore.deleted_pengajuan_resis.length > 0) {
             cleanPengajuan = cleanPengajuan.filter(p => p && !currentStore.deleted_pengajuan_resis.includes(String(p.no_resi)));
         }
 
+        currentStore.pengajuan = cleanPengajuan;
+        currentStore.pengajuanList = cleanPengajuan;
+
         return res.status(200).json({
             success: true,
-            data: { ...currentStore, pengajuan: cleanPengajuan },
+            data: { ...currentStore, pengajuan: cleanPengajuan, pengajuanList: cleanPengajuan },
             aparatur: currentStore.aparatur || [],
             pkk: currentStore.pkk || [],
             berita: currentStore.berita || [],
             sarana: currentStore.sarana || [],
             pengajuan: cleanPengajuan,
+            pengajuanList: cleanPengajuan,
             nomor_darurat: currentStore.nomor_darurat || [],
             kontak_rt: currentStore.kontak_rt || [],
             statistik: currentStore.statistik || {},
@@ -103,12 +113,14 @@ module.exports = async (req, res) => {
         if (body.berita && Array.isArray(body.berita)) currentStore.berita = body.berita;
         if (body.sarana && Array.isArray(body.sarana)) currentStore.sarana = body.sarana;
 
-        if (body.pengajuan && Array.isArray(body.pengajuan)) {
+        const incomingPengajuan = body.pengajuan || body.pengajuanList;
+        if (incomingPengajuan && Array.isArray(incomingPengajuan)) {
             const combinedMap = new Map();
-            (currentStore.pengajuan || []).forEach(p => {
+            const existingRaw = currentStore.pengajuan || currentStore.pengajuanList || [];
+            existingRaw.forEach(p => {
                 if (p && p.no_resi) combinedMap.set(p.no_resi, p);
             });
-            body.pengajuan.forEach(p => {
+            incomingPengajuan.forEach(p => {
                 if (p && p.no_resi) {
                     const existing = combinedMap.get(p.no_resi);
                     if (existing) {
@@ -125,6 +137,7 @@ module.exports = async (req, res) => {
                 mergedList = mergedList.filter(p => p && !currentStore.deleted_pengajuan_resis.includes(String(p.no_resi)));
             }
             currentStore.pengajuan = mergedList;
+            currentStore.pengajuanList = mergedList;
         }
 
         if (body.nomor_darurat && Array.isArray(body.nomor_darurat)) currentStore.nomor_darurat = body.nomor_darurat;
@@ -142,7 +155,8 @@ module.exports = async (req, res) => {
             success: true,
             message: 'Cloud store updated successfully via Firebase!',
             data: currentStore,
-            pengajuan: currentStore.pengajuan || []
+            pengajuan: currentStore.pengajuan || [],
+            pengajuanList: currentStore.pengajuanList || []
         });
     }
 
