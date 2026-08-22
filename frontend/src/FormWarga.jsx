@@ -423,7 +423,7 @@ function FormWarga() {
                           </div>
                           <div className="d-flex flex-column gap-2">
                             <a
-                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RT (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RT via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RT&role=rt`)}`}
+                              href={cleanWaNum ? `https://api.whatsapp.com/send?phone=${cleanWaNum}&text=${encodeURIComponent(`Halo Pak RT (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RT via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RT&role=rt`)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(`Halo Pak RT (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RT via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RT&role=rt`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-success fw-bold py-2 rounded-3 text-nowrap"
@@ -449,7 +449,7 @@ function FormWarga() {
                           </div>
                           <div className="d-flex flex-column gap-2">
                             <a
-                              href={`https://wa.me/?text=${encodeURIComponent(`Halo Pak RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RW via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RW&role=rw`)}`}
+                              href={cleanWaNum ? `https://api.whatsapp.com/send?phone=${cleanWaNum}&text=${encodeURIComponent(`Halo Pak RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RW via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RW&role=rw`)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(`Halo Pak RW (${formData.rt_rw}), saya ${formData.nama_pemohon} mengajukan ${formData.jenis_surat} di Kelurahan Lompoe. Mohon persetujuan digital RW via link: ${window.location.origin}/#/verifikasi-rt?token=${noResiHasil}_RW&role=rw`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-primary fw-bold py-2 rounded-3 text-nowrap"
@@ -667,9 +667,15 @@ function FormWarga() {
                       {/* 1. SURAT IZIN KERAMAIAN */}
                       {formData.jenis_surat === 'Surat Izin Keramaian' && (
                         <div>
-                          <div className="mb-3">
-                            <label className="form-label fw-semibold">Nama / Jenis Acara Keramaian *</label>
-                            <input type="text" name="nama_acara" className="form-control" placeholder="Contoh: Pesta Pernikahan & Resepsi Musik" value={extraData.nama_acara} onChange={handleExtraChange} required />
+                          <div className="row g-3 mb-3">
+                            <div className="col-md-6">
+                              <label className="form-label fw-semibold">Nama / Jenis Acara Keramaian *</label>
+                              <input type="text" name="nama_acara" className="form-control" placeholder="Contoh: Pernikahan / Syukuran / Khitanan" value={extraData.nama_acara || ''} onChange={handleExtraChange} required />
+                            </div>
+                            <div className="col-md-6">
+                              <label className="form-label fw-semibold">Penggunaan Hiburan / Izin Acara *</label>
+                              <input type="text" name="hiburan_acara" className="form-control" placeholder="Contoh: Musik Elekton / Sound System" value={extraData.hiburan_acara || 'Musik Elekton / Sound System'} onChange={handleExtraChange} required />
+                            </div>
                           </div>
                           <div className="row g-3 mb-3">
                             <div className="col-md-6">

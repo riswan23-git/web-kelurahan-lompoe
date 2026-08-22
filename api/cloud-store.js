@@ -129,7 +129,9 @@ module.exports = async (req, res) => {
                         const existing = combinedMap.get(p.no_resi);
                         if (existing) {
                             const finalNama = (existing.nama_pemohon && existing.nama_pemohon !== 'Pemohon RT/RW') ? existing.nama_pemohon : (p.nama_pemohon || existing.nama_pemohon);
-                            combinedMap.set(p.no_resi, { ...existing, ...p, nama_pemohon: finalNama });
+                            const finalRt = (p.status_rt && !p.status_rt.includes('Menunggu')) ? p.status_rt : (existing.status_rt || p.status_rt);
+                            const finalRw = (p.status_rw && !p.status_rw.includes('Menunggu')) ? p.status_rw : (existing.status_rw || p.status_rw);
+                            combinedMap.set(p.no_resi, { ...existing, ...p, nama_pemohon: finalNama, status_rt: finalRt, status_rw: finalRw });
                         } else {
                             combinedMap.set(p.no_resi, p);
                         }
