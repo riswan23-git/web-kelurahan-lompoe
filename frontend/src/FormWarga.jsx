@@ -304,6 +304,7 @@ function FormWarga() {
 
     // Instant 0-millisecond response generation
     const generatedResi = 'LMP-' + Math.floor(100000 + Math.random() * 900000);
+    const generatedToken = generatedResi + '_RT';
     const initialRtStatus = 'Menunggu Verifikasi RT';
     const initialRwStatus = 'Menunggu Verifikasi RW';
 
