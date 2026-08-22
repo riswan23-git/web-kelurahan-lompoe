@@ -2,6 +2,27 @@ const store = require('./_store.js');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
+
+const FIREBASE_DB_URL = 'https://web-kelurahan-lompoe-ca95c-default-rtdb.asia-southeast1.firebasedatabase.app/store.json';
+
+function saveToFirebase(dataObj) {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify(dataObj);
+        const req = https.request(FIREBASE_DB_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            resolve(res.statusCode === 200);
+        });
+        req.on('error', () => resolve(false));
+        req.write(payload);
+        req.end();
+    });
+}
 
 const tmpFilePath = path.join(os.tmpdir(), 'lompoe_pengajuan_store.json');
 
@@ -687,6 +708,10 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         } else {
             global.__LOMPOE_CLOUD_STORE__.pengajuan.unshift(newItem);
         }
+        global.__LOMPOE_CLOUD_STORE__.pengajuanList = global.__LOMPOE_CLOUD_STORE__.pengajuan;
+
+        // Persist submission to Firebase Realtime DB immediately
+        saveToFirebase(global.__LOMPOE_CLOUD_STORE__).catch(() => {});
 
         return res.status(200).json({
             success: true,
