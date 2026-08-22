@@ -507,17 +507,20 @@ body { margin: 0; padding: 30px; background: #0f172a; color: #fff; font-family: 
         token = token.split('?')[0].split('/')[0].trim();
         const body = req.body || {};
 
-        let found = store.pengajuanList.find(p => p.token_rt === token || (p.no_resi && p.no_resi.includes(token)));
+        const cloudList = (global.__LOMPOE_CLOUD_STORE__ && Array.isArray(global.__LOMPOE_CLOUD_STORE__.pengajuan)) ? global.__LOMPOE_CLOUD_STORE__.pengajuan : [];
+        let found = cloudList.find(p => p && (p.token_rt === token || (p.no_resi && p.no_resi.includes(token)))) ||
+                    store.pengajuanList.find(p => p && (p.token_rt === token || (p.no_resi && p.no_resi.includes(token))));
+
+        if (!found && req.method === 'GET') {
+            return res.status(404).json({ success: false, message: 'Data pengajuan verifikasi RT/RW tidak ditemukan.' });
+        }
+
         if (!found) {
             found = {
                 id: Date.now(),
-                no_resi: 'LMP-891472',
-                nama_pemohon: 'Riswan Fachrezy',
-                nik: '7372012404950001',
-                jenis_surat: 'Surat Izin Keramaian',
-                rt_rw: 'RW 02 / RT 03',
-                status_rt: 'Menunggu Verifikasi RT/RW',
-                token_rt: token || 'tok_rt_891472'
+                no_resi: 'LMP-' + token.replace(/[^0-9]/g, ''),
+                nama_pemohon: 'Pemohon RT/RW',
+                token_rt: token
             };
         }
 

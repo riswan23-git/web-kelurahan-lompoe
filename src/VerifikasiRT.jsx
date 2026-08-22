@@ -34,25 +34,31 @@ function VerifikasiRT() {
       return;
     }
 
-    axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}`)
-      .then((res) => {
-        if (res.data) setData(res.data);
-      })
-      .catch((err) => {
-        // Fallback to localStorage
-        try {
-          const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
-          const found = localList.find(i => i.token_rt === token || (i.no_resi && i.no_resi.includes(token)));
-          if (found) {
-            setData(found);
-            return;
-          }
-        } catch(e) {}
-        setErrorMsg(err.response?.data?.message || 'Data pengajuan verifikasi RT/RW tidak ditemukan.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    Promise.all([
+      axios.get(`${API_BASE_URL}/api/verifikasi-rt/${token}?_t=${Date.now()}`).catch(() => null),
+      axios.get(`${API_BASE_URL}/api/cloud-store?_t=${Date.now()}`).catch(() => null)
+    ]).then(([resApi, resCloud]) => {
+      const cloudObj = resCloud?.data?.data || resCloud?.data || {};
+      const cloudList = Array.isArray(cloudObj.pengajuan) ? cloudObj.pengajuan : [];
+      const cloudMatch = cloudList.find(i => i && (i.token_rt === token || (i.no_resi && i.no_resi.includes(token))));
+
+      const localList = JSON.parse(localStorage.getItem('all_pengajuan') || '[]');
+      const localMatch = Array.isArray(localList) ? localList.find(i => i && (i.token_rt === token || (i.no_resi && i.no_resi.includes(token)))) : null;
+
+      const apiMatch = (resApi?.data && resApi.data.nama_pemohon && resApi.data.nama_pemohon !== 'Riswan Fachrezy') ? resApi.data : null;
+
+      const finalMatch = cloudMatch || apiMatch || localMatch || (resApi?.data && resApi.data.nama_pemohon ? resApi.data : null);
+
+      if (finalMatch && finalMatch.nama_pemohon) {
+        setData(finalMatch);
+      } else {
+        setErrorMsg('Data pengajuan verifikasi RT/RW tidak ditemukan.');
+      }
+    }).catch(() => {
+      setErrorMsg('Data pengajuan verifikasi RT/RW tidak ditemukan.');
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [token]);
 
   const handleVerifikasi = async (keputusan) => {
