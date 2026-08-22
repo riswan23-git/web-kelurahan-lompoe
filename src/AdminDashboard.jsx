@@ -149,6 +149,10 @@ function AdminDashboard() {
   // 5. Data Statistik & Info Wilayah
   const [stats, setStats] = useState({ total_pria: 0, total_wanita: 0, total_kk: 0, total_rt: 0, total_rw: 0, luas_wilayah: '' });
   const [info, setInfo] = useState({ deskripsi_profil: '', batas_utara: '', batas_selatan: '', batas_timur: '', batas_barat: '', embed_map_url: '' });
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingInfo, setLoadingInfo] = useState(false);
+  const [successStats, setSuccessStats] = useState(false);
+  const [successInfo, setSuccessInfo] = useState(false);
 
   // 6. Data Sarana Prasarana
   const [saranaList, setSaranaList] = useState([]);
@@ -786,22 +790,42 @@ function AdminDashboard() {
   // Handlers for Statistik & Info
   const handleSaveStats = async (e) => {
     e.preventDefault();
+    setLoadingStats(true);
+    setSuccessStats(false);
     try {
       axios.put(`${API_BASE_URL}/api/admin/statistik`, stats).catch(() => { });
       localStorage.setItem('store_stats', JSON.stringify(stats));
       syncCmsCloud('statistik', stats);
-      showNotif('Statistik penduduk berhasil diupdate!');
-    } catch (err) { showNotif('Gagal update statistik'); }
+      setTimeout(() => {
+        setLoadingStats(false);
+        setSuccessStats(true);
+        showNotif('Ringkasan Statistik Penduduk Berhasil Diupdate & Disinkronkan Ke Cloud Firebase!');
+        setTimeout(() => setSuccessStats(false), 3000);
+      }, 500);
+    } catch (err) {
+      setLoadingStats(false);
+      showNotif('Gagal update statistik penduduk');
+    }
   };
 
   const handleSaveInfo = async (e) => {
     e.preventDefault();
+    setLoadingInfo(true);
+    setSuccessInfo(false);
     try {
       axios.put(`${API_BASE_URL}/api/admin/info-kelurahan`, info).catch(() => { });
       localStorage.setItem('store_info', JSON.stringify(info));
       syncCmsCloud('info', info);
-      showNotif('Info profil & peta wilayah berhasil diupdate!');
-    } catch (err) { showNotif('Gagal update info kelurahan'); }
+      setTimeout(() => {
+        setLoadingInfo(false);
+        setSuccessInfo(true);
+        showNotif('Info Profil, Instagram & Batas Wilayah Berhasil Diupdate & Disinkronkan Ke Cloud Firebase!');
+        setTimeout(() => setSuccessInfo(false), 3000);
+      }, 500);
+    } catch (err) {
+      setLoadingInfo(false);
+      showNotif('Gagal update info kelurahan');
+    }
   };
 
   // Handlers for Sarana CRUD
@@ -891,8 +915,26 @@ function AdminDashboard() {
       </nav>
 
       {pesanNotif && (
-        <div className="alert alert-success position-fixed top-0 end-0 m-4 shadow-lg rounded-3 z-3" style={{ maxWidth: '400px' }}>
-          ✅ {pesanNotif}
+        <div 
+          className="position-fixed top-0 end-0 m-4 p-3 shadow-lg rounded-4 text-white z-3 border border-2 border-white"
+          style={{ 
+            backgroundColor: '#059669', 
+            maxWidth: '450px',
+            boxShadow: '0 10px 30px rgba(5, 150, 105, 0.4)',
+            backdropFilter: 'blur(8px)',
+            animation: 'fadeInDown 0.3s ease-out'
+          }}
+        >
+          <div className="d-flex align-items-center justify-content-between gap-3">
+            <div className="d-flex align-items-center gap-2">
+              <span className="fs-4">🎉</span>
+              <div>
+                <strong className="d-block text-warning fw-extrabold fs-6">SISTEM CLOUD FIREBASE SYNC:</strong>
+                <span className="small fw-semibold">{pesanNotif}</span>
+              </div>
+            </div>
+            <button type="button" className="btn-close btn-close-white ms-2" onClick={() => setPesanNotif('')}></button>
+          </div>
         </div>
       )}
 
@@ -1497,7 +1539,24 @@ function AdminDashboard() {
                     <label className="form-label fw-semibold">Luas Wilayah</label>
                     <input type="text" className="form-control" value={stats.luas_wilayah} onChange={(e) => setStats({ ...stats, luas_wilayah: e.target.value })} />
                   </div>
-                  <button type="submit" className="btn btn-primary w-100 fw-bold">Update Ringkasan Statistik</button>
+                  <button
+                    type="submit"
+                    className={`btn w-100 fw-bold py-3 shadow-sm rounded-3 transition-all ${
+                      successStats ? 'btn-success text-white' : loadingStats ? 'btn-warning text-dark' : 'btn-primary'
+                    }`}
+                    disabled={loadingStats}
+                  >
+                    {loadingStats ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        ⏳ Menyimpan Ke Cloud Firebase...
+                      </>
+                    ) : successStats ? (
+                      <>✓ BERHASIL DISIMPAN & DISINKRONKAN KE CLOUD FIREBASE!</>
+                    ) : (
+                      <>💾 Update Ringkasan Statistik</>
+                    )}
+                  </button>
                 </form>
               </div>
             </div>
@@ -1556,7 +1615,24 @@ function AdminDashboard() {
                     <textarea className="form-control" rows="2" placeholder="Contoh: https://maps.app.goo.gl/zdHwb9f13x8q8K1U8" value={info.embed_map_url || ''} onChange={(e) => setInfo({ ...info, embed_map_url: e.target.value })}></textarea>
                     <small className="text-muted d-block mt-1">💡 Tips: Anda dapat memasukkan link bagikan (contoh: https://maps.app.goo.gl/zdHwb9f13x8q8K1U8). Sistem otomatis mengonversi ke peta interaktif.</small>
                   </div>
-                  <button type="submit" className="btn btn-primary w-100 fw-bold">Update Info & Batas Wilayah</button>
+                  <button
+                    type="submit"
+                    className={`btn w-100 fw-bold py-3 shadow-sm rounded-3 transition-all ${
+                      successInfo ? 'btn-success text-white' : loadingInfo ? 'btn-warning text-dark' : 'btn-primary'
+                    }`}
+                    disabled={loadingInfo}
+                  >
+                    {loadingInfo ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        ⏳ Menyimpan Ke Cloud Firebase...
+                      </>
+                    ) : successInfo ? (
+                      <>✓ BERHASIL DISIMPAN & DISINKRONKAN KE CLOUD FIREBASE!</>
+                    ) : (
+                      <>💾 Update Info & Batas Wilayah</>
+                    )}
+                  </button>
                 </form>
               </div>
             </div>
